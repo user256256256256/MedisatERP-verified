@@ -1,0 +1,84 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Areas.CoreSystem.Models
+@model MedisatERP.Areas.CoreSystem.Views.IndexModel
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Activity Logs";
+}
+
+<style>
+    .lbl_header {
+        margin-bottom: 10px;
+        margin-top: 10px;
+    }
+
+    .company-logo {
+        max-width: 100px;
+        max-height: 100px;
+    }
+
+    /* Add padding to the grid container */
+    #auditLogGrid {
+        padding: 20px;
+    }
+</style>
+
+<!-- Section Title Card -->
+<div class="card col-12 text-white" style="margin-bottom:20px;padding:20px;background: linear-gradient(to top, #6f42c1, #9b6bd3);">
+    <center><span><i data-feather="users"></i> ACTIVITY LOGS</span></center>
+</div>
+
+<!-- DevExtreme DataGrid for Activity Logs -->
+<div id="auditLogGrid">
+    @(Html.DevExtreme().DataGrid<AuditLog>()
+        .ShowBorders(true)
+        .ID("gv_auditLogList")
+        .DataSource(d => d.Mvc().Controller("AuditLogsAPI").LoadAction("Get").Key("AuditLogId")
+        .InsertAction("Post")
+        .UpdateAction("Put")
+        .DeleteAction("Delete"))
+        .ShowColumnLines(false)
+        .ShowRowLines(true)
+        .RowAlternationEnabled(true)
+        .ColumnHidingEnabled(true)
+        .ColumnAutoWidth(true)
+        .Selection(s => s.Mode(SelectionMode.Multiple))
+        .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
+        .FocusedRowEnabled(true)
+        .Paging(p => p.PageSize(10))
+        .RemoteOperations(true)
+        .Editing(e => e
+        .AllowAdding(false)  // Allow adding new logs
+        .AllowUpdating(false)  // Allow updating existing logs
+        .AllowDeleting(false)  // Allow deleting logs
+        .Mode(GridEditMode.Popup)
+        .Popup(p => p
+        .Title("Activity Log")
+        .Height(450)
+        .ShowTitle(true)
+        .Position(pos => pos
+        .My(HorizontalAlignment.Center, VerticalAlignment.Center)
+        .At(HorizontalAlignment.Center, VerticalAlignment.Center)
+        .Of(new JS("window"))
+        )
+        )
+        )
+        .Columns(columns =>
+        {
+            columns.AddFor(m => m.AuditLogId).Visible(false);  // Hide AuditLogId
+            //columns.AddFor(m => m.UserId)
+            //.Caption("User")
+            // .Lookup(l => l.DataSource(d => d.Mvc().Controller("AuditLogsAPI").LoadAction("AspNetUsersLookup")).ValuField("Value").DisplayField("Text")); columns.AddFor(m => m.Action).Caption("Action");
+            columns.AddFor(m => m.Timestamp).Caption("Timestamp").DataType(GridColumnDataType.Date).Format("MM/dd/yyyy HH:mm:ss");
+            columns.AddFor(m => m.Details).Caption("Details");
+            columns.AddFor(m => m.IpAddress).Caption("IP Address");
+            columns.AddFor(m => m.DeviceInfo).Caption("Device Info");
+            columns.AddFor(m => m.EventType).Caption("Event Type");
+            columns.AddFor(m => m.EntityAffected).Caption("Entity Affected");
+            columns.AddFor(m => m.OldValue).Caption("Old Value");
+            columns.AddFor(m => m.NewValue).Caption("New Value");
+            columns.AddFor(m => m.ComplianceStatus).Caption("Compliance Status");
+        })
+        )
+</div>

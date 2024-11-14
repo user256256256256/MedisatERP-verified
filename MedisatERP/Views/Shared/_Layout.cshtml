@@ -8,7 +8,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>MedisatERP</title>
+    <title>Medisat ERP</title>
     <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 
     @* Uncomment to use the HtmlEditor control *@
@@ -20,7 +20,11 @@
     @* Uncomment to use the Diagram control *@
     @*<link href="~/css/devextreme/dx-diagram.css" rel="stylesheet" />*@
 
+    @*Major Site Styles  *@
     <link href="~/css/devextreme/bootstrap.css" rel="stylesheet" />
+
+    @*Feather icons-- importing icons*@
+    <link href="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.css" rel="stylesheet" />
 
     @* Predefined themes: https://js.devexpress.com/DevExtreme/Guide/Themes_and_Styles/Predefined_Themes/ *@
     <link href="~/css/devextreme/dx.light.css" rel="stylesheet" />
@@ -56,34 +60,30 @@
     @* Uncomment to provide geo-data for the VectorMap control *@
     @* Docs: https://js.devexpress.com/DevExtreme/Guide/Widgets/VectorMap/Providing_Data/#Data_for_Areas *@
     @*<script src="~/js/devextreme/vectormap-data/world.js"></script>*@
+    
+    <!-- MetisMenu jQuery plugin --helps in sidebar toggle -->
+    <script src="https://cdn.jsdelivr.net/npm/metismenu@3.0.6/dist/metisMenu.min.js"></script>
+
 
     <script src="~/js/devextreme/aspnet/dx.aspnet.mvc.js"></script>
     <script src="~/js/devextreme/aspnet/dx.aspnet.data.js"></script>
 </head>
 
-<body style="padding-top: 5rem;">
+<body>
 
-    <nav class="navbar navbar-dark bg-dark fixed-top navbar-expand-md">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">MedisatERP</a>
-
-            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div id="navbar" class="collapse navbar-collapse">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a href="#" class="nav-link active">Home</a></li>
-                    <li class="nav-item"><a href="#about" class="nav-link">About</a></li>
-                    <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <main class="container">
+    <content>
         @RenderBody()
-    </main>
+     </content>
+
+    @* Notifilix framework managing user notifications*@
+    <script src="~/js/notiflix-aio-2.5.0.min.js"></script>
+
+    @*Feather Icons: Initialize Feather.js to convert the data-feather attributes into actual SVG elements *@
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script>feather.replace();</script>
+
+    <script src="~/js/site.js"></script>
+
 </body>
 
 </html>

@@ -1,0 +1,6 @@
+--This EF command is used for automatically creating models to Areas/CoreSystem/Models -f
+
+dotnet ef dbcontext scaffold "Data Source=medisaterp.lyfexafrica.com;uid=adminMedisatERP;pwd=Planchinobo256;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -o Areas/CoreSystem/Models -f
+
+
+
