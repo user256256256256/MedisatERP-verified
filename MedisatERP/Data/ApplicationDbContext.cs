@@ -2,14 +2,12 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-
-// Configure AppDbContext with Identity Framework.
-public class ApplicationDbContext : IdentityDbContext<IdentityUser>
+namespace MedisatERP.Data
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
+    // Set up DB Context with Identity framework
+    public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     {
-    }
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
-    // Add any additional DbSet properties here
+    }
 }

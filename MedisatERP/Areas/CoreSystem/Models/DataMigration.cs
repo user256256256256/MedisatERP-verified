@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace MedisatERP.Areas.CoreSystem.Models;
 
 public partial class DataMigration
 {
-    [Key]
     public Guid MigrationId { get; set; }
 
     public string SourceSystem { get; set; }
@@ -26,4 +24,8 @@ public partial class DataMigration
     public string Log { get; set; }
 
     public string MappingRules { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public virtual Company Company { get; set; }
 }

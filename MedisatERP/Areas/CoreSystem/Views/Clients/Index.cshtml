@@ -1,21 +1,14 @@
-﻿@using DevExtreme.AspNet.Mvc
+﻿@using MedisatERP.Models
+@using DevExtreme.AspNet.Mvc
 @using MedisatERP.Areas.CoreSystem.Models
-@model MedisatERP.Areas.CoreSystem.Views.IndexModel
 
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Company Info";
+    ViewData["Title"] = "Clients Info";
 }
 
-<style>
-    .lbl_header {
-        margin-bottom: 10px;
-        margin-top: 10px;
-    }
-</style>
-
 <!-- Section Title Card -->
-<div class="card col-12 text-white" style="margin-bottom:20px;padding:20px;background: linear-gradient(to top, #6f42c1, #9b6bd3);">
+<div class="card col-12 card-title">
     <center><span><i data-feather="users"></i> CLIENT INFORMATION</span></center>
 </div>
 
@@ -54,31 +47,35 @@
         .ShowColumnLines(false)
         .ShowRowLines(true)
         .RowAlternationEnabled(true)
+        .FilterRow(f => f.Visible(false))
+        .HeaderFilter(f => f.Visible(true))
+        .RemoteOperations(true)
         .ShowBorders(true)
         .ColumnHidingEnabled(true)
         .ColumnAutoWidth(true)
         .OnFocusedRowChanged("onMainRowChanged")
-        .OnInitNewRow("intiate_new_client")
         .Columns(columns =>
         {
-            columns.AddFor(m => m.ClientId).Caption("Client ID").Visible(true).Width(100);
+            // Comany Clients Data Columns
+            columns.AddFor(m => m.ClientId).Caption("Client ID").Visible(false);
             columns.AddFor(m => m.ClientName).Caption("Client Name").Visible(true);
             columns.AddFor(m => m.DateOfBirth).Caption("Date of Birth").Format("dd MMM, yyyy");
             columns.AddFor(m => m.Gender).Caption("Gender").Visible(true);
             columns.AddFor(m => m.Email).Caption("Email").Visible(true);
             columns.AddFor(m => m.PhoneNumber).Caption("Phone").Visible(true);
+            columns.AddFor(m => m.EmergencyContactName).Caption("Emergency Contact Name").Visible(true);
+            columns.AddFor(m => m.EmergencyContactPhone).Caption("Emergency Contact Phone").Visible(true);
+            columns.AddFor(m => m.MaritalStatus).Caption("Marital Status").Visible(true);
+            columns.AddFor(m => m.Nationality).Caption("Nationality").Visible(true);
+            columns.AddFor(m => m.CreatedAt).Caption("Date Created").Format("dd MMM, yyyy").AllowEditing(false);
+
+            // Add column for Client Address --a foreign key in Company Clients Model
             columns.AddFor(m => m.AddressId).Caption("Address ID").Visible(false);
             columns.AddFor(m => m.Address.Street).Caption("Street").Visible(true);
             columns.AddFor(m => m.Address.City).Caption("City").Visible(true);
             columns.AddFor(m => m.Address.State).Caption("State").Visible(true);
             columns.AddFor(m => m.Address.PostalCode).Caption("Postal Code").Visible(true);
             columns.AddFor(m => m.Address.Country).Caption("Country").Visible(true);
-            columns.AddFor(m => m.EmergencyContactName).Caption("Emergency Contact Name").Visible(true);
-            columns.AddFor(m => m.EmergencyContactPhone).Caption("Emergency Contact Phone").Visible(true);
-            columns.AddFor(m => m.MaritalStatus).Caption("Marital Status").Visible(true);
-            columns.AddFor(m => m.Nationality).Caption("Nationality").Visible(true);
-            columns.AddFor(m => m.CreatedAt).Caption("Date Created").Format("dd MMM, yyyy").AllowEditing(false);
-            columns.AddFor(m => m.CompanyId).Caption("Company Code").AllowEditing(false);
             columns.Add()
             .Type(GridCommandColumnType.Buttons)
             .Width(80)
@@ -93,8 +90,8 @@
         .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
         .FocusedRowEnabled(true)
         .Editing(e => e
-        .AllowAdding(true)
-        .AllowUpdating(true)
+        .AllowAdding(false)
+        .AllowUpdating(false)
         .AllowDeleting(true)
         .UseIcons(true)
         .Mode(GridEditMode.Popup)
@@ -131,7 +128,6 @@
                 groupItems.AddSimpleFor(m => m.MaritalStatus);
                 groupItems.AddSimpleFor(m => m.Nationality);
                 groupItems.AddSimpleFor(m => m.CreatedAt).Visible(false);
-                groupItems.AddSimpleFor(m => m.CompanyId);
             });
         }).ScrollingEnabled(true))
         )
@@ -156,16 +152,6 @@
     // Get the selected company ID
     function getCompanyId() {
         var companyId = $("#txt_company").dxSelectBox('option', 'value');
-        console.log(companyId);
         return companyId;
-    }
-
-    // Initialize a new client
-    function intiate_new_client(e) {
-        if (getCompanyId() == null) {
-            Notiflix.Report.Failure("Client Failure", "Please Select the company first!", "OK");
-        } else {
-            e.data.CompanyId = getCompanyId();  // Set the CompanyId for new client
-        }
     }
 </script>

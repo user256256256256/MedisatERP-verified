@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using MedisatERP.Models;
 
 namespace MedisatERP.Areas.CoreSystem.Models;
 
@@ -41,9 +42,17 @@ public partial class Company
 
     public DateTime? CreatedAt { get; set; }
 
-    public byte[] CompanyLogo { get; set; }
+    public string CompanyLogo { get; set; }
+
+    public string CompanyLogoFilePath { get; set; }
 
     public virtual CompanyAddress Address { get; set; }
 
+    public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+
     public virtual ICollection<CompanyClient> CompanyClients { get; set; } = new List<CompanyClient>();
+
+    public virtual ICollection<DataMigration> DataMigrations { get; set; } = new List<DataMigration>();
+
+    public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 }

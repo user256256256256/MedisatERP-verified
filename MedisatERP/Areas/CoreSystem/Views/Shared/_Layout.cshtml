@@ -1,5 +1,5 @@
 ﻿@{
-    Layout = "~/Views/Shared/_Layout.cshtml";  
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <div class="wrapper">
@@ -8,7 +8,7 @@
         <div class="sidebar-content js-simplebar">
             <!-- Sidebar Brand (Logo) -->
             <a class="sidebar-brand" href="/">
-                <center><span class="align-middle">MEDISAT ERP</span></center>
+                <center><span class="align-middle">MEDISAT ERP </span></center>
             </a>
 
             <!-- Sidebar Navigation Menu -->
@@ -16,39 +16,40 @@
 
                 <!-- Section Header: SYSTEM SETTINGS -->
                 <li class="sidebar-header">
-                    SYSTEM MANAGER
+                    MEDISAT ERP
                 </li>
 
                 <!-- Sidebar Item: Dashboard -->
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="Dashboard">
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("SystemManager")) ? "active" : "")">
+                    <a class="sidebar-link" href="SystemManager">
                         <i class="align-middle" data-feather="sliders"></i> <span class="align-middle">Dashboard</span>
                     </a>
                 </li>
 
                 <!-- Sidebar Item: Company Info -->
-                <li class="sidebar-item">
+                <!-- Sidebar Item: Company Info -->
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("Company")) ? "active" : "")">
                     <a class="sidebar-link" href="Company">
                         <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Company Info</span>
                     </a>
                 </li>
 
                 <!-- Sidebar Item: Clients -->
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="Clients" >
-                        <i class="align-middle" data-feather="users"></i> <span class="align-middle">Clients </span>
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("Clients")) ? "active" : "")">
+                    <a class="sidebar-link" href="Clients">
+                        <i class="align-middle" data-feather="users"></i> <span class="align-middle">Clients</span>
                     </a>
                 </li>
 
                 <!-- Sidebar Item: Feedback -->
-                <li class="sidebar-item">
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("Feedback")) ? "active" : "")">
                     <a class="sidebar-link" href="Feedback">
                         <i class="align-middle" data-feather="edit-2"></i> <span class="align-middle">Feedback</span>
                     </a>
                 </li>
 
                 <!-- Sidebar Item: Data Migration -->
-                <li class="sidebar-item">
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("DataMigrations")) ? "active" : "")">
                     <a class="sidebar-link" href="DataMigrations">
                         <i class="align-middle" data-feather="arrow-right-circle"></i> <span class="align-middle">Data Migration</span>
                     </a>
@@ -60,15 +61,15 @@
                 </li>
 
                 <!-- Sidebar Item: User Accounts -->
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="#">
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("UserAccounts")) ? "active" : "")">
+                    <a class="sidebar-link" href="UserAccounts">
                         <i class="align-middle" data-feather="user"></i> <span class="align-middle">User Accounts</span>
                     </a>
                 </li>
 
                 <!-- Sidebar Item: Activity Log -->
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="AuditLogs" >
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("AuditLogs")) ? "active" : "")">
+                    <a class="sidebar-link" href="AuditLogs">
                         <i class="align-middle" data-feather="list"></i> <span class="align-middle">Activity Log</span>
                     </a>
                 </li>
@@ -82,7 +83,7 @@
         <!-- Navbar Section -->
         <nav class="navbar navbar-expand navbar-light navbar-bg">
             <!-- Sidebar Toggle Button -->
-            <a class="sidebar-toggle js-sidebar-toggle"  >
+            <a class="sidebar-toggle js-sidebar-toggle">
                 <i class="hamburger align-self-center"></i>
             </a>
 
@@ -142,11 +143,13 @@
                             <i class="align-middle" data-feather="settings"></i>
                         </a>
 
-                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle" href="UserProfile" data-bs-toggle="dropdown">
                             <!-- User Avatar and Name -->
-                            <img src="~/img/avatars/avatar.jpg" class="avatar img-fluid rounded me-1" alt="Sekalema Hamza" />
-                            <span>@ViewBag.FullName</span> <!-- Full name of the logged-in user -->
+                            <img src="~/img/userProfileImages/team-2.jpg" class="avatar img-fluid rounded me-1" alt="Profile-img" />
+                            <span>Mutebi Alawi</span> <!-- Full name of the logged-in user -->
                         </a>
+
+
                         <div class="dropdown-menu dropdown-menu-end">
                             <a class="dropdown-item" href="Profile"><i class="align-middle me-1" data-feather="user"></i> Profile</a>
                             <div class="dropdown-divider"></div>
@@ -174,7 +177,7 @@
                 <div class="row text-muted">
                     <div class="col-12 text-start">
                         <p class="mb-0" style="color: #565e64; ">
-                            <script>document.write(new Date().getFullYear() + ' Edusat ERP |  By Eurosat Group');</script>
+                            <script>document.write(new Date().getFullYear() + ' MEDISAT | By Eurosat ' );</script>
                         </p>
                     </div>
                 </div>

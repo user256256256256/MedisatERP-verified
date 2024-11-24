@@ -20,10 +20,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Areas\CoreSystem\Models\" />
-      <Folder Include="Areas\NutritionCompany\Models\" />
       <Folder Include="Areas\NutritionCompany\Controllers\" />
+      <Folder Include="Areas\NutritionCompany\Models\" />
       <Folder Include="Areas\NutritionCompany\Views\Shared\" />
+      <Folder Include="Code Bin\" />
     </ItemGroup>
 
     <ProjectExtensions><VisualStudio><UserProperties TemplateFeatures="NETCORE" /></VisualStudio></ProjectExtensions>

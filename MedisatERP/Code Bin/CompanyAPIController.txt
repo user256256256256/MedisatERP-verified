@@ -1,37 +1,39 @@
-﻿using DevExtreme.AspNet.Data;
+using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using MedisatERP.Areas.CoreSystem.Models;
-using MedisatERP.Data;
+using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+using Newtonsoft.Json.Linq;
+using System.Text;
+using System.Text.Unicode;
+using System.Security.Cryptography.X509Certificates;
 
 namespace MedisatERP.Controllers
 {
     [Route("api/[controller]/[action]")]
     public class CompaniesAPIController : Controller
     {
-        private readonly  MedisatErpDbContext _context;
+        private MedisatErpDbContext _context;
+        private readonly HttpClient _client;
 
-        // Constructor to initialize the context and HttpClient
-        public CompaniesAPIController(MedisatErpDbContext context)
-        {
+        public CompaniesAPIController(MedisatErpDbContext context, HttpClient client) {
             _context = context;
+            _client = client;
         }
 
-        /// <summary>
-        /// Retrieves a list of companies with their associated address data.
-        /// Supports filtering, sorting, and pagination.
-        /// </summary>
-        /// <param name="loadOptions">The options for filtering, sorting, and paging data.</param>
-        /// <returns>Returns the processed company data.</returns>
         [HttpGet]
         public async Task<IActionResult> Get(DataSourceLoadOptions loadOptions)
         {
@@ -55,8 +57,7 @@ namespace MedisatERP.Controllers
                                         i.Motto,
                                         i.CompanyType,
                                         i.CreatedAt,
-                                        Address = new
-                                        {
+                                        Address = new  {
                                             i.Address.AddressId,
                                             i.Address.Street,
                                             i.Address.City,
@@ -66,179 +67,240 @@ namespace MedisatERP.Controllers
                                         }
                                     });
 
-            // Apply filtering, sorting, and paging using DataSourceLoader
+            // Log raw data before any transformation
+            var rawData = await companies.ToListAsync();
+            string rawDataJson = JsonConvert.SerializeObject(rawData, Formatting.Indented);
+
+            Console.WriteLine("Raw Data Before DataSourceLoader:");
+            Console.WriteLine(rawDataJson);  // Log the data before applying any filters, sort, or pagination
+
+            // Apply filtering, sorting, and paging
             var transformedData = await DataSourceLoader.LoadAsync(companies, loadOptions);
+
+            // Log the data after DataSourceLoader processes it
+            string transformedDataJson = JsonConvert.SerializeObject(transformedData, Formatting.Indented);
+            Console.WriteLine("Transformed Data After DataSourceLoader:");
+            Console.WriteLine(transformedDataJson);  // Log the transformed data that will be returned to the UI
 
             return Json(transformedData); // Return the processed data
         }
 
-        /// <summary>
-        /// Adds a new company with its associated address data.
-        /// </summary>
-        /// <param name="values">The incoming values as a JSON string.</param>
-        /// <returns>Returns the Status OK  of the newly created company.</returns>
         [HttpPost]
         public async Task<IActionResult> Post(string values)
         {
             try
             {
-                // Deserialize the incoming request values
-                var valuesDict = JsonConvert.DeserializeObject<IDictionary<string, object>>(values);
+                // Log the incoming request values
+                Console.WriteLine("Received request values: " + values);
 
-                // Extract the address data if available
+                // Deserialize the incoming values into a dictionary for easy processing
+                var valuesDict = JsonConvert.DeserializeObject<IDictionary<string, object>>(values); // Corrected the type here
+
+                // Extract the address data, which is nested under "Address"
                 var addressData = valuesDict.ContainsKey("Address") ? valuesDict["Address"] as JObject : null;
 
-                // Create a new Company instance and populate it with the provided data
+                // Log the extracted address data
+                Console.WriteLine("Extracted address data: " + JsonConvert.SerializeObject(addressData));
+
+                // Create a new Company instance
                 var model = new Company();
+
+                // Extract company data, excluding the address data
                 var companyData = valuesDict.Where(kv => kv.Key != "Address")
                                             .ToDictionary(kv => kv.Key, kv => kv.Value);
-                PopulateModel(model, companyData); // Populate the company model
 
-                // Initialize Address if not provided
+                // Populate the company model with the data (excluding address)
+                Console.WriteLine("Extracted company data: " + JsonConvert.SerializeObject(companyData));
+                PopulateModel(model, companyData); // Assuming this method fills the company fields
+
+                // Ensure that Address is initialized
                 if (model.Address == null)
                 {
                     model.Address = new CompanyAddress();
+                    Console.WriteLine("Initialized new Company with Address.");
                 }
 
-                // If address data is provided, populate the address model
+                // If we have address data, populate the address model
                 if (addressData != null)
                 {
+                    Console.WriteLine("Address data found, populating address model...");
+
                     model.Address.Street = addressData["Street"]?.ToString();
                     model.Address.City = addressData["City"]?.ToString();
                     model.Address.State = addressData["State"]?.ToString();
                     model.Address.PostalCode = addressData["PostalCode"]?.ToString();
                     model.Address.Country = addressData["Country"]?.ToString();
+
+                    // Log the populated address model before saving
+                    Console.WriteLine("Populated address model: " + JsonConvert.SerializeObject(model.Address));
+                }
+                else
+                {
+                    Console.WriteLine("No address data found in request.");
                 }
 
-                // Set CreatedAt field if not already set
+                // Ensure CreatedAt is set if it's not already
                 if (model.CreatedAt == null)
                 {
                     model.CreatedAt = DateTime.Now;
+                    Console.WriteLine("Created Date has been set to: " + model.CreatedAt);
                 }
 
-                // Save the new company record to the database
+                // Save the company model with the address
                 _context.Companies.Add(model);
                 await _context.SaveChangesAsync();
 
-                // Return the status ok (200) of the newly created company
-                return Ok();
+                // Log success
+                Console.WriteLine("Company saved successfully. CompanyId: " + model.CompanyId);
+
+                // Return the CompanyId as part of the response
+                return Json(new { model.CompanyId });
             }
             catch (Exception ex)
             {
-                // Return an internal server error if an exception occurs
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                // Log any unexpected exceptions
+                Console.WriteLine("Error occurred: " + ex.Message);
+                return StatusCode(500, "Internal server error.");
             }
         }
 
-        /// <summary>
-        /// Updates an existing company and its address data.
-        /// </summary>
-        /// <param name="key">The unique identifier of the company to update.</param>
-        /// <param name="values">The incoming updated values as a JSON string.</param>
-        /// <returns>Returns a success status if the company is updated.</returns>
+
         [HttpPut]
         public async Task<IActionResult> Put(Guid key, string values)
         {
             try
             {
-                // Retrieve the company by its unique identifier
+                // Log the incoming request values
+                Console.WriteLine("Received request for update: " + key + ": " + values);
+
+                // Retrieve the company model based on the key
                 var model = await _context.Companies
-                                          .Include(c => c.Address)
+                                          .Include(c => c.Address) // Include the address in the query
                                           .FirstOrDefaultAsync(item => item.CompanyId == key);
 
                 if (model == null)
                     return StatusCode(404, "Company not found");
 
-                // Deserialize the incoming updated values
+                // Deserialize the incoming values into a dictionary
                 var valuesDict = JsonConvert.DeserializeObject<IDictionary<string, object>>(values);
 
-                // Extract address data from the request, if provided
+                // Log data after deserialization
+                //Console.WriteLine("Deserialized fields: " + JsonConvert.SerializeObject(valuesDict));
+
+                // Extract the address data nested under "Address" key
                 var addressData = valuesDict.ContainsKey("Address") ? valuesDict["Address"] as JObject : null;
 
-                // If address data is provided, update the address
+                // If address data is found, update the address directly in the database
                 if (addressData != null)
                 {
+                    Console.WriteLine("Address data found, updating address...");
+
+                    // Update the company address directly
                     if (model.Address == null)
                     {
+                        // If the company does not have an address, create a new one
                         model.Address = new CompanyAddress();
+                        Console.WriteLine("Created new address for company.");
                     }
 
+                    // Populate the address properties from the provided data
                     model.Address.Street = addressData["Street"]?.ToString();
                     model.Address.City = addressData["City"]?.ToString();
                     model.Address.State = addressData["State"]?.ToString();
                     model.Address.PostalCode = addressData["PostalCode"]?.ToString();
                     model.Address.Country = addressData["Country"]?.ToString();
+
+                    // Log the updated address before saving
+                    //Console.WriteLine("Updated address model: " + JsonConvert.SerializeObject(model.Address));
+                }
+                else
+                {
+                    Console.WriteLine("No address data found in the request.");
                 }
 
-                // Extract company data and update the company fields
+                // Extract the company data (excluding the address part)
                 var companyData = valuesDict.Where(kv => kv.Key != "Address")
                                             .ToDictionary(kv => kv.Key, kv => kv.Value);
-                PopulateModel(model, companyData); // Update company model
 
-                // Validate the updated model before saving
+                // Log the extracted company data
+                //Console.WriteLine("Extracted company data: " + JsonConvert.SerializeObject(companyData));
+
+                // Populate the company model with the new company data
+                PopulateModel(model, companyData);  // Assuming this method fills in the company properties
+
+                // Validate the model before saving
                 if (!TryValidateModel(model))
                     return BadRequest(GetFullErrorMessage(ModelState));
 
-                // Save the changes to the database
+                // Save the updated company (and address) in the database
                 await _context.SaveChangesAsync();
 
-                return Ok(); // Return a success response
+                // Return a successful response
+                return Ok();
             }
             catch (Exception ex)
             {
-                // Return an internal server error if an exception occurs
-                return StatusCode(500, $"Internal Server error: {ex.Message}");
+                // Log any unexpected exceptions
+                Console.WriteLine("Error occurred: " + ex.Message);
+                return StatusCode(500, "Internal Server error");
             }
         }
 
-        /// <summary>
-        /// Deletes a company and its associated address data by its unique identifier.
-        /// </summary>
-        /// <param name="key">The unique identifier of the company to delete.</param>
-        /// <returns>Returns a status code indicating the result of the operation.</returns>
+
+
         [HttpDelete]
         public async Task<IActionResult> Delete(Guid key)
         {
             try
             {
-                // Retrieve the company to delete
+                // Log the received key.
+                Console.WriteLine($"Received key: {key}");
+
+                // Fetch the company and check if it exists.
                 var model = await _context.Companies
-                                          .Include(c => c.Address) // Ensure Address data is eagerly loaded
+                                          .Include(c => c.Address)    // Eager load CompanyAddress to avoid separate query
                                           .FirstOrDefaultAsync(item => item.CompanyId == key);
 
                 if (model == null)
                 {
-                    // Return not found if the company does not exist
+                    // Return a not found response if the company does not exist.
                     return NotFound($"Company with ID {key} not found.");
                 }
 
-                // Remove the associated address, if it exists
+                // Log the Company details (if necessary, but remove for production).
+                //Console.WriteLine($"Company model: {JsonConvert.SerializeObject(model)}");
+
+                // If the company has an associated address, remove it first
                 if (model.Address != null)
                 {
+                    // Log the address details (be cautious about sensitive data).
+                    //Console.WriteLine($"Address model: {JsonConvert.SerializeObject(model.Address)}");
+
+                    // Remove the associated address.
                     _context.CompanyAddresses.Remove(model.Address);
                 }
 
-                // Remove the company record itself
+                // Now remove the company itself.
                 _context.Companies.Remove(model);
 
-                // Save the changes to the database
+                // Save changes to commit the deletions in one go.
                 await _context.SaveChangesAsync();
 
-                return NoContent(); // Return No Content status after successful deletion
+                // Return a No Content status (204) to indicate successful deletion.
+                return NoContent();  // No content is returned after successful deletion.
             }
             catch (Exception ex)
             {
-                // Return an internal server error if an exception occurs
-                return StatusCode(500, $"An internal server error occurred: {ex.Message}");
+                // Log the full exception with the stack trace for better troubleshooting.
+                Console.WriteLine($"Error occurred: {ex.Message}, StackTrace: {ex.StackTrace}");
+
+                // Return an internal server error response.
+                return StatusCode(500, "An internal server error occurred. Please try again later.");
             }
         }
 
-        /// <summary>
-        /// Populates the company model with the given values.
-        /// </summary>
-        private void PopulateModel(Company model, IDictionary<string, object> values)
+        private void PopulateModel(Company model, IDictionary values)
         {
-            // Define the field names for clarity and ease of use
             string COMPANY_ID = nameof(Company.CompanyId);
             string COMPANY_NAME = nameof(Company.CompanyName);
             string CONTACT_PERSON = nameof(Company.ContactPerson);
@@ -258,120 +320,118 @@ namespace MedisatERP.Controllers
             string ADDRESS_ID = nameof(Company.AddressId);
             string CREATED_AT = nameof(Company.CreatedAt);
 
-            if (values.ContainsKey(COMPANY_ID))
+            // Populate basic fields for the Company model
+            if (values.Contains(COMPANY_ID))
             {
-                model.CompanyId = ConvertTo<Guid>(values[COMPANY_ID]);
+                model.CompanyId = ConvertTo<System.Guid>(values[COMPANY_ID]);
             }
 
-            if (values.ContainsKey(COMPANY_NAME))
+            if (values.Contains(COMPANY_NAME))
             {
                 model.CompanyName = Convert.ToString(values[COMPANY_NAME]);
             }
 
-            if (values.ContainsKey(CONTACT_PERSON))
+            if (values.Contains(CONTACT_PERSON))
             {
                 model.ContactPerson = Convert.ToString(values[CONTACT_PERSON]);
             }
 
-            if (values.ContainsKey(COMPANY_EMAIL))
+            if (values.Contains(COMPANY_EMAIL))
             {
                 model.CompanyEmail = Convert.ToString(values[COMPANY_EMAIL]);
             }
 
-            if (values.ContainsKey(COMPANY_PHONE))
+            if (values.Contains(COMPANY_PHONE))
             {
                 model.CompanyPhone = Convert.ToString(values[COMPANY_PHONE]);
             }
 
-            if (values.ContainsKey(EXP_DATE))
+            if (values.Contains(EXP_DATE))
             {
                 model.ExpDate = values[EXP_DATE] != null ? Convert.ToDateTime(values[EXP_DATE]) : (DateTime?)null;
             }
 
-            if (values.ContainsKey(API_CODE))
+            if (values.Contains(API_CODE))
             {
                 model.ApiCode = Convert.ToString(values[API_CODE]);
             }
 
-            if (values.ContainsKey(COMPANY_STATUS))
+            if (values.Contains(COMPANY_STATUS))
             {
                 model.CompanyStatus = Convert.ToString(values[COMPANY_STATUS]);
             }
 
-            if (values.ContainsKey(SUBSCRIPTION_AMOUNT))
+            if (values.Contains(SUBSCRIPTION_AMOUNT))
             {
                 model.SubscriptionAmount = values[SUBSCRIPTION_AMOUNT] != null ? Convert.ToDecimal(values[SUBSCRIPTION_AMOUNT], CultureInfo.InvariantCulture) : (decimal?)null;
             }
 
-            if (values.ContainsKey(COMPANY_INITIALS))
+            if (values.Contains(COMPANY_INITIALS))
             {
                 model.CompanyInitials = Convert.ToString(values[COMPANY_INITIALS]);
             }
 
-            if (values.ContainsKey(SMS_ACCOUNT))
+            if (values.Contains(SMS_ACCOUNT))
             {
                 model.SmsAccount = Convert.ToString(values[SMS_ACCOUNT]);
             }
 
-            if (values.ContainsKey(PAY_ACCOUNT))
+            if (values.Contains(PAY_ACCOUNT))
             {
                 model.PayAccount = Convert.ToString(values[PAY_ACCOUNT]);
             }
 
-            if (values.ContainsKey(PAY_BANK))
+            if (values.Contains(PAY_BANK))
             {
                 model.PayBank = Convert.ToString(values[PAY_BANK]);
             }
 
-            if (values.ContainsKey(PAY_ACCOUNT_NAME))
+            if (values.Contains(PAY_ACCOUNT_NAME))
             {
                 model.PayAccountName = Convert.ToString(values[PAY_ACCOUNT_NAME]);
             }
 
-            if (values.ContainsKey(MOTTO))
+            if (values.Contains(MOTTO))
             {
                 model.Motto = Convert.ToString(values[MOTTO]);
             }
 
-            if (values.ContainsKey(COMPANY_TYPE))
+            if (values.Contains(COMPANY_TYPE))
             {
                 model.CompanyType = Convert.ToString(values[COMPANY_TYPE]);
             }
 
-            if (values.ContainsKey(ADDRESS_ID))
+            if (values.Contains(ADDRESS_ID))
             {
-                model.AddressId = ConvertTo<Guid>(values[ADDRESS_ID]);
+                model.AddressId = ConvertTo<System.Guid>(values[ADDRESS_ID]);
             }
 
-            if (values.ContainsKey(CREATED_AT))
+            if (values.Contains(CREATED_AT))
             {
                 model.CreatedAt = values[CREATED_AT] != null ? Convert.ToDateTime(values[CREATED_AT]) : (DateTime?)null;
             }
+
         }
 
-
-        /// <summary>
-        /// Converts a value to the specified type.
-        /// </summary>
-        private T ConvertTo<T>(object value)
-        {
+        private T ConvertTo<T>(object value) {
             var converter = System.ComponentModel.TypeDescriptor.GetConverter(typeof(T));
-            if (converter != null)
-            {
+            if(converter != null) {
                 return (T)converter.ConvertFrom(null, CultureInfo.InvariantCulture, value);
-            }
-            else
-            {
-                throw new NotImplementedException("Conversion not implemented");
+            } else {
+                // If necessary, implement a type conversion here
+                throw new NotImplementedException();
             }
         }
 
-        /// <summary>
-        /// Retrieves a full error message from the ModelState.
-        /// </summary>
-        private string GetFullErrorMessage(ModelStateDictionary modelState)
-        {
-            return string.Join(" ", modelState.SelectMany(entry => entry.Value.Errors).Select(error => error.ErrorMessage));
+        private string GetFullErrorMessage(ModelStateDictionary modelState) {
+            var messages = new List<string>();
+
+            foreach(var entry in modelState) {
+                foreach(var error in entry.Value.Errors)
+                    messages.Add(error.ErrorMessage);
+            }
+
+            return String.Join(" ", messages);
         }
     }
 }

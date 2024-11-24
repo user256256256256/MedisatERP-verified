@@ -1,13 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace MedisatERP.Areas.CoreSystem.Models;
 
 public partial class CompanyAddress
 {
-    [Key]
     public Guid AddressId { get; set; }
 
     public string Street { get; set; }

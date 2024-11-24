@@ -1,28 +1,18 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using MedisatERP.Areas.CoreSystem.Models
-@model MedisatERP.Areas.CoreSystem.Views.IndexModel
 
+<!-- Inheriting the System Administrator layout  -->
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Company Info";
 }
 
-<style>
-    .lbl_header {
-        margin-bottom: 10px;
-        margin-top: 10px;
-    }
-
-    .company-logo {
-        max-width: 100px;
-        max-height: 100px;
-    }
-</style>
 
 <!-- Section Title Card -->
-<div class="card col-12 text-white" style="margin-bottom:20px;padding:20px;background: linear-gradient(to top, #6f42c1, #9b6bd3);">
-    <center><span><i data-feather="users"></i> COMPANY INFORMATION</span></center>
+<div class="card col-12 card-title">
+    <center><span><i data-feather="briefcase"></i> COMPANY INFORMATION</span></center>
 </div>
+
 <div class="card" style="padding:20px">
     @(Html.DevExtreme().DataGrid<Company>()
             .ShowBorders(true)
@@ -34,13 +24,16 @@
             .ShowColumnLines(false)
             .ShowRowLines(true)
             .RowAlternationEnabled(true)
+            .FilterRow(f => f.Visible(false))
+            .HeaderFilter(f => f.Visible(true))
+            .RemoteOperations(true)
             .ColumnHidingEnabled(true)
             .ColumnAutoWidth(true)
             .OnFocusedRowChanged("onMainRowChanged")
             .OnInitNewRow("intiateNewCompany")
             .Columns(columns =>
             {
-                columns.AddFor(m => m.CompanyId).Alignment(HorizontalAlignment.Left).Width(100).Caption("Company Id");
+                // Company Data Columns
                 columns.AddFor(m => m.CompanyName);
                 columns.AddFor(m => m.CreatedAt).Format("dd MMM, yyyy").AllowEditing(false);
                 columns.AddFor(m => m.ExpDate).Format("dd MMM, yyyy");
@@ -55,24 +48,7 @@
                 columns.AddFor(m => m.PayBank);
                 columns.AddFor(m => m.SmsAccount);
                 columns.AddFor(m => m.SubscriptionAmount);
-
-                // Add custom column for Company Logo
-                columns.Add()
-            .Caption("Company Logo")
-            .CellTemplate(@<text>
-        @{
-        var company = item as MedisatERP.Areas.CoreSystem.Models.Company;
-        if (company != null && company.CompanyLogo != null)
-        {
-            <img src="data:image/png;base64,@Convert.ToBase64String(company.CompanyLogo)" class="company-logo" />
-        }
-        else
-        {
-            <span>No logo available</span>
-        }
-        }
-    </text>);
-
+                // columns.AddFor(m => m.CompanyLogoFilePath);
                 // Add column for Address --a foreign key in Company Model
                 columns.AddFor(m => m.Address.Street);
                 columns.AddFor(m => m.Address.City);
@@ -196,56 +172,24 @@
 <script>
 
     $(function () {
-        // Initialize the DataGrid
+        // Initialize DataGrid component
         $('#gv_companyList').dxDataGrid({
-            onDataSourceChanged: function (e) {
-                // This event is triggered when data is loaded or changed
-                console.log("DataSource changed: ", e.component.option("dataSource"));
-            }
+            // Any additional setup code for DataGrid can be added here
         });
     });
 
+    // Event handler for focused row change
     function onMainRowChanged(e) {
-        console.log("Focused Row Changed:", e);
-        // Add console log to track the specific data of the focused row
-        console.log("Focused Row Data:", e.row.data); 
+        // Handle logic when the focused row changes (currently no logging)
     }
 
+    // Event handler for initiating a new company
     function intiateNewCompany(e) {
-        console.log("New Company Created:", e);
-        var company = e.data; // Capture the company data
+        // Handle the initialization of new company (currently no logging)
+        var company = e.data;
+        if (!company.AddressId) {
+            // Address ID missing, can trigger further actions if necessary
+        }
     }
-
-    // For debugging purposes, when you load the data, log it
-    function logAddressData() {
-        // Assuming the data is already available at this point in the grid
-        var gridData = $('#gv_companyList').dxDataGrid('instance').option('dataSource');
-        console.log("Grid Data:", gridData);
-    }
-
-    // Call logAddressData after the DataGrid is initialized to inspect its data
-    $(document).ready(function() {
-        logAddressData();
-    });
-
-
-    // $(function () {
-    //     Initialize the DataGrid
-    //     $('#gv_companyList').dxDataGrid();
-    // });
-
-    // function onMainRowChanged(e) {
-    //     console.log("Focused Row Changed:", e);
-    // }
-
-//     function intiateNewCompany(e) {
-//         console.log("New Company Created:", e);
-//         var company = e.data; Capture the company data
-
-//         If AddressId is not provided, trigger address creation
-//         if (!company.AddressId) {
-//             console.log("Address ID is missing, creating new address...");
-//         }
-//     }
 
 </script>

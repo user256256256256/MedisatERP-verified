@@ -45,5 +45,7 @@ public partial class AspNetUser
 
     public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 
+    public virtual ICollection<UserProfile> UserProfiles { get; set; } = new List<UserProfile>();
+
     public virtual ICollection<AspNetRole> Roles { get; set; } = new List<AspNetRole>();
 }

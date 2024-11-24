@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace PANDOLLAR.Areas.CoreSystem.Controllers
+namespace MedisatERP.Areas.CoreSystem.Controllers
 {
     [Area("CoreSystem")]
-    public class AuditLogsController : Controller
+    public class UserAccountsController : Controller
     {
         public IActionResult Index()
         {

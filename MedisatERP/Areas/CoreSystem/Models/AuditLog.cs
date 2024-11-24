@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace MedisatERP.Areas.CoreSystem.Models;
 
 public partial class AuditLog
 {
-    [Key]
     public Guid AuditLogId { get; set; }
 
     public string UserId { get; set; }
@@ -30,6 +28,10 @@ public partial class AuditLog
     public string NewValue { get; set; }
 
     public string ComplianceStatus { get; set; }
+
+    public Guid CompanyId { get; set; }
+
+    public virtual Company Company { get; set; }
 
     public virtual AspNetUser User { get; set; }
 }

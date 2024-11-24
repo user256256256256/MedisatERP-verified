@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace MedisatERP.Areas.CoreSystem.Controllers
+namespace MedisatERP.Areas.SystemManager.Controllers
 {
     [Area("CoreSystem")]
     public class SystemManagerController : Controller

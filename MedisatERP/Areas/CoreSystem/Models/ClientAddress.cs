@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+using MedisatERP.Models;
 
 namespace MedisatERP.Areas.CoreSystem.Models;
 
 public partial class ClientAddress
 {
-
-    [Key]
     public Guid AddressId { get; set; }
 
     public Guid ClientId { get; set; }

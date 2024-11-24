@@ -1,0 +1,393 @@
+@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Areas.CoreSystem.Models
+@model MedisatERP.Areas.CoreSystem.Views.IndexModel
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Company Info";
+}
+
+<style>
+    .lbl_header {
+        margin-bottom: 10px;
+        margin-top: 10px;
+    }
+
+    .company-logo {
+        max-width: 100px;
+        max-height: 100px;
+    }
+</style>
+
+<!-- Section Title Card -->
+<div class="card col-12 text-white" style="margin-bottom:20px;padding:20px;background: linear-gradient(to top, #6f42c1, #9b6bd3);">
+    <center><span><i data-feather="users"></i> COMPANY INFORMATION</span></center>
+</div>
+<div class="card" style="padding:20px">
+    @(Html.DevExtreme().DataGrid<Company>()
+            .ShowBorders(true)
+            .ID("gv_companyList")
+            .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId")
+            .InsertAction("Post")
+            .UpdateAction("Put")
+            .DeleteAction("Delete"))
+            .ShowColumnLines(false)
+            .ShowRowLines(true)
+            .RowAlternationEnabled(true)
+            .ColumnHidingEnabled(true)
+            .ColumnAutoWidth(true)
+            .OnFocusedRowChanged("onMainRowChanged")
+            .OnInitNewRow("intiateNewCompany")
+            .Columns(columns =>
+            {
+                columns.AddFor(m => m.CompanyName);
+                columns.AddFor(m => m.CreatedAt).Format("dd MMM, yyyy").AllowEditing(false);
+                columns.AddFor(m => m.ExpDate).Format("dd MMM, yyyy");
+                columns.AddFor(m => m.CompanyEmail);
+                columns.AddFor(m => m.CompanyPhone);
+                columns.AddFor(m => m.Motto);
+                columns.AddFor(m => m.CompanyType);
+                columns.AddFor(m => m.ContactPerson);
+                columns.AddFor(m => m.CompanyInitials);
+                columns.AddFor(m => m.PayAccount);
+                columns.AddFor(m => m.PayAccountName);
+                columns.AddFor(m => m.PayBank);
+                columns.AddFor(m => m.SmsAccount);
+                columns.AddFor(m => m.SubscriptionAmount);
+
+                // Add custom column for Company Logo
+                columns.Add()
+            .Caption("Company Logo")
+            .CellTemplate(@<text>
+        @{
+        var company = item as MedisatERP.Areas.CoreSystem.Models.Company;
+        if (company != null && company.CompanyLogo != null)
+        {
+            <img src="data:image/png;base64,@Convert.ToBase64String(company.CompanyLogo)" class="company-logo" />
+        }
+        else
+        {
+            <span>No logo available</span>
+        }
+        }
+    </text>);
+
+                // Add column for Address --a foreign key in Company Model
+                columns.AddFor(m => m.Address.Street);
+                columns.AddFor(m => m.Address.City);
+                columns.AddFor(m => m.Address.State);
+                columns.AddFor(m => m.Address.PostalCode);
+                columns.AddFor(m => m.Address.Country);
+
+                // Manage Button Column (for Edit/Delete)
+                columns.Add()
+    .Type(GridCommandColumnType.Buttons)
+    .Width(80)
+    .Caption("Manage")
+    .Name("ManageButton")
+    .Buttons(b =>
+    {
+                b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
+                b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
+            });
+            })
+        .Selection(s => s.Mode(SelectionMode.Multiple))
+        .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
+        .FocusedRowEnabled(true)
+        .Editing(e => e
+        .AllowAdding(true)
+        .AllowUpdating(true)
+        .AllowDeleting(true)
+        .UseIcons(true)
+        .Mode(GridEditMode.Popup)
+        .Popup(p => p
+        .Title("Company Profile")
+        .Height(550)
+        .ShowTitle(true)
+        .Position(pos => pos
+        .My(HorizontalAlignment.Center, VerticalAlignment.Center)
+        .At(HorizontalAlignment.Center, VerticalAlignment.Center)
+        .Of(new JS("window"))
+        )
+        )
+        .Form(f => f.Items(items =>
+        {
+
+            // Group 1: Company Information
+            items.AddGroup()
+            .Caption("Company Information")
+            .ColCount(2)
+            .ColSpan(2)
+            .Items(groupItems =>
+            {
+                groupItems.AddSimpleFor(m => m.CompanyName).Visible(true);
+                groupItems.AddSimpleFor(m => m.CompanyStatus).Visible(true);
+                groupItems.AddSimpleFor(m => m.CompanyInitials).Visible(true);
+                groupItems.AddSimpleFor(m => m.Motto).Visible(true);
+                groupItems.AddSimpleFor(m => m.CreatedAt).Visible(true);
+                groupItems.AddSimpleFor(m => m.ExpDate).Visible(true);
+            });
+
+            // Group 2: Contact Information
+            items.AddGroup()
+            .Caption("Contact Information")
+            .ColCount(2)
+            .ColSpan(2)
+            .Items(groupItems =>
+            {
+                groupItems.AddSimpleFor(m => m.ContactPerson).Visible(true);
+                groupItems.AddSimpleFor(m => m.CompanyEmail).Visible(true);
+                groupItems.AddSimpleFor(m => m.CompanyPhone).Visible(true);
+                groupItems.AddSimpleFor(m => m.SmsAccount).Visible(true);
+            });
+
+            // Group 3: Payment & Account Information
+            items.AddGroup()
+            .Caption("Payment & Account Information")
+            .ColCount(2)
+            .ColSpan(2)
+            .Items(groupItems =>
+            {
+                groupItems.AddSimpleFor(m => m.SubscriptionAmount).Visible(true);
+                groupItems.AddSimpleFor(m => m.PayAccount).Visible(true);
+                groupItems.AddSimpleFor(m => m.PayAccountName).Visible(true);
+                groupItems.AddSimpleFor(m => m.PayBank).Visible(true);
+            });
+
+            // Group 4: Company Logo
+            items.AddGroup()
+            .Caption("Company Logo")
+            .ColCount(1)
+            .ColSpan(2)
+            .Items(groupItems =>
+            {
+                groupItems.AddSimpleFor(m => m.CompanyLogo).Visible(true);
+            });
+
+            // Group 5: Company Address
+            items.AddGroup()
+            .Caption("Company Address")
+            .ColCount(2)
+            .ColSpan(2)
+            .Items(groupItems =>
+            {
+                groupItems.AddSimpleFor(m => m.Address.AddressId).Visible(false);
+                groupItems.AddSimpleFor(m => m.Address.Street).Visible(true);
+                groupItems.AddSimpleFor(m => m.Address.City).Visible(true);
+                groupItems.AddSimpleFor(m => m.Address.State).Visible(true);
+                groupItems.AddSimpleFor(m => m.Address.PostalCode).Visible(true);
+                groupItems.AddSimpleFor(m => m.Address.Country).Visible(true);
+            });
+
+        }))
+        )
+        .Paging(p => p.PageSize(10))
+        .RemoteOperations(true)
+        .Summary(s => s
+        .TotalItems(totalItems =>
+        {
+            totalItems.AddFor(m => m.CompanyName).SummaryType(SummaryType.Count);
+        })
+        )
+        )
+</div>
+
+<script>
+
+    $(function () {
+        // Initialize the DataGrid
+        $('#gv_companyList').dxDataGrid({
+            onDataSourceChanged: function (e) {
+                // This event is triggered when data is loaded or changed
+                console.log("DataSource changed: ", e.component.option("dataSource"));
+            }
+        });
+    });
+
+    function onMainRowChanged(e) {
+        console.log("Focused Row Changed:", e);
+        // Add console log to track the specific data of the focused row
+        console.log("Focused Row Data:", e.row.data);
+
+        // Specifically log the Address data of the selected row
+        var focusedRow = e.row.data;
+        if (focusedRow && focusedRow.Address) {
+            console.log("Address Data:", focusedRow.Address);
+        }
+    }
+
+    function intiateNewCompany(e) {
+        console.log("New Company Created:", e);
+        var company = e.data; // Capture the company data
+
+        // Specifically log the address fields when creating a new company
+        if (company.Address) {
+            console.log("New Address Data:", company.Address);
+        }
+
+        // If AddressId is missing or invalid, log a message
+        if (!company.AddressId) {
+            console.log("Address ID is missing, creating new address...");
+        }
+    }
+
+   
+
+    // $(function () {
+    //     Initialize the DataGrid
+    //     $('#gv_companyList').dxDataGrid({
+    //         onDataSourceChanged: function (e) {
+    //             This event is triggered when data is loaded or changed
+    //             console.log("DataSource changed: ", e.component.option("dataSource"));
+    //         }
+    //     });
+    // });
+
+    // function onMainRowChanged(e) {
+    //     console.log("Focused Row Changed:", e);
+    //     Add console log to track the specific data of the focused row
+    //     console.log("Focused Row Data:", e.row.data); 
+    // }
+
+    // function intiateNewCompany(e) {
+    //     console.log("New Company Created:", e);
+    //     var company = e.data; Capture the company data
+    // }
+
+    // For debugging purposes, when you load the data, log it
+    // function logAddressData() {
+        // Assuming the data is already available at this point in the grid
+    //     var gridData = $('#gv_companyList').dxDataGrid('instance').option('dataSource');
+    //     console.log("Grid Data:", gridData);
+    // }
+
+    // Call logAddressData after the DataGrid is initialized to inspect its data
+    // $(document).ready(function() {
+    //     logAddressData();
+    // });
+
+
+    // $(function () {
+    //     Initialize the DataGrid
+    //     $('#gv_companyList').dxDataGrid();
+    // });
+
+    // function onMainRowChanged(e) {
+    //     console.log("Focused Row Changed:", e);
+    // }
+
+//     function intiateNewCompany(e) {
+//         console.log("New Company Created:", e);
+//         var company = e.data; Capture the company data
+
+//         If AddressId is not provided, trigger address creation
+//         if (!company.AddressId) {
+//             console.log("Address ID is missing, creating new address...");
+//         }
+//     }
+
+</script>
+
+
+
+
+<div class="main-content">
+    <section class="section">
+        <div class="section-header">
+            <h1>Profile</h1>
+        </div>
+
+        <div class="section-body">
+            <h2 class="section-title">Hi, @Model.User.</h2> <!-- Dynamically display the User Name -->
+            <p class="section-lead">Change information about yourself on this page.</p>
+
+            <div class="row mt-sm-4">
+                <!-- Profile Section (Using DevExtreme Card and Image) -->
+                <div class="col-12 col-md-12 col-lg-5">
+                    <div class="card profile-widget">
+                        <div class="profile-widget-header">
+                            <img alt="image" src="~/img/userProfileImages/@Model.UserProfile.ProfileImagePath" class="rounded-circle profile-widget-picture" style="width: 100px; height: 100px;">
+                        </div>
+                        <div class="card-body">
+                            <!-- Dynamically Display User Name, Phone Number, and Role -->
+                            <p>User Name: <span>@Model.UserProfile.User.UserName</span></p> <!-- Dynamically bind User Name -->
+                            <p>Phone Number: <span>@Model.UserProfile.User.PhoneNumber</span></p> <!-- Dynamically bind Phone Number -->
+                            <p>Role: <span>@Model.UserProfile.User.UserRoles.FirstOrDefault()?.Role.Name</span></p> <!-- Dynamically bind User Role -->
+                            <!-- Bio Section (Dynamically Displayed) -->
+                            <div class="font-weight-bold">Bio <span class="text-muted">@Model.UserProfile.UserBio</span></div> <!-- Dynamically bind Bio -->
+                            <p>@Model.UserProfile.UserBio</p> <!-- Dynamically bind full Bio content -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Profile Section (Using DevExtreme Controls) -->
+                <div class="col-12 col-md-12 col-lg-7">
+                    <div class="card">
+                        <form method="post" class="needs-validation" novalidate="">
+                            <div class="card-header">
+                                <h4>Edit Profile</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <!-- First Name Field -->
+                                    <div class="form-group col-md-6 col-12">
+                                        <label>First Name</label>
+                                        @Html.DevExtreme().TextBoxFor(m => m.UserProfile.FirstName)
+                                        .Value(Model.UserProfile.FirstName)
+                                        .IsRequired(true)
+                                        .Placeholder("Enter First Name")
+                                        .CssClass("form-control")
+                                    </div>
+                                    <!-- Last Name Field -->
+                                    <div class="form-group col-md-6 col-12">
+                                        <label>Last Name</label>
+                                        @Html.DevExtreme().TextBoxFor(m => m.UserProfile.LastName)
+                                        .Value(Model.UserProfile.LastName)
+                                        .IsRequired(true)
+                                        .Placeholder("Enter Last Name")
+                                        .CssClass("form-control")
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <!-- Email Field -->
+                                    <div class="form-group col-md-7 col-12">
+                                        <label>Email</label>
+                                        @Html.DevExtreme().TextBoxFor(m => m.UserProfile.User.Email)
+                                        .Value(Model.UserProfile.User.Email)
+                                        .IsRequired(true)
+                                        .Placeholder("Enter Email")
+                                        .CssClass("form-control")
+                                    </div>
+
+                                    <!-- Phone Field -->
+                                    <div class="form-group col-md-5 col-12">
+                                        <label>Phone</label>
+                                        @Html.DevExtreme().TextBoxFor(m => m.UserProfile.User.PhoneNumber)
+                                        .Value(Model.UserProfile.User.PhoneNumber)
+                                        .CssClass("form-control")
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <!-- Bio Field (Text Area) -->
+                                    <div class="form-group col-12">
+                                        <label>Bio</label>
+                                        @Html.DevExtreme().TextAreaFor(m => m.UserProfile.UserBio)
+                                        .Value(Model.UserProfile.UserBio)
+                                        .Height(100)
+                                        .IsRequired(true)
+                                        .CssClass("form-control")
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer text-right">
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

@@ -5,6 +5,11 @@
  * Licensed under MIT (https://github.com/adminkit/adminkit/blob/master/LICENSE)
  */
 
+/* Apply Raleway globally */
+* {
+    font-family: 'Raleway', sans-serif;
+}
+
 :root, [data-bs-theme=light] {
     --bs-blue: #3b7ddd;
     --bs-indigo: #0a0a0a;
@@ -14074,6 +14079,16 @@ body {
     min-width: 260px
 }
 
+/*
+#sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 250px; 
+    overflow-y: auto;
+}*/
+
 .sidebar, .sidebar-content {
     /* background: linear-gradient(to top, rgba(150, 105, 205, 1) 5%, rgba(255, 255, 255, 0) 100%);*/
     /* background :#6f42c1;*/
@@ -14126,9 +14141,9 @@ body {
         }
 
 .sidebar-item.active .sidebar-link:hover, .sidebar-item.active > .sidebar-link {
-    background: linear-gradient(90deg,rgba(59,125,221,.1),rgba(59,125,221,.088) 50%,transparent);
-    border-left-color: #3b7ddd;
-    color: #e9ecef
+    background: rgba(180, 135, 255, 0.4); /* Background color */
+    border-left-color: white; /* Set border left color to white */
+    color: #e9ecef; /* Light text color */
 }
 
     .sidebar-item.active .sidebar-link:hover i, .sidebar-item.active .sidebar-link:hover svg, .sidebar-item.active > .sidebar-link i, .sidebar-item.active > .sidebar-link svg {
@@ -14179,6 +14194,7 @@ body {
 
 .sidebar-header {
     background: transparent;
+    font-weight:bold;
     color: #ced4da;
     font-size: .75rem;
     padding: 1.5rem 1.5rem .375rem
@@ -14197,6 +14213,18 @@ body {
     color: #e9ecef;
     margin: 1.75rem;
     padding: 1.5rem
+}
+
+.content {
+    padding: 20px;
+    overflow-y: auto; /* Enable vertical scrolling if content overflows */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+}
+
+/* For Webkit browsers (Chrome, Safari, Edge) */
+.content::-webkit-scrollbar {
+    display: none; /* Hides the scrollbar */
 }
 
 .min-vw-50 {
@@ -14266,7 +14294,8 @@ a {
     align-items: stretch;
     background: #010066;
     display: flex;
-    width: 100%
+    width: 100%;
+    height: 100vh;
 }
 
 .cursor-grab {
@@ -15439,3 +15468,126 @@ span.flatpickr-weekday {
     width: 260px
 }
 /*# sourceMappingURL=app.css.map*/
+
+
+/*More Sylings */
+
+/* Header styling */
+.lbl_header {
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+
+/* Styling for company logo image */
+.company-logo {
+    max-width: 100px;
+    max-height: 100px;
+}
+
+/* Card container styling */
+.card-title {
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #6f42c1;
+    text-align: center;
+    color: white;
+}
+
+/* Custom button column */
+.button-column {
+    width: 80px;
+}
+
+
+/*Profile Page */
+
+.section .section-title {
+    font-size: 18px;
+    color: #3B3D55;
+    font-weight: 600;
+    position: relative;
+    margin: 30px 0 25px 0;
+}
+
+    .section .section-title:before {
+        content: ' ';
+        border-radius: 5px;
+        height: 8px;
+        width: 30px;
+        background-color: #563d7c;
+        display: inline-block;
+        float: left;
+        margin-top: 6px;
+        margin-right: 15px;
+    }
+
+    .section .section-title + .section-lead {
+        margin-top: -20px;
+    }
+
+.section .section-lead {
+    margin-left: 45px;
+}
+
+
+@media (max-width: 575.98px) {
+    .section .section-title {
+        font-size: 14px;
+    }
+}
+
+/* Profile Widget */
+
+/* Profile Widget Header */
+.profile-widget .profile-widget-header {
+    background-color: transparent; /* Transparent background for profile widget header */
+}
+
+/* Profile Widget Description */
+.profile-widget-description .profile-widget-name {
+    font-weight: normal; /* Font weight for profile widget name */
+}
+
+.profile-widget-header {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 10px
+}
+
+.profile-widget-picture {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    float: left;
+    width: 100px;
+    position: relative;
+    z-index: 1
+}
+
+.profile-widget-picture {
+    left: 50%;
+    -webkit-transform: translate(-50%, 0);
+    transform: translate(-50%, 0);
+    margin: 40px 0;
+    float: none
+}
+
+.profile-widget .profile-widget-header {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+
+@media (max-width: 575.98px) {
+    .profile-widget .profile-widget-picture {
+        left: 50%;
+        -webkit-transform: translate(-50%, 0);
+        transform: translate(-50%, 0);
+        margin: 40px 0;
+        float: none;
+    }
+
+    .profile-widget .profile-widget-items .profile-widget-item {
+        border-top: 1px solid #f2f2f2;
+    }
+}
+

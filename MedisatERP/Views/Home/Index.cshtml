@@ -92,9 +92,16 @@
 				// Check if the login was successful
 				if (json.success) {
 					// Perform actions based on success
-					Notiflix.Report.Success("Login Success", json.mresponse, "OK");
-					// You can redirect or perform additional actions here
-					// Example: window.location.href = "/dashboard"; // redirect to dashboard
+					// Notiflix.Report.Success("Login Success", json.mresponse);
+
+					// Redirect to the appropriate page based on the redirectTo value
+					if (json.redirectUrl) {
+						window.location.href = json.redirectUrl;  // Redirect to the specified URL
+					} else {
+						// Default behavior if no redirection URL is provided
+						window.location.href = "/"; // or another default page like "/home"
+					}
+
 				} else {
 					// Report failure if login was unsuccessful
 					Notiflix.Report.Failure("Login Failure", json.mresponse, "OK");
@@ -109,5 +116,4 @@
 				Notiflix.Report.Failure("Failure", "Login failed: " + err, "OK");
 			});
 	}
-
 </script>
