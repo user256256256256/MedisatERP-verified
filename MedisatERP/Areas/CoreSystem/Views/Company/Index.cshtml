@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using MedisatERP.Areas.CoreSystem.Models
+@using MedisatERP.Models
 
 <!-- Inheriting the System Administrator layout  -->
 @{
@@ -7,63 +8,87 @@
     ViewData["Title"] = "Company Info";
 }
 
-
 <!-- Section Title Card -->
 <div class="card col-12 card-title">
     <center><span><i data-feather="briefcase"></i> COMPANY INFORMATION</span></center>
 </div>
 
 <div class="card" style="padding:20px">
-    @(Html.DevExtreme().DataGrid<Company>()
-            .ShowBorders(true)
-            .ID("gv_companyList")
-            .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId")
-            .InsertAction("Post")
-            .UpdateAction("Put")
-            .DeleteAction("Delete"))
-            .ShowColumnLines(false)
-            .ShowRowLines(true)
-            .RowAlternationEnabled(true)
-            .FilterRow(f => f.Visible(false))
-            .HeaderFilter(f => f.Visible(true))
-            .RemoteOperations(true)
-            .ColumnHidingEnabled(true)
-            .ColumnAutoWidth(true)
-            .OnFocusedRowChanged("onMainRowChanged")
-            .OnInitNewRow("intiateNewCompany")
-            .Columns(columns =>
-            {
-                // Company Data Columns
-                columns.AddFor(m => m.CompanyName);
-                columns.AddFor(m => m.CreatedAt).Format("dd MMM, yyyy").AllowEditing(false);
-                columns.AddFor(m => m.ExpDate).Format("dd MMM, yyyy");
-                columns.AddFor(m => m.CompanyEmail);
-                columns.AddFor(m => m.CompanyPhone);
-                columns.AddFor(m => m.Motto);
-                columns.AddFor(m => m.CompanyType);
-                columns.AddFor(m => m.ContactPerson);
-                columns.AddFor(m => m.CompanyInitials);
-                columns.AddFor(m => m.PayAccount);
-                columns.AddFor(m => m.PayAccountName);
-                columns.AddFor(m => m.PayBank);
-                columns.AddFor(m => m.SmsAccount);
-                columns.AddFor(m => m.SubscriptionAmount);
-                // columns.AddFor(m => m.CompanyLogoFilePath);
-                // Add column for Address --a foreign key in Company Model
-                columns.AddFor(m => m.Address.Street);
-                columns.AddFor(m => m.Address.City);
-                columns.AddFor(m => m.Address.State);
-                columns.AddFor(m => m.Address.PostalCode);
-                columns.AddFor(m => m.Address.Country);
+    @(
+        Html.DevExtreme().DataGrid<Company>()
+                .ShowBorders(true)
+                .ID("gv_companyList")
+                .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId")
+                .InsertAction("Post")
+                .UpdateAction("Put")
+                .DeleteAction("Delete"))
+                .ShowColumnLines(false)
+                .ShowRowLines(true)
+                .RowAlternationEnabled(true)
+                .FilterRow(f => f.Visible(false))
+                .HeaderFilter(f => f.Visible(true))
+                .RemoteOperations(true)
+                .ColumnHidingEnabled(true)
+                .ColumnAutoWidth(true)
+                .OnFocusedRowChanged("onMainRowChanged")
+                .OnInitNewRow("intiateNewCompany")
+                .Columns(columns =>
+                {
+                    // Company Data Columns
+                    columns.AddFor(m => m.CompanyId).Visible(false);
+                    columns.AddFor(m => m.CompanyName);
+            columns.AddFor(m => m.CreatedAt).Format("dd MMM, yyyy").AllowEditing(false);
+            columns.AddFor(m => m.ExpDate).Format("dd MMM, yyyy");
+            columns.AddFor(m => m.CompanyEmail);
+            columns.AddFor(m => m.CompanyPhone);
+            columns.AddFor(m => m.Motto);
+            columns.AddFor(m => m.CompanyType);
+            columns.AddFor(m => m.ContactPerson);
+            columns.AddFor(m => m.CompanyInitials);
+            columns.AddFor(m => m.PayAccount);
+            columns.AddFor(m => m.PayAccountName);
+            columns.AddFor(m => m.PayBank);
+            columns.AddFor(m => m.SmsAccount);
+            columns.AddFor(m => m.SubscriptionAmount);
+            
+            //columns.AddFor(m => m.CompanyLogoFilePath);
 
-                // Manage Button Column (for Edit/Delete)
-                columns.Add()
-    .Type(GridCommandColumnType.Buttons)
-    .Width(80)
-    .Caption("Manage")
-    .Name("ManageButton")
-    .Buttons(b =>
-    {
+            // Display companyLogoFilePath as an img
+            columns.Add().Caption("Company Logo").DataField("CompanyLogoFilePath")
+    .CellTemplate(@<text>
+        <img src="~/img/companyLogoImages/LyfexAfricaLogo.png" alt="Company Logo" style="max-width: 100px; max-height: 100px;"/>
+    </text>);
+
+
+            // Add column for Address --a foreign key in Company Model
+            columns.AddFor(m => m.Address.Street);
+            columns.AddFor(m => m.Address.City);
+            columns.AddFor(m => m.Address.State);
+            columns.AddFor(m => m.Address.PostalCode);
+            columns.AddFor(m => m.Address.Country);
+
+            // Profile popup
+            columns.Add()
+            .Type(GridCommandColumnType.Buttons)
+            .Width(80)
+            .Caption("Profile")
+            .Buttons(b =>
+            {
+                b.Add()
+            .Hint("Click for details")
+            .Icon("mediumiconslayout")
+            .Visible(true)
+            .OnClick("showCompProfile");
+            });
+
+            // Manage Button Column (for Edit/Delete)
+            columns.Add()
+            .Type(GridCommandColumnType.Buttons)
+            .Width(80)
+            .Caption("Manage")
+            .Name("ManageButton")
+            .Buttons(b =>
+            {
                 b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
                 b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
             });
@@ -138,7 +163,7 @@
             .ColSpan(2)
             .Items(groupItems =>
             {
-                groupItems.AddSimpleFor(m => m.CompanyLogo).Visible(true);
+                groupItems.AddSimpleFor(m => m.CompanyLogoFilePath).Visible(true);
             });
 
             // Group 5: Company Address
@@ -169,10 +194,120 @@
         )
 </div>
 
+<!-- This is the general popup --it shows when the user clicks the profile button  -->
+@using (Html.DevExtreme().NamedTemplate("embedded_comp_profile"))
+{
+    @(Html.DevExtreme().TabPanel()  // Create a TabPanel widget
+            .DeferRendering(false)  // Disables deferred rendering (loads all tabs at once)
+                .Height("auto")  // Automatically adjusts the height of the TabPanel
+            .ScrollingEnabled(true) // Enable scrolling
+            .Items(tab =>  // Define tabs for the TabPanel
+            {
+                tab.Add()  // Add the first tab
+                    .Title("CLIENTS")  // Set the title of the tab
+                    .Icon("columnchooser")  // Set the icon for the tab
+                    .Template(new TemplateName("embedded_clients"));  // Set the template for the tab content
+
+                tab.Add()  // Add the second tab
+                    .Title("SUBSCRIPTION")  // Set the title of the tab
+                    .Icon("bulletlist")  // Set the icon for the tab
+                    .Template(new TemplateName("embedded_new_payment"));  // Set the template for the tab content
+
+                tab.Add()  // Add the third tab
+                    .Title(" NEW JOURNAL VOUCHER")  // Set the title of the tab
+                    .Icon("paste")  // Set the icon for the tab
+                    .Template(new TemplateName("embedded_new_journal"));  // Set the template for the tab content
+            })
+        )
+}
+
+@using (Html.DevExtreme().NamedTemplate("embedded_clients"))
+{
+    @(Html.DevExtreme().DataGrid<CompanyClient>()  // Create a DataGrid for displaying Company Clients
+            .ShowBorders(true)  // Show borders around the grid
+            .ID("gv_clientList")  // Set the ID of the grid
+            .DataSource(d => d.Mvc().Controller("CompanyClientsAPI").LoadAction("Get").Key("ClientId")  // Set the data source for the grid
+                .InsertAction("Post")  // Define the insert action for the grid
+                .UpdateAction("Put")  // Define the update action for the grid
+                .DeleteAction("Delete")  // Define the delete action for the grid
+                .LoadParams(new { CompanyId = new JS("getCompanyId") }))  // Pass the CompanyId to the API as a load parameter
+                
+            .ShowColumnLines(false)  // Disable column lines
+            .ShowRowLines(false)  // Enable row lines
+            .RowAlternationEnabled(true)  // Enable row alternation (striped rows)
+            .FilterRow(f => f.Visible(false))  // Hide the filter row
+            .HeaderFilter(f => f.Visible(true))  // Enable header filtering
+            
+            .RemoteOperations(true)  // Enable remote operations (for paging, sorting, etc.)
+
+            .ShowBorders(false)  // Hide borders around the grid
+            .ColumnHidingEnabled(true)  // Enable column hiding
+            .ColumnAutoWidth(true)  // Enable automatic column width adjustment
+            .OnFocusedRowChanged("onMainRowChanged")  // Set the event handler for focused row change
+            .Columns(columns =>  // Define columns for the grid
+            {
+                // Company Clients Data Columns
+                columns.AddFor(m => m.ClientId).Caption("Client ID").Visible(false);  // Hidden column for ClientId
+                columns.AddFor(m => m.ClientName).Caption("Client Name").Visible(true);  // Visible column for ClientName
+                columns.AddFor(m => m.DateOfBirth).Caption("Date of Birth").Format("dd MMM, yyyy");  // Format Date of Birth column
+                columns.AddFor(m => m.Gender).Caption("Gender").Visible(true);  // Visible column for Gender
+                columns.AddFor(m => m.Email).Caption("Email").Visible(true);  // Visible column for Email
+                columns.AddFor(m => m.PhoneNumber).Caption("Phone").Visible(true);  // Visible column for Phone Number
+                columns.AddFor(m => m.EmergencyContactName).Caption("Emergency Contact Name").Visible(true);  // Visible column for Emergency Contact Name
+                columns.AddFor(m => m.EmergencyContactPhone).Caption("Emergency Contact Phone").Visible(true);  // Visible column for Emergency Contact Phone
+                columns.AddFor(m => m.MaritalStatus).Caption("Marital Status").Visible(true);  // Visible column for Marital Status
+                columns.AddFor(m => m.Nationality).Caption("Nationality").Visible(true);  // Visible column for Nationality
+                columns.AddFor(m => m.CreatedAt).Caption("Date Created").Format("dd MMM, yyyy").AllowEditing(false);  // Format CreatedAt column, disable editing
+
+                // Add column for Client Address -- a foreign key in Company Clients Model
+                columns.AddFor(m => m.AddressId).Caption("Address ID").Visible(false);  // Hidden column for Address ID
+                columns.AddFor(m => m.Address.Street).Caption("Street").Visible(true);  // Visible column for Street address
+                columns.AddFor(m => m.Address.City).Caption("City").Visible(true);  // Visible column for City
+                columns.AddFor(m => m.Address.State).Caption("State").Visible(true);  // Visible column for State
+                columns.AddFor(m => m.Address.PostalCode).Caption("Postal Code").Visible(true);  // Visible column for Postal Code
+                columns.AddFor(m => m.Address.Country).Caption("Country").Visible(true);  // Visible column for Country
+            })
+            .Selection(s => s.Mode(SelectionMode.Multiple))  // Enable multiple row selection
+            .SearchPanel(s => s.Visible(true).Width(100).Placeholder("Search..."))  // Enable search panel
+            .FocusedRowEnabled(true)  // Enable focused row
+            .Paging(p => p.PageSize(10))  // Enable paging with page size of 10
+            .RemoteOperations(true)  // Enable remote operations (for paging, sorting, etc.)
+            .Summary(s => s  // Configure summary row
+                .TotalItems(totalItems =>  // Configure total items summary
+                {
+                    totalItems.AddFor(m => m.ClientName).SummaryType(SummaryType.Count);  // Count the number of clients
+                })
+            )
+        )
+}
+
+@(Html.DevExtreme().Popup()  // Create a popup for new user account
+    .ID("pop_comp_profile")  // Set ID of the popup
+    .Width("50%")  // Set width of the popup
+    .Height("450")  // Set height of the popup
+    
+    .ShowTitle(true)  // Show title in the popup
+    //.ShadingColor("Purple")
+    .Title("Company Profile")  // Set title of the popup
+    .Visible(false)  // Initially hide the popup
+    .ShowCloseButton(true)  // Show close button
+    .DragEnabled(true)  // Disable dragging of the popup
+    .DeferRendering(false)  // Disable deferred rendering for the popup content
+    .OnContentReady(@<text>
+    function(e){
+    const template = $('#embedded_comp_profile');  // Select the embedded template
+    e.component.option('contentTemplate',template);  // Set the popup content template
+    }
+</text>)
+)
+
+
 <script>
 
+    let compoId = "";  // Variable to hold the CompanyId
+
     $(function () {
-        // Initialize DataGrid component
+        // Initialize DataGrid component for company list
         $('#gv_companyList').dxDataGrid({
             // Any additional setup code for DataGrid can be added here
         });
@@ -180,7 +315,16 @@
 
     // Event handler for focused row change
     function onMainRowChanged(e) {
+
         // Handle logic when the focused row changes (currently no logging)
+        const rowData = e.row && e.row.data;
+        compoId = rowData.CompanyId;  // Save the CompanyId of the focused row
+        const grid = $('#gv_clientList').dxDataGrid('instance');  // Refresh the client list grid
+        grid.refresh();
+    }
+
+    function getCompanyId() {
+        return compoId;  // Return the stored CompanyId
     }
 
     // Event handler for initiating a new company
@@ -190,6 +334,11 @@
         if (!company.AddressId) {
             // Address ID missing, can trigger further actions if necessary
         }
+    }
+
+    function showCompProfile() {
+        const popup = $('#pop_comp_profile').dxPopup('instance');  // Get the popup instance
+        popup.show();  // Show the popup
     }
 
 </script>

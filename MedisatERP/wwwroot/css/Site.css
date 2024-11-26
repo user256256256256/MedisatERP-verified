@@ -14093,7 +14093,9 @@ body {
     /* background: linear-gradient(to top, rgba(150, 105, 205, 1) 5%, rgba(255, 255, 255, 0) 100%);*/
     /* background :#6f42c1;*/
     /* background: linear-gradient(to top, #6f42c1, #9b6bd3);*/
-    background: #6f42c1;
+    /*    background: #6f42c1;*/
+    /*    background: #3B3D55;*/
+    background: #311465;
     transition: margin-left .35s ease-in-out,left .35s ease-in-out,margin-right .35s ease-in-out,right .35s ease-in-out
 }
 
@@ -15590,4 +15592,5 @@ span.flatpickr-weekday {
         border-top: 1px solid #f2f2f2;
     }
 }
+
 

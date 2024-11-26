@@ -42,8 +42,6 @@ public partial class Company
 
     public DateTime? CreatedAt { get; set; }
 
-    public string CompanyLogo { get; set; }
-
     public string CompanyLogoFilePath { get; set; }
 
     public virtual CompanyAddress Address { get; set; }

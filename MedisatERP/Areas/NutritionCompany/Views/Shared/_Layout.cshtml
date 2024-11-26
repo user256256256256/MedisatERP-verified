@@ -6,51 +6,96 @@
     <!-- Sidebar Section -->
     <nav id="sidebar" class="sidebar js-sidebar">
         <div class="sidebar-content js-simplebar">
-           
-            <!-- Custom template --See ~wwwroot/js/CustomElements.js Sidebar Brand (Logo) -->
+
+            <!-- Custom template -- See ~wwwroot/js/CustomElements.js -->
+            <!-- Sidebar Brand (Logo) -->
             <sidebar-brand></sidebar-brand>
 
             <!-- Sidebar Navigation Menu -->
             <ul class="sidebar-nav">
 
-                <!-- Section Header: SYSTEM SETTINGS -->
+                <!-- Section Header: MEDISAT ERP -->
                 <li class="sidebar-header">
                     MEDISAT ERP
                 </li>
 
                 <!-- Sidebar Item: Dashboard -->
-                <li class="sidebar-item @((Context.Request.Path.Value.Contains("SystemManager")) ? "active" : "")">
-                    <a class="sidebar-link" href="SystemManager">
-                        <i class="align-middle" data-feather="sliders"></i> <span class="align-middle">Dashboard</span>
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("NutritionSystem")) ? "active" : "")">
+                    <a class="sidebar-link" href="NutritionSystem">
+                        <i class="align-middle" data-feather="sliders"></i>
+                        <span class="align-middle">Dashboard</span>
                     </a>
                 </li>
 
-                <!-- Sidebar Item: Company Info -->
-                <!-- Sidebar Item: Company Info -->
-                <li class="sidebar-item @((Context.Request.Path.Value.Contains("Company")) ? "active" : "")">
-                    <a class="sidebar-link" href="Company">
-                        <i class="align-middle" data-feather="briefcase"></i> <span class="align-middle">Company Info</span>
+                <!-- Sidebar Item: Patients -->
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("Patients")) ? "active" : "")">
+                    <a class="sidebar-link" href="Patients">
+                        <i class="align-middle" data-feather="users"></i>
+                        <span class="align-middle">Patients</span>
                     </a>
                 </li>
 
-                <!-- Sidebar Item: Clients -->
-                <li class="sidebar-item @((Context.Request.Path.Value.Contains("Clients")) ? "active" : "")">
-                    <a class="sidebar-link" href="Clients">
-                        <i class="align-middle" data-feather="users"></i> <span class="align-middle">Clients</span>
+                <!-- Sidebar Item: Allergies -->
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("Allergies")) ? "active" : "")">
+                    <a class="sidebar-link" href="Allergies">
+                        <i class="align-middle" data-feather="alert-octagon"></i>
+                        <span class="align-middle">Allergies</span>
                     </a>
                 </li>
 
-                <!-- Sidebar Item: Feedback -->
-                <li class="sidebar-item @((Context.Request.Path.Value.Contains("Feedback")) ? "active" : "")">
-                    <a class="sidebar-link" href="Feedback">
-                        <i class="align-middle" data-feather="edit-2"></i> <span class="align-middle">Feedback</span>
+                <!-- Sidebar Item: Nutrition Profiles -->
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("NutritionProfiles")) ? "active" : "")">
+                    <a class="sidebar-link" href="NutritionProfiles">
+                        <i class="align-middle" data-feather="heart"></i>
+                        <span class="align-middle">Nutrition Profiles</span>
                     </a>
                 </li>
 
-                <!-- Sidebar Item: Data Migration -->
-                <li class="sidebar-item @((Context.Request.Path.Value.Contains("DataMigrations")) ? "active" : "")">
-                    <a class="sidebar-link" href="DataMigrations">
-                        <i class="align-middle" data-feather="arrow-right-circle"></i> <span class="align-middle">Data Migration</span>
+                <!-- Sidebar Item: Medical Conditions -->
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("MedicalConditions")) ? "active" : "")">
+                    <a class="sidebar-link" href="MedicalConditions">
+                        <i class="align-middle" data-feather="activity"></i>
+                        <span class="align-middle">Medical Conditions</span>
+                    </a>
+                </li>
+
+                <!-- Sidebar Item: Diet Plans -->
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("DietPlans")) ? "active" : "")">
+                    <a class="sidebar-link" href="DietPlans">
+                        <i class="align-middle" data-feather="clipboard"></i>
+                        <span class="align-middle">Diet Plans</span>
+                    </a>
+                </li>
+
+                <!-- Sidebar Item: Meal Plans -->
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("MealPlans")) ? "active" : "")">
+                    <a class="sidebar-link" href="MealPlans">
+                        <i class="align-middle" data-feather="grid"></i>
+                        <span class="align-middle">Meal Plans</span>
+                    </a>
+                </li>
+
+                <!-- Sidebar Item: Food Database -->
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("FoodDatabase")) ? "active" : "")">
+                    <a class="sidebar-link" href="FoodDatabase">
+                        <i class="align-middle" data-feather="database"></i>
+                        <span class="align-middle">Food Database</span>
+                    </a>
+                </li>
+
+                <!-- Sidebar Item: Meal Logs -->
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("MealLogs")) ? "active" : "")">
+                    <a class="sidebar-link" href="MealLogs">
+                        <i class="align-middle" data-feather="book-open"></i>
+                        <span class="align-middle">Meal Logs</span>
+                    </a>
+                </li>
+
+                <!-- Sidebar Item: Reports Conducted -->
+                <li class="sidebar-item @((Context.Request.Path.Value.Contains("Reports")) ? "active" : "")">
+                    <a class="sidebar-link" href="Reports">
+                        <i class="align-middle" data-feather="file-text"></i>
+                        <span class="align-middle">Reports Conducted</span>
                     </a>
                 </li>
 
@@ -59,25 +104,11 @@
                     SECURITY CENTRE
                 </li>
 
-                <!-- Sidebar Item: User Accounts -->
-                <li class="sidebar-item @((Context.Request.Path.Value.Contains("UserAccounts")) ? "active" : "")">
-                    <a class="sidebar-link" href="UserAccounts">
-                        <i class="align-middle" data-feather="user"></i> <span class="align-middle">User Accounts</span>
-                    </a>
-                </li>
-
-                <!-- Sidebar Item: Activity Log -->
-                <li class="sidebar-item @((Context.Request.Path.Value.Contains("AuditLogs")) ? "active" : "")">
-                    <a class="sidebar-link" href="AuditLogs">
-                        <i class="align-middle" data-feather="list"></i> <span class="align-middle">Activity Log</span>
-                    </a>
-                </li>
-
             </ul>
         </div>
     </nav>
 
-    
+
     <!-- Main Content Section -->
     <div class="main">
 
@@ -146,8 +177,8 @@
 
                         <a class="nav-link dropdown-toggle" href="UserProfile" data-bs-toggle="dropdown">
                             <!-- User Avatar and Name -->
-                            <img src="~/img/userProfileImages/team-2.jpg" class="avatar img-fluid rounded me-1" alt="Profile-img" />
-                            <span>Mutebi Alawi</span> <!-- Full name of the logged-in user -->
+                            <img src="~/img/userProfileImages/team-1.jpg" class="avatar img-fluid rounded me-1" alt="Profile-img" />
+                            <span>Nadia Malker</span> <!-- Full name of the logged-in user -->
                         </a>
 
 
@@ -186,4 +217,4 @@
         </footer>
     </div>
 
- </div>
+</div>

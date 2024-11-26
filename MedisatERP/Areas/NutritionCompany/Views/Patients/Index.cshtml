@@ -1,37 +1,15 @@
-﻿@using MedisatERP.Models
-@using DevExtreme.AspNet.Mvc
-@using MedisatERP.Areas.CoreSystem.Models
+﻿@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Areas.NutritionCompany.Models
+@using MedisatERP.Models
 
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Clients Info";
+    ViewData["Title"] = "Patients";
 }
 
 <!-- Section Title Card -->
 <div class="card col-12 card-title">
-    <center><span><i data-feather="users"></i> CLIENT INFORMATION</span></center>
-</div>
-
-<div class="row">
-    <div class="form-group col-md-4">
-        <label class="my-3">Company Name:</label>
-        @(Html.DevExtreme().SelectBox()
-            .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId"))
-            .DisplayExpr("CompanyName")
-            .ValueExpr("CompanyId")
-            .SearchEnabled(true)
-            .ShowClearButton(true)
-            .Placeholder("Select Company")
-            .Width("100%")
-            .ID("txt_company")
-            .OnValueChanged(@<text>
-            function(e){
-                const grid = $('#gv_clientList').dxDataGrid('instance');
-                grid.refresh();
-            }
-        </text>)
-            )
-    </div>
+    <center><span><i data-feather="users"></i> PATIENTS INFORMATION</span></center>
 </div>
 
 <!-- Client List DataGrid -->
@@ -42,8 +20,7 @@
         .DataSource(d => d.Mvc().Controller("CompanyClientsAPI").LoadAction("Get").Key("ClientId")
         .InsertAction("Post")
         .UpdateAction("Put")
-        .DeleteAction("Delete")
-        .LoadParams(new { CompanyId = new JS("getCompanyId") }))
+        .DeleteAction("Delete"))
         .ShowColumnLines(false)
         .ShowRowLines(true)
         .RowAlternationEnabled(true)
@@ -76,6 +53,20 @@
             columns.AddFor(m => m.Address.State).Caption("State").Visible(true);
             columns.AddFor(m => m.Address.PostalCode).Caption("Postal Code").Visible(true);
             columns.AddFor(m => m.Address.Country).Caption("Country").Visible(true);
+
+            // Profile popup
+            columns.Add()
+            .Type(GridCommandColumnType.Buttons)
+            .Width(80)
+            .Caption("Profile")
+            .Buttons(b =>
+            {
+                b.Add()
+            .Hint("Click for details")
+            .Icon("mediumiconslayout")
+            .Visible(true);
+            });
+
             columns.Add()
             .Type(GridCommandColumnType.Buttons)
             .Width(80)
@@ -85,13 +76,13 @@
                 b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
                 b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
             });
-      
+            
         })
         .Selection(s => s.Mode(SelectionMode.Multiple))
         .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
         .FocusedRowEnabled(true)
         .Editing(e => e
-        .AllowAdding(false)
+        .AllowAdding(true)
         .AllowUpdating(false)
         .AllowDeleting(true)
         .UseIcons(true)
@@ -143,17 +134,10 @@
         )
 </div>
 
-
 <script>
     // Handling row change for the client grid
     function onMainRowChanged(e) {
         const rowData = e.row && e.row.data;
         // You can add your custom logic here to handle row change
-    }
-
-    // Get the selected company ID
-    function getCompanyId() {
-        var companyId = $("#txt_company").dxSelectBox('option', 'value');
-        return companyId;
     }
 </script>

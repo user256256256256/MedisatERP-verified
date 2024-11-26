@@ -55,6 +55,7 @@ namespace MedisatERP.Controllers
                                         i.Motto,
                                         i.CompanyType,
                                         i.CreatedAt,
+                                        i.CompanyLogoFilePath,
                                         Address = new
                                         {
                                             i.Address.AddressId,
