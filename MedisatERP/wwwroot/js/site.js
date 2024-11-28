@@ -44,17 +44,29 @@
             if ($(this).hasClass("active")) {
                 // Get the parent <ul> of the active <li> and add 'show' class
                 $(this).closest("ul").addClass("show");
+                // Add active class on the parent <li> (which is the dropdown)
+                $(this).closest("li").addClass("active");
             }
         });
 
         // Add active class on click to the sidebar header
         $(".sidebar-header").on("click", function () {
-            // Remove 'active' class from all sidebar headers
+            // Get the parent <li> of the clicked sidebar header
+            var parentLi = $(this).closest("li");
+
+            // Remove 'active' class from all sidebar headers and dropdowns
             $(".sidebar-header").removeClass("active");
+            $(".nav-item").removeClass("active");  // Remove 'active' class from all <li> items
+            $(".collapse").removeClass("show");    // Collapse all dropdowns
 
             // Add 'active' class to the clicked sidebar header
             $(this).addClass("active");
+
+            // Show the corresponding <ul> and add the 'active' class to its parent <li>
+            parentLi.find("ul").addClass("show");
+            parentLi.addClass("active");
         });
+
 
     });
 

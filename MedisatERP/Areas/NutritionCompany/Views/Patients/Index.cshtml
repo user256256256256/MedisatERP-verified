@@ -18,12 +18,15 @@
     <p class="section-lead">This page is just an example for you to create your own page.</p>
 </div>
 
+
+
 <!-- Client List DataGrid -->
 <div class="card" style="padding:20px">
     @(Html.DevExtreme().DataGrid<CompanyClient>()
         .ShowBorders(true)
         .ID("gv_clientList")
         .DataSource(d => d.Mvc().Controller("CompanyClientsAPI").LoadAction("Get").Key("ClientId")
+        .LoadParams(new { CompanyId = new JS("getCompanyId") }))
         .InsertAction("Post")
         .UpdateAction("Put")
         .DeleteAction("Delete"))
@@ -145,5 +148,11 @@
     function onMainRowChanged(e) {
         const rowData = e.row && e.row.data;
         // You can add your custom logic here to handle row change
+    }
+
+    // Get the selected company ID
+    function getCompanyId() {
+        var companyId = $("#txt_company").dxSelectBox('option', 'value');
+        return companyId;
     }
 </script>
