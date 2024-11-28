@@ -2488,25 +2488,25 @@
   opacity: .5;
 }
 .dx-button-mode-contained {
-  background-color: #fff;
-  border-color: #ddd;
-  color: #333;
+    background-color: #208611;
+    border-color: #ddd;
+    color: white;
 }
 .dx-button-mode-contained .dx-icon {
-  color: #333;
+  color: #fff;
 }
 .dx-button-mode-contained.dx-state-hover {
-  background-color: #f5f5f5;
-  border-color: #ddd;
+    background-color: #333;
+    border-color: #ddd;
 }
 .dx-button-mode-contained.dx-state-focused {
   background-color: #ebebeb;
   border-color: #ddd;
 }
 .dx-button-mode-contained.dx-state-active {
-  background-color: #c2c2c2;
-  border-color: #ddd;
-  color: #333;
+    background-color: #0000;
+    border-color: #ddd;
+    color: #fff;
 }
 .dx-button-mode-contained.dx-button-danger {
   background-color: #d9534f;
@@ -12658,7 +12658,7 @@
   content: "\f050";
 }
 .dx-datagrid .dx-header-filter-empty {
-  color: rgba(149,149,149,.5);
+    color: #208611;
 }
 .dx-datagrid.dx-filter-menu .dx-menu-item-content .dx-icon {
   width: 14px;
@@ -12982,9 +12982,9 @@
   border-bottom-color: transparent;
 }
 .dx-datagrid .dx-link {
-  text-decoration: underline;
-  cursor: pointer;
-  color: #337ab7;
+    text-decoration: underline;
+    cursor: pointer;
+    color: #208611;
 }
 .dx-datagrid .dx-row-lines > td {
   border-bottom: 1px solid #ddd;
@@ -13213,11 +13213,11 @@
   background-color: transparent;
 }
 .dx-datagrid-headers {
-  color: #959595;
-  font-weight: 400;
-  -ms-touch-action: pinch-zoom;
-  touch-action: pinch-zoom;
-  border-bottom: 1px solid #ddd;
+    color: #000000;
+    font-weight: 600;
+    -ms-touch-action: pinch-zoom;
+    touch-action: pinch-zoom;
+    border-bottom: 1px solid #ddd;
 }
 .dx-datagrid-headers .dx-datagrid-content {
   margin-bottom: -1px;
@@ -13439,8 +13439,8 @@
 .dx-datagrid-rowsview .dx-row-focused.dx-data-row .dx-command-edit:not(.dx-focused) .dx-link,
 .dx-datagrid-rowsview .dx-row-focused.dx-data-row > td:not(.dx-focused),
 .dx-datagrid-rowsview .dx-row-focused.dx-data-row > tr > td:not(.dx-focused) {
-  background-color: #5c95c5;
-  color: #fff;
+    background-color: #208611;
+    color: #fff;
 }
 .dx-datagrid-rowsview .dx-row-focused.dx-data-row .dx-command-edit:not(.dx-focused) .dx-link .dx-texteditor-input,
 .dx-datagrid-rowsview .dx-row-focused.dx-data-row > td:not(.dx-focused) .dx-texteditor-input,

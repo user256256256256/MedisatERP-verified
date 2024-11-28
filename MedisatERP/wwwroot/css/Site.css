@@ -14077,7 +14077,9 @@ body {
 .sidebar {
     direction: ltr;
     max-width: 260px;
-    min-width: 260px
+    min-width: 260px;
+    overflow: hidden;
+    /*    overflow-y: auto;*/
 }
 
 /*
@@ -14088,6 +14090,7 @@ body {
     bottom: 0;
     width: 250px; 
     overflow-y: auto;
+
 }*/
 
 .sidebar, .sidebar-content {
@@ -14100,10 +14103,18 @@ body {
     transition: margin-left .35s ease-in-out,left .35s ease-in-out,margin-right .35s ease-in-out,right .35s ease-in-out
 }
 
+
 .sidebar-content {
     display: flex;
     flex-direction: column;
-    height: 100vh
+    height: 100vh;
+    overflow-y: scroll; /* Enable scrolling */
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For Internet Explorer */
+}
+
+.sidebar-content::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Edge */
 }
 
 .sidebar-nav {
@@ -14197,10 +14208,23 @@ body {
 
 .sidebar-header {
     background: transparent;
-    font-weight:bold;
+    font-weight: bold;
     color: #ced4da;
     font-size: .75rem;
-    padding: 1.5rem 1.5rem .375rem
+    padding: 1.5rem 1.5rem .375rem;
+    transition: color 0.3s ease, background-color 0.3s ease; 
+}
+
+/* Hover state */
+.sidebar-header:hover {
+    color: #208611; /* Change text color on hover */
+    background-color: rgba(32, 134, 17, 0.1); /* Optional: Add background color on hover */
+}
+
+/* Active state - color change when the element is clicked */
+.sidebar-header.active {
+    color: #208611; /* Change text color when active */
+    background-color: rgba(32, 134, 17, 0.2); /* Optional: Change background color when active */
 }
 
 .sidebar-badge {
@@ -15491,19 +15515,19 @@ span.flatpickr-weekday {
 .card-title {
     margin-bottom: 20px;
     padding: 20px;
-    background: #6f42c1;
+    background: #311465;
     text-align: center;
-
+    color: white;
 }
 
 /*Nutrition system card */
 .card-title-nutrition-system {
     margin-bottom: 20px;
     padding: 20px;
-    background: #6f42c1;
+    background: #311465;
     display: flex;
     color: white;
-    flex-direction:row;
+    flex-direction: row;
     font-size: .925rem;
     font-weight: 600
 }

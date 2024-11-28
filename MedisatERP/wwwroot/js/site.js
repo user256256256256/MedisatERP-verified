@@ -38,6 +38,24 @@
         $('.close-btn').on('click', function () {
             $('.search-wrapper').fadeOut(200);
         });
+       
+        // Check if any sidebar item has the 'active' class
+        $(".sidebar-item").each(function () {
+            if ($(this).hasClass("active")) {
+                // Get the parent <ul> of the active <li> and add 'show' class
+                $(this).closest("ul").addClass("show");
+            }
+        });
+
+        // Add active class on click to the sidebar header
+        $(".sidebar-header").on("click", function () {
+            // Remove 'active' class from all sidebar headers
+            $(".sidebar-header").removeClass("active");
+
+            // Add 'active' class to the clicked sidebar header
+            $(this).addClass("active");
+        });
+
     });
 
 })(window, document, window.jQuery);
