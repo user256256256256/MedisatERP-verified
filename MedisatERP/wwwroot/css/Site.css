@@ -4789,6 +4789,7 @@ textarea.form-control-lg {
                 }
 }
 
+
 .badge {
     --bs-badge-padding-x: 0.45em;
     --bs-badge-padding-y: 0.3em;
@@ -15492,8 +15493,22 @@ span.flatpickr-weekday {
     padding: 20px;
     background: #6f42c1;
     text-align: center;
-    color: white;
+
 }
+
+/*Nutrition system card */
+.card-title-nutrition-system {
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #6f42c1;
+    display: flex;
+    color: white;
+    flex-direction:row;
+    font-size: .925rem;
+    font-weight: 600
+}
+
+
 
 /* Custom button column */
 .button-column {
@@ -15511,21 +15526,21 @@ span.flatpickr-weekday {
     margin: 30px 0 25px 0;
 }
 
-    .section .section-title:before {
-        content: ' ';
-        border-radius: 5px;
-        height: 8px;
-        width: 30px;
-        background-color: #563d7c;
-        display: inline-block;
-        float: left;
-        margin-top: 6px;
-        margin-right: 15px;
-    }
+.section .section-title:before {
+    content: ' ';
+    border-radius: 5px;
+    height: 8px;
+    width: 30px;
+    background-color: #563d7c;
+    display: inline-block;
+    float: left;
+    margin-top: 6px;
+    margin-right: 15px;
+}
 
-    .section .section-title + .section-lead {
-        margin-top: -20px;
-    }
+.section .section-title + .section-lead {
+    margin-top: -20px;
+}
 
 .section .section-lead {
     margin-left: 45px;
