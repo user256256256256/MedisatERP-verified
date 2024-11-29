@@ -66,11 +66,25 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+
 // Add this line to enable areas support
 app.MapControllerRoute(
     name: "areaRoute",
-    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}"
-);
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
+// Maps routes for the "NutritionCompany" area, allowing a specific controller and action.
+// The {companyId:guid?} is an optional GUID parameter for company-specific routing.
+app.MapAreaControllerRoute(
+    name: "NutritionCompany",
+    areaName: "NutritionCompany",
+    pattern: "NutritionCompany/{controller=Home}/{action=Index}/{companyId:guid?}");
+
+// Specifically routes to the "NutritionSystem" controller within the "NutritionCompany" area.
+// The {companyId:guid?} is a required GUID parameter for company-specific routing.
+app.MapAreaControllerRoute(
+    name: "nutritionSystemRoute",
+    areaName: "NutritionCompany",
+    pattern: "NutritionCompany/{controller=NutritionSystem}/{action=Index}/{companyId:guid}");
 
 // Map the default controller route (for non-area routes)
 app.MapDefaultControllerRoute();
@@ -78,10 +92,10 @@ app.MapDefaultControllerRoute();
 // Map Razor Pages
 app.MapRazorPages();
 
-////Hashing Password 
-//var password = "@Pandollar?";
+//Hashing Password 
+//var password = "@Lyfex?";
 //var passwordHasher = new PasswordHasher<object>();
 //var hashedPassword = passwordHasher.HashPassword(null, password);
-//Console.WriteLine("Hashed Password" + hashedPassword);
+//Console.WriteLine("Hashed Password " + hashedPassword);
 
 app.Run();

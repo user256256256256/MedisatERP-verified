@@ -86,13 +86,14 @@ public partial class MedisatErpDbContext : DbContext
             entity.HasOne(d => d.Role).WithMany(p => p.AspNetRoleClaims).HasForeignKey(d => d.RoleId);
         });
 
+        // Configure relationships
         modelBuilder.Entity<AspNetUser>(entity =>
         {
-            entity.HasIndex(e => e.NormalizedEmail, "EmailIndex");
+            entity.HasIndex(e => e.NormalizedEmail).HasDatabaseName("EmailIndex");
 
-            entity.HasIndex(e => e.NormalizedUserName, "UserNameIndex")
+            entity.HasIndex(e => e.NormalizedUserName).HasDatabaseName("UserNameIndex")
                 .IsUnique()
-                .HasFilter("([NormalizedUserName] IS NOT NULL)");
+                .HasFilter("[NormalizedUserName] IS NOT NULL");
 
             entity.Property(e => e.Email).HasMaxLength(256);
             entity.Property(e => e.NormalizedEmail).HasMaxLength(256);
@@ -110,6 +111,14 @@ public partial class MedisatErpDbContext : DbContext
                         j.ToTable("AspNetUserRoles");
                         j.HasIndex(new[] { "RoleId" }, "IX_AspNetUserRoles_RoleId");
                     });
+
+            // Add the CompanyId property and configure the relationship
+            entity.Property(e => e.CompanyId).IsRequired(false);
+
+            entity.HasOne(d => d.Company)
+                .WithMany(p => p.Users)
+                .HasForeignKey(d => d.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<AspNetUserClaim>(entity =>

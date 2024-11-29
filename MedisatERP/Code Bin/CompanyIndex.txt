@@ -746,3 +746,14 @@
 #311465
 
 /*#3B3D55; #6f42c1, #311465*/
+
+
+
+Sure! In the relationship we defined, each user (represented by the AspNetUser model) 
+can belong to a company, identified by the CompanyId. This is a one-to-many relationship, meaning one company can have many users, 
+but a user can belong to only one company or none at all if they are, for example, a system administrator.
+
+For instance, imagine a company called "Healthy Eats". This company can have multiple users, such as nutritionists and managers, 
+associated with it. Each user in the "Healthy Eats" company will have the CompanyId of "Healthy Eats". Conversely, the 
+"Healthy Eats" company will have a list of users who belong to it. However, a system administrator, 
+who oversees multiple companies, would not have a CompanyId and thus is not restricted to any specific company.

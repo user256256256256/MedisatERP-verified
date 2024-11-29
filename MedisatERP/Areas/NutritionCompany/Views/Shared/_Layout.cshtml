@@ -1,5 +1,10 @@
-﻿@{
+﻿@using MedisatERP.Areas.CoreSystem.Models
+@using MedisatERP.Library
+@model Company
+
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var encodedCompanyId = HashingHelper.EncodeGuidID(Model.CompanyId);
 }
 
 <div class="wrapper">
@@ -21,9 +26,9 @@
                     </a>
                     <ul class="collapse list-unstyled" id="crmDropdownMenu">
 
-                        <!-- Sidebar Item: Dashboard --change to DashboardCRM   --> 
+                        <!-- Sidebar Item: Dashboard -->
                         <li class="sidebar-item @((Context.Request.Path.Value.Contains("NutritionSystem")) ? "active" : "")">
-                            <a class="sidebar-link" href="NutritionSystem">
+                            <a class="sidebar-link" href="@Url.Action("Index", "NutritionSystem", new { area = "NutritionCompany", companyId = encodedCompanyId })">
                                 <i class="align-middle" data-feather="sliders"></i>
                                 <span class="align-middle">Dashboard</span>
                             </a>
@@ -31,7 +36,7 @@
 
                         <!-- Sidebar Item: Patients -->
                         <li class="sidebar-item @((Context.Request.Path.Value.Contains("Patients")) ? "active" : "")">
-                            <a class="sidebar-link" href="Patients">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Patients", new { area = "NutritionCompany", companyId = encodedCompanyId })">
                                 <i class="align-middle" data-feather="users"></i>
                                 <span class="align-middle">Patients</span>
                             </a>

@@ -1,12 +1,14 @@
 ﻿@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Areas.CoreSystem.Models
 @using MedisatERP.Areas.NutritionCompany.Models
 @using MedisatERP.Models
+@model Company
 
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Patients";
+    var companyId = Model.CompanyId;
 }
-
 
 <!-- Section Title Card -->
 <div class="card col-12 card-title-nutrition-system">
@@ -18,18 +20,17 @@
     <p class="section-lead">This page is just an example for you to create your own page.</p>
 </div>
 
-
-
 <!-- Client List DataGrid -->
 <div class="card" style="padding:20px">
     @(Html.DevExtreme().DataGrid<CompanyClient>()
         .ShowBorders(true)
         .ID("gv_clientList")
         .DataSource(d => d.Mvc().Controller("CompanyClientsAPI").LoadAction("Get").Key("ClientId")
-        .LoadParams(new { CompanyId = new JS("getCompanyId") }))
         .InsertAction("Post")
         .UpdateAction("Put")
-        .DeleteAction("Delete"))
+        .DeleteAction("Delete")
+        .LoadParams(new { companyId = companyId}) // Pass the CompanyId as load params
+        )
         .ShowColumnLines(false)
         .ShowRowLines(true)
         .RowAlternationEnabled(true)
@@ -42,9 +43,9 @@
         .OnFocusedRowChanged("onMainRowChanged")
         .Columns(columns =>
         {
-            // Comany Clients Data Columns
-            columns.AddFor(m => m.ClientId).Caption("Client ID").Visible(false);
-            columns.AddFor(m => m.ClientName).Caption("Client Name").Visible(true);
+            // Company Clients Data Columns
+            columns.AddFor(m => m.ClientId).Caption("Patient ID").Visible(false);
+            columns.AddFor(m => m.ClientName).Caption("Patient Name").Visible(true);
             columns.AddFor(m => m.DateOfBirth).Caption("Date of Birth").Format("dd MMM, yyyy");
             columns.AddFor(m => m.Gender).Caption("Gender").Visible(true);
             columns.AddFor(m => m.Email).Caption("Email").Visible(true);
@@ -85,7 +86,6 @@
                 b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
                 b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
             });
-            
         })
         .Selection(s => s.Mode(SelectionMode.Multiple))
         .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
@@ -148,11 +148,5 @@
     function onMainRowChanged(e) {
         const rowData = e.row && e.row.data;
         // You can add your custom logic here to handle row change
-    }
-
-    // Get the selected company ID
-    function getCompanyId() {
-        var companyId = $("#txt_company").dxSelectBox('option', 'value');
-        return companyId;
     }
 </script>

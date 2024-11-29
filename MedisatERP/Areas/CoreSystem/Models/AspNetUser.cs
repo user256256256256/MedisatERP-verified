@@ -35,6 +35,10 @@ public partial class AspNetUser
 
     public int AccessFailedCount { get; set; }
 
+    public Guid? CompanyId { get; set; }  // Nullable CompanyId for users who might not belong to a company
+
+    public virtual Company Company { get; set; }  // Navigation property to Company
+
     public virtual ICollection<AspNetUserClaim> AspNetUserClaims { get; set; } = new List<AspNetUserClaim>();
 
     public virtual ICollection<AspNetUserLogin> AspNetUserLogins { get; set; } = new List<AspNetUserLogin>();
