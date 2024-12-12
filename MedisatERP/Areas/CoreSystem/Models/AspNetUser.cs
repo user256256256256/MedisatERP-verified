@@ -37,6 +37,10 @@ public partial class AspNetUser
 
     public Guid? CompanyId { get; set; }  // Nullable CompanyId for users who might not belong to a company
 
+    public string ProfileImagePath { get; set; }
+
+    public string BioData { get; set; }  // New BioData property
+
     public virtual Company Company { get; set; }  // Navigation property to Company
 
     public virtual ICollection<AspNetUserClaim> AspNetUserClaims { get; set; } = new List<AspNetUserClaim>();
@@ -48,8 +52,6 @@ public partial class AspNetUser
     public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
 
     public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
-
-    public virtual ICollection<UserProfile> UserProfiles { get; set; } = new List<UserProfile>();
 
     public virtual ICollection<AspNetRole> Roles { get; set; } = new List<AspNetRole>();
 }

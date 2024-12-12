@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using MedisatERP.Areas.CoreSystem.Models
+@model AspNetUser
 
 @{
     Layout = "_Layout";
@@ -62,7 +63,7 @@
         .Summary(s => s.TotalItems(totalItems => { totalItems.AddFor(m => m.FeedbackId).SummaryType(SummaryType.Count); }))
         .Editing(e => e
         .AllowAdding(false)  // Disable adding new feedback
-        .AllowUpdating(false)  // Allow editing feedback
+        .AllowUpdating(true)  // Allow editing feedback
         .AllowDeleting(true)  // Allow deleting feedback
         .UseIcons(true) // Use Icons
         .Mode(GridEditMode.Popup)
@@ -108,7 +109,7 @@
             .Name("ManageButton")
             .Buttons(b =>
             {
-                // b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
+                b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
                 b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
             });
 

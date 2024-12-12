@@ -54,6 +54,6 @@ namespace MedisatERP.Areas.CoreSystem.Models
 
         public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 
-        public virtual ICollection<AspNetUser> Users { get; set; } = new List<AspNetUser>();  
+        public virtual ICollection<AspNetUser> Users { get; set; } = new List<AspNetUser>();
     }
 }

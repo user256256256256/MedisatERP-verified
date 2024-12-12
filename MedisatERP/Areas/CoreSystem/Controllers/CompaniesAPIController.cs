@@ -12,6 +12,7 @@ using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using MedisatERP.Areas.CoreSystem.Models;
 using MedisatERP.Data;
+using Microsoft.AspNetCore.Http;
 
 namespace MedisatERP.Controllers
 {
@@ -116,6 +117,13 @@ namespace MedisatERP.Controllers
                 {
                     model.CreatedAt = DateTime.Now;
                 }
+
+                // Set the CompanyId if not already set
+                if (model.CompanyId == Guid.Empty)
+                {
+                    model.CompanyId = Guid.NewGuid();
+                }
+
 
                 // Save the new company record to the database
                 _context.Companies.Add(model);
@@ -233,6 +241,72 @@ namespace MedisatERP.Controllers
                 return StatusCode(500, $"An internal server error occurred: {ex.Message}");
             }
         }
+
+
+        // Update the UploadLogo method to use IFormFile
+        [HttpPost]
+        public async Task<ActionResult> UploadLogo(IFormFile companyLogo)
+        {
+            // Log the start of the method
+            Console.WriteLine("UploadLogo method started.");
+
+            if (companyLogo != null && companyLogo.Length > 0)
+            {
+                Console.WriteLine("File received: " + companyLogo.FileName);
+
+                // Generate a unique name for the image file to avoid overwriting
+                string fileName = Path.GetFileName(companyLogo.FileName);
+                Console.WriteLine("Generated file name: " + fileName);
+
+                // Determine the folder path to store the image
+                string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "companyLogoImages");
+                Console.WriteLine("Folder path: " + folderPath);
+
+                // Ensure the directory exists
+                if (!Directory.Exists(folderPath))
+                {
+                    Console.WriteLine("Directory does not exist. Creating directory...");
+                    Directory.CreateDirectory(folderPath);
+                }
+                else
+                {
+                    Console.WriteLine("Directory already exists.");
+                }
+
+                // Combine the folder path and file name to create the full file path
+                string filePath = Path.Combine(folderPath, fileName);
+                Console.WriteLine("Full file path: " + filePath);
+
+                // Save the file to the server
+                try
+                {
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        Console.WriteLine("Saving file to the server...");
+                        await companyLogo.CopyToAsync(fileStream);
+                        Console.WriteLine("File saved successfully.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error while saving the file: " + ex.Message);
+                    return Json(new { error = "Error while saving the file: " + ex.Message });
+                }
+
+                // Return the relative path to be stored in the database
+                string relativeFilePath = "../../img/companyLogoImages/" + fileName;
+                Console.WriteLine("File saved successfully. Returning relative path: " + relativeFilePath);
+
+                return Json(new { filePath = relativeFilePath });
+            }
+            else
+            {
+                Console.WriteLine("No file uploaded or file is empty.");
+            }
+
+            return Json(new { error = "No file uploaded" });
+        }
+
 
         /// <summary>
         /// Populates the company model with the given values.

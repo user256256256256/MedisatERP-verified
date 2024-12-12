@@ -3583,11 +3583,15 @@ textarea.form-control-lg {
     z-index: var(--bs-dropdown-zindex)
 }
 
-    .dropdown-menu[data-bs-popper] {
-        left: 0;
-        margin-top: var(--bs-dropdown-spacer);
-        top: 100%
-    }
+.dropdownProfile {
+    background-color: #563d7c;
+}
+
+.dropdown-menu[data-bs-popper] {
+    left: 0;
+    margin-top: var(--bs-dropdown-spacer);
+    top: 100%
+}
 
 .dropdown-menu-start {
     --bs-position: start
@@ -3791,7 +3795,7 @@ textarea.form-control-lg {
 }
 
 .dropdown-divider {
-    border-top: 1px solid var(--bs-dropdown-divider-bg);
+    border-top: 1px solid #fff;
     height: 0;
     margin: var(--bs-dropdown-divider-margin-y) 0;
     opacity: 1;
@@ -3803,7 +3807,7 @@ textarea.form-control-lg {
     border: 0;
     border-radius: var(--bs-dropdown-item-border-radius,0);
     clear: both;
-    color: var(--bs-dropdown-link-color);
+    color: #fff;
     display: block;
     font-weight: 400;
     padding: var(--bs-dropdown-item-padding-y) var(--bs-dropdown-item-padding-x);
@@ -3819,7 +3823,7 @@ textarea.form-control-lg {
     }
 
     .dropdown-item.active, .dropdown-item:active {
-        background-color: var(--bs-dropdown-link-active-bg);
+        background-color: #3B3D55;
         color: var(--bs-dropdown-link-active-color);
         text-decoration: none
     }
@@ -14224,7 +14228,7 @@ body {
 /* Active state - color change when the element is clicked */
 .sidebar-header.active {
     color: #208611; /* Change text color when active */
-    background-color: rgba(32, 134, 17, 0.2); /* Optional: Change background color when active */
+    /*background-color: rgba(32, 134, 17, 0.2);*/ /* Optional: Change background color when active */
 }
 
 .sidebar-badge {
@@ -15511,6 +15515,12 @@ span.flatpickr-weekday {
     max-height: 100px;
 }
 
+/* Styling for company logo image */
+.user-profile-img {
+    max-width: 100px;
+    max-height: 100px;
+}
+
 /* Card container styling */
 .card-title {
     margin-bottom: 20px;
@@ -15633,3 +15643,7 @@ span.flatpickr-weekday {
 }
 
 
+.company-logo {
+    max-width:100px;
+/*    max-height:100px;*/
+}

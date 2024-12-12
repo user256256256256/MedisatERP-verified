@@ -435,3 +435,205 @@ namespace MedisatERP.Controllers
         }
     }
 }
+
+[HttpPost]
+public ActionResult UploadCompanyLogo()
+{
+    // Ensure a file is uploaded
+    if (Request.Files.Count > 0)
+    {
+        var file = Request.Files[0];
+        if (file != null && file.ContentLength > 0 && 
+            (file.ContentType.Contains("image/jpg") || file.ContentType.Contains("image/jpeg") || file.ContentType.Contains("image/png")))
+        {
+            // Create a unique filename to avoid overwriting
+            var fileName = Path.GetFileName(file.FileName);
+            var directoryPath = Server.MapPath("~/img/companyLogoImages"); // Save directory
+            var filePath = Path.Combine(directoryPath, fileName);
+
+            // Ensure the directory exists
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
+            // Save the file
+            file.SaveAs(filePath);
+
+            // Return the relative file path
+            string relativeFilePath = $"../../img/companyLogoImages/{fileName}";
+            return Json(new { success = true, filePath = relativeFilePath });
+        }
+    }
+
+    return Json(new { success = false, message = "Invalid file" });
+}
+
+
+// Group 4: Company Logo with FileUploader
+            items.AddGroup()
+            .Caption("Company Logo")
+            .ColCount(1)
+            .ColSpan(2)
+            .Items(groupItems =>
+            {
+                groupItems.AddSimpleFor(m => m.CompanyLogoFilePath).Visible(false);
+                groupItems.AddSimple().Template(@<text>
+                @(Html.DevExtreme().FileUploader()
+                .Name("companyLogoUploader")
+                .LabelText("")
+                .Accept("image/*")
+                .UploadMode(FileUploadMode.Instantly)
+                .AllowedFileExtensions(new[] { ".jpg", ".jpeg", ".png" })
+                .InputAttr("aria-lable", "Select image")
+                .OnUploaded("onUpload"))
+            </text>)
+            .ColSpan(2);
+            });
+// Handle file upload completion
+    function onUpload(e) {
+        var file = e.file;  // The uploaded file
+
+        // Assuming you have a form with a file input with the id 'companyLogoInput'
+        var formData = new FormData();
+
+        // Append the file to FormData object
+        formData.append('companyLogo', file);
+
+        // Show loading indicator before the request starts
+        Notiflix.Loading.Dots("Uploading your logo...");
+
+        // Make the API call using jQuery's getJSON method
+        $.ajax({
+            url: '/api/CompaniesAPI/UploadLogo', // Make sure the path is correct
+            type: 'POST',
+            data: formData,
+            contentType: false,  // Important for sending binary data
+            processData: false,  // Prevent jQuery from processing the data
+        })
+            .done(function (json) {
+                // Remove loading indicator on success
+                Notiflix.Loading.Remove(500);
+
+                // Check if the upload was successful
+                if (json.filePath) {
+
+                    // Update the CompanyLogoFilePath field using DevExtreme API
+                    var form = $("#companyForm").dxForm("instance"); // Assuming your form has the ID 'companyForm'
+                    form.getEditor("CompanyLogoFilePath").option("value", json.filePath);
+
+                    // Update the DataGrid's internal value if necessary
+                    var grid = $("#gv_companyList").dxDataGrid("instance");
+
+                    Notiflix.Report.Success("Upload Success", "Your logo has been successfully uploaded!", "OK");
+                } else {
+                    // Handle failure if the file path is not returned
+                    Notiflix.Report.Failure("Upload Failure", json.error || "Error uploading the logo", "OK");
+                }
+            })
+            .fail(function (jqxhr, textStatus, error) {
+                // Remove loading indicator on failure
+                Notiflix.Loading.Remove(500);
+
+                // Handle the error case
+                var err = textStatus + ", " + error;
+                Notiflix.Report.Failure("Upload Failed", "Failed to upload the logo: " + err, "OK");
+            });
+
+    }
+
+
+
+    /// new*****************************************
+    @using (Html.DevExtreme().NamedTemplate("embedded_upload_logo"))
+{
+    @(
+        Html.DevExtreme().DataGrid<Company>()
+            .ID("gv_companyLogo")
+            .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId"))
+            .ColumnAutoWidth(true)
+            .Columns(columns =>
+            {
+                // Only show the Company Logo Column
+                columns.AddFor(m => m.CompanyLogoFilePath)
+                    .Caption("Company Logo")
+                    .Width(200)  // Adjust the width of the column
+                    .AllowEditing(false)  // Prevent editing
+                    .AllowSorting(false)  // Disable sorting for this column
+                    .CellTemplate(@<text>
+                        <div>
+                            <img src="<%- value %>" alt="Company Logo" class="company-logo" />
+                        </div>
+                    </text>); // Display the logo as an image
+            })
+    )
+}
+
+<!-- Below the DataGrid, add a section to upload a new logo -->
+<div class="upload-logo-section">
+    <h3>Upload New Company Logo</h3>
+    @(Html.DevExtreme().FileUploader()
+        .Name("companyLogoUploader")
+        .LabelText("Select Image")
+        .Accept("image/*")
+        .UploadMode(FileUploadMode.Instantly)
+        .AllowedFileExtensions(new[] { ".jpg", ".jpeg", ".png" })
+        .InputAttr("aria-label", "Select image")
+        .OnUploaded("onUpload")
+        .Height(60)
+    )
+</div>
+
+<script>
+    // Handle file upload completion
+    function onUpload(e) {
+        var file = e.file;  // The uploaded file
+
+        // Assuming you have a form with a file input with the id 'companyLogoInput'
+        var formData = new FormData();
+
+        // Append the file to FormData object
+        formData.append('companyLogo', file);
+
+        // Show loading indicator before the request starts
+        Notiflix.Loading.Dots("Uploading your logo...");
+
+        // Make the API call using jQuery's getJSON method
+        $.ajax({
+            url: '/api/CompaniesAPI/UploadLogo', // Make sure the path is correct
+            type: 'POST',
+            data: formData,
+            contentType: false,  // Important for sending binary data
+            processData: false,  // Prevent jQuery from processing the data
+        })
+        .done(function (json) {
+            // Remove loading indicator on success
+            Notiflix.Loading.Remove(500);
+
+            // Check if the upload was successful
+            if (json.filePath) {
+
+                // Update the CompanyLogoFilePath field using DevExtreme API
+                var form = $("#companyForm").dxForm("instance"); // Assuming your form has the ID 'companyForm'
+                form.getEditor("CompanyLogoFilePath").option("value", json.filePath);
+
+                // Update the DataGrid's internal value if necessary
+                var grid = $("#gv_companyLogo").dxDataGrid("instance");
+                grid.refresh();  // Refresh the grid to reflect the updated logo
+
+                Notiflix.Report.Success("Upload Success", "Your logo has been successfully uploaded!", "OK");
+            } else {
+                // Handle failure if the file path is not returned
+                Notiflix.Report.Failure("Upload Failure", json.error || "Error uploading the logo", "OK");
+            }
+        })
+        .fail(function (jqxhr, textStatus, error) {
+            // Remove loading indicator on failure
+            Notiflix.Loading.Remove(500);
+
+            // Handle the error case
+            var err = textStatus + ", " + error;
+            Notiflix.Report.Failure("Upload Failed", "Failed to upload the logo: " + err, "OK");
+        });
+    }
+</script>

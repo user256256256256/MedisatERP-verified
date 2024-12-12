@@ -7,17 +7,17 @@ namespace MedisatERP.Areas.CoreSystem.Controllers
 {
     [Area("CoreSystem")]
     [Route("CoreSystem/[controller]/[action]/{userId?}")]
-    public class AuditLogsController : Controller
+    public class UserProfileController : Controller
     {
         private readonly MedisatErpDbContext _dbContext;
 
         // Constructor to inject DbContext
-        public AuditLogsController(MedisatErpDbContext dbContext)
+        public UserProfileController(MedisatErpDbContext dbContext)
         {
             _dbContext = dbContext;
         }
 
-        // GET: CoreSystem/AuditLogs/Index/{userId}
+        // GET: CoreSystem/UserProfile/Index/{userId}
         public async Task<IActionResult> Index(string userId)
         {
             if (string.IsNullOrEmpty(userId))

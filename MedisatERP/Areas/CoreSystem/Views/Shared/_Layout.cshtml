@@ -1,5 +1,10 @@
-﻿@{
+﻿@using MedisatERP.Areas.CoreSystem.Models
+@using MedisatERP.Library
+@model AspNetUser
+
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var encodedUserId = HashingHelper.EncodeString(Model.Id);
 }
 
 <div class="wrapper">
@@ -14,15 +19,15 @@
             <ul class="sidebar-nav">
 
                 <!-- Section Header: MEDISAT CENTER -->
-                <li class="nav-item dropdown ">
+                <li class="nav-item dropdown">
                     <a href="#" class="sidebar-header nav-link has-dropdown" id="medisatDropdown" data-bs-toggle="collapse" data-bs-target="#medisatDropdownMenu" aria-expanded="false" aria-controls="medisatDropdownMenu">
                         <span>SYSTEM MANAGEMENT</span>
                     </a>
-                    <ul class="collapse list-unstyled " id="medisatDropdownMenu">
+                    <ul class="collapse list-unstyled" id="medisatDropdownMenu">
 
                         <!-- Sidebar Item: Dashboard -->
                         <li class="sidebar-item @((Context.Request.Path.Value.Contains("SystemManager")) ? "active" : "")">
-                            <a class="sidebar-link" href="SystemManager">
+                            <a class="sidebar-link" href="@Url.Action("Index", "SystemManager", new { area = "CoreSystem", userId = encodedUserId })">
                                 <i class="align-middle" data-feather="sliders"></i>
                                 <span class="align-middle">Dashboard</span>
                             </a>
@@ -30,7 +35,7 @@
 
                         <!-- Sidebar Item: Company Info -->
                         <li class="sidebar-item @((Context.Request.Path.Value.Contains("Company")) ? "active" : "")">
-                            <a class="sidebar-link" href="Company">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Company", new { area = "CoreSystem", userId = encodedUserId })">
                                 <i class="align-middle" data-feather="briefcase"></i>
                                 <span class="align-middle">Company Info</span>
                             </a>
@@ -38,7 +43,7 @@
 
                         <!-- Sidebar Item: Clients -->
                         <li class="sidebar-item @((Context.Request.Path.Value.Contains("Clients")) ? "active" : "")">
-                            <a class="sidebar-link" href="Clients">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Clients", new { area = "CoreSystem", userId = encodedUserId })">
                                 <i class="align-middle" data-feather="users"></i>
                                 <span class="align-middle">Clients</span>
                             </a>
@@ -46,7 +51,7 @@
 
                         <!-- Sidebar Item: Feedback -->
                         <li class="sidebar-item @((Context.Request.Path.Value.Contains("Feedback")) ? "active" : "")">
-                            <a class="sidebar-link" href="Feedback">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Feedback", new { area = "CoreSystem", userId = encodedUserId })">
                                 <i class="align-middle" data-feather="edit-2"></i>
                                 <span class="align-middle">Feedback</span>
                             </a>
@@ -54,7 +59,7 @@
 
                         <!-- Sidebar Item: Data Migration -->
                         <li class="sidebar-item @((Context.Request.Path.Value.Contains("DataMigrations")) ? "active" : "")">
-                            <a class="sidebar-link" href="DataMigrations">
+                            <a class="sidebar-link" href="@Url.Action("Index", "DataMigrations", new { area = "CoreSystem", userId = encodedUserId })">
                                 <i class="align-middle" data-feather="arrow-right-circle"></i>
                                 <span class="align-middle">Data Migration</span>
                             </a>
@@ -63,17 +68,16 @@
                     </ul>
                 </li>
 
-
                 <!-- Section Header: SECURITY CENTRE -->
-                <li class="nav-item dropdown ">
-                    <a href="#" class="sidebar-header nav-link has-dropdown " id="securityDropdown" data-bs-toggle="collapse" data-bs-target="#securityDropdownMenu" aria-expanded="false" aria-controls="securityDropdownMenu">
+                <li class="nav-item dropdown">
+                    <a href="#" class="sidebar-header nav-link has-dropdown" id="securityDropdown" data-bs-toggle="collapse" data-bs-target="#securityDropdownMenu" aria-expanded="false" aria-controls="securityDropdownMenu">
                         <span>SECURITY CENTRE</span>
                     </a>
-                    <ul class="collapse list-unstyled " id="securityDropdownMenu">
+                    <ul class="collapse list-unstyled" id="securityDropdownMenu">
 
                         <!-- Sidebar Item: User Accounts -->
                         <li class="sidebar-item @((Context.Request.Path.Value.Contains("UserAccounts")) ? "active" : "")">
-                            <a class="sidebar-link" href="UserAccounts">
+                            <a class="sidebar-link" href="@Url.Action("Index", "UserAccounts", new { area = "CoreSystem", userId = encodedUserId })">
                                 <i class="align-middle" data-feather="user"></i>
                                 <span class="align-middle">User Accounts</span>
                             </a>
@@ -81,7 +85,7 @@
 
                         <!-- Sidebar Item: Activity Log -->
                         <li class="sidebar-item @((Context.Request.Path.Value.Contains("AuditLogs")) ? "active" : "")">
-                            <a class="sidebar-link" href="AuditLogs">
+                            <a class="sidebar-link" href="@Url.Action("Index", "AuditLogs", new { area = "CoreSystem", userId = encodedUserId })">
                                 <i class="align-middle" data-feather="list"></i>
                                 <span class="align-middle">Activity Log</span>
                             </a>
@@ -99,6 +103,8 @@
     <!-- Main Content Section -->
     <div class="main">
 
+
+        <!-- Custom template --See ~wwwroot/js/CustomElements.js Top-Nav Bar -->
         <!-- Navbar Section -->
         <nav class="navbar navbar-expand navbar-light navbar-bg">
             <!-- Sidebar Toggle Button -->
@@ -158,28 +164,35 @@
 
                     <!-- User Account Dropdown -->
                     <li class="nav-item dropdown">
-                        <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
+                        <!-- Settings icon for smaller screens -->
+                        <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" id="settingsDropdown" aria-expanded="false">
                             <i class="align-middle" data-feather="settings"></i>
                         </a>
 
-                        <a class="nav-link dropdown-toggle" href="UserProfile" data-bs-toggle="dropdown">
+                        <!-- User Profile Avatar and Name for larger screens -->
+                        <a class="nav-link dropdown-toggle" href="" id="userDropdown" aria-expanded="false">
                             <!-- User Avatar and Name -->
-                            <img src="~/img/userProfileImages/team-2.jpg" class="avatar img-fluid rounded me-1" alt="Profile-img" />
-                            <span>Mutebi Alawi</span> <!-- Full name of the logged-in user -->
+                            <img src="@(string.IsNullOrEmpty(Model.ProfileImagePath) ? Url.Content("~/img/userProfileImages/avatar.jpg") : Url.Content("~/img/userProfileImages/" + Model.ProfileImagePath))"
+                                 class="avatar img-fluid rounded me-1" alt="Profile-img" />
+                            <span>@Model.UserName</span> <!-- Display the logged-in user's name -->
                         </a>
 
-
-                        <div class="dropdown-menu dropdown-menu-end">
-                            <a class="dropdown-item" href="Profile"><i class="align-middle me-1" data-feather="user"></i> Profile</a>
+                        <!-- Dropdown Menu -->
+                        <div class="dropdown-menu dropdown-menu-end dropdownProfile" aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="@Url.Action("Index", "UserProfile", new { area = "CoreSystem", userId = encodedUserId })">
+                                <i class="align-middle me-1" data-feather="user"></i> Profile
+                            </a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#"><i class="align-middle me-1" data-feather="help-circle"></i> Help Center</a>
-                            <div class="dropdown-divider"></div>
-                            <!-- Log out option -->
-                            <a class="dropdown-item" href="javascript:;" onclick="Logout()"><i class="align-middle me-1" data-feather="log-in"></i> Log out</a>
+                            <!-- Log out option with Javascript functionality -->
+                            <a class="dropdown-item log-out" href="javascript:;" onclick="Logout()">
+                                <i class="align-middle me-1" data-feather="log-out"></i> Log out
+                            </a>
                         </div>
                     </li>
+
                 </ul>
             </div>
+
         </nav>
 
         <!-- Main Content Area -->
@@ -190,6 +203,7 @@
             </div>
         </main>
 
+        <!-- Custom template --See ~wwwroot/js/CustomElements.js End-Bar Section -->
         <!-- Footer Section -->
         <footer class="footer">
             <div class="container-fluid">
@@ -202,6 +216,7 @@
                 </div>
             </div>
         </footer>
+
     </div>
 
  </div>

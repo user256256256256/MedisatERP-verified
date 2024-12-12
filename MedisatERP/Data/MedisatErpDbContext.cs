@@ -44,8 +44,6 @@ public partial class MedisatErpDbContext : DbContext
 
     public virtual DbSet<Feedback> Feedbacks { get; set; }
 
-    public virtual DbSet<UserProfile> UserProfiles { get; set; }
-
     public virtual DbSet<Allergy> Allergies { get; set; }
 
     public virtual DbSet<DietPlan> DietPlans { get; set; }
@@ -119,6 +117,16 @@ public partial class MedisatErpDbContext : DbContext
                 .WithMany(p => p.Users)
                 .HasForeignKey(d => d.CompanyId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure the new ProfileImagePath property
+            entity.Property(e => e.ProfileImagePath)
+                .HasMaxLength(255) 
+                .IsRequired(false);
+
+            // Configure the new BioData property
+            entity.Property(e => e.BioData)
+                .HasMaxLength(1000)  // Adjust the max length as needed
+                .IsRequired(false);
         });
 
         modelBuilder.Entity<AspNetUserClaim>(entity =>
@@ -333,23 +341,6 @@ public partial class MedisatErpDbContext : DbContext
                 .HasConstraintName("FK__Feedback__UserId__08B54D69");
         });
 
-        modelBuilder.Entity<UserProfile>(entity =>
-        {
-            entity.HasKey(e => e.UserProfileId).HasName("PK__UserProf__9E267F622315FB7B");
-
-            entity.ToTable("UserProfile");
-
-            entity.Property(e => e.UserProfileId).ValueGeneratedNever();
-            entity.Property(e => e.ProfileImagePath).HasMaxLength(255);
-            entity.Property(e => e.UserBio).HasMaxLength(1000);
-            entity.Property(e => e.UserId)
-                .IsRequired()
-                .HasMaxLength(450);
-
-            entity.HasOne(d => d.User).WithMany(p => p.UserProfiles)
-                .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__UserProfi__UserI__114A936A");
-        });
 
         modelBuilder.Entity<Allergy>(entity =>
         {

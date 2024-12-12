@@ -1,6 +1,8 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using MedisatERP.Areas.CoreSystem.Models
 @using MedisatERP.Models
+@model AspNetUser
+
 
 <!-- Inheriting the System Administrator layout  -->
 @{
@@ -16,56 +18,62 @@
 <div class="card" style="padding:20px">
     @(
         Html.DevExtreme().DataGrid<Company>()
-                .ShowBorders(true)
-                .ID("gv_companyList")
-                .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId")
-                .InsertAction("Post")
-                .UpdateAction("Put")
-                .DeleteAction("Delete"))
-                .ShowColumnLines(false)
-                .ShowRowLines(true)
-                .RowAlternationEnabled(true)
-                .FilterRow(f => f.Visible(false))
-                .HeaderFilter(f => f.Visible(true))
-                .RemoteOperations(true)
-                .ColumnHidingEnabled(true)
-                .ColumnAutoWidth(true)
-                .OnFocusedRowChanged("onMainRowChanged")
-                .OnInitNewRow("intiateNewCompany")
-                .Columns(columns =>
-                {
-                    // Company Data Columns
-                    columns.AddFor(m => m.CompanyId).Visible(false);
-                    columns.AddFor(m => m.CompanyName);
-            columns.AddFor(m => m.CreatedAt).Format("dd MMM, yyyy").AllowEditing(false);
-            columns.AddFor(m => m.ExpDate).Format("dd MMM, yyyy");
-            columns.AddFor(m => m.CompanyEmail);
-            columns.AddFor(m => m.CompanyPhone);
-            columns.AddFor(m => m.Motto);
-            columns.AddFor(m => m.CompanyType);
-            columns.AddFor(m => m.ContactPerson);
-            columns.AddFor(m => m.CompanyInitials);
-            columns.AddFor(m => m.PayAccount);
-            columns.AddFor(m => m.PayAccountName);
-            columns.AddFor(m => m.PayBank);
-            columns.AddFor(m => m.SmsAccount);
-            columns.AddFor(m => m.SubscriptionAmount);
+            .ShowBorders(true)
+            .ID("gv_companyList")
+            .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId")
+            .InsertAction("Post")
+            .UpdateAction("Put")
+            .DeleteAction("Delete"))
+            .ShowColumnLines(false)
+            .ShowRowLines(true)
+            .RowAlternationEnabled(true)
+            .FilterRow(f => f.Visible(false))
+            .HeaderFilter(f => f.Visible(true))
+            .RemoteOperations(true)
+            .ColumnHidingEnabled(true)
+            .ColumnAutoWidth(true)
+            .OnFocusedRowChanged("onMainRowChanged")
+            .OnInitNewRow("intiateNewCompany")
+            .Columns(columns =>
+            {
+                // Company Data Columns
+                columns.AddFor(m => m.CompanyId).Visible(false).AllowEditing(false);
+                columns.AddFor(m => m.CompanyName).AllowEditing(true);
+                columns.AddFor(m => m.CreatedAt).Format("dd MMM, yyyy").AllowEditing(false);
+                columns.AddFor(m => m.ExpDate).Format("dd MMM, yyyy");
+                columns.AddFor(m => m.CompanyEmail).AllowEditing(true); ;
+                columns.AddFor(m => m.CompanyPhone).AllowEditing(true);
+                columns.AddFor(m => m.CompanyStatus).AllowEditing(true);
+                columns.AddFor(m => m.Motto).AllowEditing(true); ;
+                columns.AddFor(m => m.CompanyType).AllowEditing(true); ;
+                columns.AddFor(m => m.ContactPerson).AllowEditing(true); ;
+                columns.AddFor(m => m.CompanyInitials).AllowEditing(true); ;
+                columns.AddFor(m => m.PayAccount);
+                columns.AddFor(m => m.PayAccountName);
+                columns.AddFor(m => m.PayBank);
+                columns.AddFor(m => m.SmsAccount);
+                columns.AddFor(m => m.SubscriptionAmount);
+
             
-            //columns.AddFor(m => m.CompanyLogoFilePath);
-
-            // Display companyLogoFilePath as an img
-            columns.Add().Caption("Company Logo").DataField("CompanyLogoFilePath")
-    .CellTemplate(@<text>
-        <img src="~/img/companyLogoImages/LyfexAfricaLogo.png" alt="Company Logo" style="max-width: 100px; max-height: 100px;"/>
-    </text>);
-
 
             // Add column for Address --a foreign key in Company Model
-            columns.AddFor(m => m.Address.Street);
-            columns.AddFor(m => m.Address.City);
-            columns.AddFor(m => m.Address.State);
-            columns.AddFor(m => m.Address.PostalCode);
-            columns.AddFor(m => m.Address.Country);
+                columns.AddFor(m => m.Address.Street).AllowEditing(true); ;
+                columns.AddFor(m => m.Address.City).AllowEditing(true); ;
+                columns.AddFor(m => m.Address.State).AllowEditing(true); ;
+                columns.AddFor(m => m.Address.PostalCode).AllowEditing(true); ;
+                columns.AddFor(m => m.Address.Country).AllowEditing(true); ;
+
+            // Display companyLogoFilePath as an img using CellTemplate
+            columns.AddFor(m => m.CompanyLogoFilePath).AllowEditing(false)
+            .Caption("Company Logo")
+            .Width(100)
+            .AllowFiltering(false)
+            .AllowSorting(false)
+            .CellTemplate(@<text>
+            <div>
+                <img src="~/img/companyLogoImages/<%- value %>" alt="Company Logo" class="company-logo" />
+            </div>
+            </text>);
 
             // Profile popup
             columns.Add()
@@ -112,7 +120,9 @@
         .Of(new JS("window"))
         )
         )
-        .Form(f => f.Items(items =>
+        .Form(f => f
+        .ID("companyForm")
+        .Items(items =>
         {
 
             // Group 1: Company Information
@@ -156,17 +166,7 @@
                 groupItems.AddSimpleFor(m => m.PayBank).Visible(true);
             });
 
-            // Group 4: Company Logo
-            items.AddGroup()
-            .Caption("Company Logo")
-            .ColCount(1)
-            .ColSpan(2)
-            .Items(groupItems =>
-            {
-                groupItems.AddSimpleFor(m => m.CompanyLogoFilePath).Visible(true);
-            });
-
-            // Group 5: Company Address
+            // Group 4: Company Address
             items.AddGroup()
             .Caption("Company Address")
             .ColCount(2)
@@ -200,6 +200,7 @@
     @(Html.DevExtreme().TabPanel()  // Create a TabPanel widget
             .DeferRendering(false)  // Disables deferred rendering (loads all tabs at once)
                 .Height("auto")  // Automatically adjusts the height of the TabPanel
+                
             .ScrollingEnabled(true) // Enable scrolling
             .Items(tab =>  // Define tabs for the TabPanel
             {
@@ -214,9 +215,9 @@
                     .Template(new TemplateName("embedded_new_payment"));  // Set the template for the tab content
 
                 tab.Add()  // Add the third tab
-                    .Title(" NEW JOURNAL VOUCHER")  // Set the title of the tab
+                    .Title("Upload Company Logo")  // Set the title of the tab
                     .Icon("paste")  // Set the icon for the tab
-                    .Template(new TemplateName("embedded_new_journal"));  // Set the template for the tab content
+                    .Template(new TemplateName("embedded_upload_logo"));  // Set the template for the tab content
             })
         )
 }
@@ -231,7 +232,7 @@
                 .UpdateAction("Put")  // Define the update action for the grid
                 .DeleteAction("Delete")  // Define the delete action for the grid
                 .LoadParams(new { CompanyId = new JS("getCompanyId") }))  // Pass the CompanyId to the API as a load parameter
-                
+            .Height("400px")  // Add height for scrollable grid
             .ShowColumnLines(false)  // Disable column lines
             .ShowRowLines(false)  // Enable row lines
             .RowAlternationEnabled(true)  // Enable row alternation (striped rows)
@@ -268,7 +269,7 @@
                 columns.AddFor(m => m.Address.Country).Caption("Country").Visible(true);  // Visible column for Country
             })
             .Selection(s => s.Mode(SelectionMode.Multiple))  // Enable multiple row selection
-            .SearchPanel(s => s.Visible(true).Width(100).Placeholder("Search..."))  // Enable search panel
+            .SearchPanel(s => s.Visible(true).Width(200).Placeholder("Search..."))  // Enable search panel
             .FocusedRowEnabled(true)  // Enable focused row
             .Paging(p => p.PageSize(10))  // Enable paging with page size of 10
             .RemoteOperations(true)  // Enable remote operations (for paging, sorting, etc.)
@@ -281,10 +282,35 @@
         )
 }
 
+@using (Html.DevExtreme().NamedTemplate("embedded_upload_logo"))
+{
+    @(
+            Html.DevExtreme().DataGrid<Company>()
+                .ID("gv_companyLogo")
+                .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId"))
+                .ColumnAutoWidth(true)
+                .Columns(columns =>
+                {
+                    // Only show the Company Logo Column
+                    columns.AddFor(m => m.CompanyLogoFilePath)
+                        .Caption("Company Logo")
+                        .Width(200)  // Adjust the width of the column
+                        .AllowEditing(false)  // Prevent editing
+                        .AllowSorting(false)  // Disable sorting for this column since we are displaying a single image
+                        .CellTemplate(@<text>
+                        <div>
+                            <img src="~/img/companyLogoImages/<%- value %>" alt="Company Logo" class="company-logo" />
+                        </div>
+                    </text>); // Display the logo as an image
+                })
+        )
+}
+
+
 @(Html.DevExtreme().Popup()  // Create a popup for new user account
     .ID("pop_comp_profile")  // Set ID of the popup
-    .Width("50%")  // Set width of the popup
-    .Height("450")  // Set height of the popup
+    .Width("80%")  // Set width of the popup
+    .Height("550")  // Set height of the popup
     
     .ShowTitle(true)  // Show title in the popup
     //.ShadingColor("Purple")
@@ -340,5 +366,6 @@
         const popup = $('#pop_comp_profile').dxPopup('instance');  // Get the popup instance
         popup.show();  // Show the popup
     }
+
 
 </script>

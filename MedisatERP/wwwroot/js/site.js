@@ -67,6 +67,22 @@
             parentLi.addClass("active");
         });
 
+        
+        // Toggle the dropdown menu on click
+        $('#userDropdown, #settingsDropdown').on('click', function (event) {
+            event.preventDefault();
+            $(this).next('.dropdown-menu').toggle();
+            $(this).attr('aria-expanded', $(this).next('.dropdown-menu').is(':visible'));
+        });
+
+        // Close the dropdown menu when clicking outside of it
+        $(document).on('click', function (event) {
+            if (!$(event.target).closest('.nav-item.dropdown').length) {
+                $('.dropdown-menu').hide();
+                $('.nav-item.dropdown a').attr('aria-expanded', 'false');
+            }
+        });
+        
 
     });
 

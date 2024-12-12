@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using MedisatERP.Areas.CoreSystem.Models
+@model AspNetUser
 
 @{
     Layout = "_Layout";
@@ -8,31 +9,67 @@
 
 <!-- Section Title Card -->
 <div class="card col-12 card-title">
-    <center><span><i data-feather="users"></i> USER ACCOUNTS</span></center>
+    <center><span><i data-feather="users"></i> USER ACCOUNTS </span></center>
 </div>
 
-<!-- Filter by Role Section -->
-<div class="row">
+<div class="section my-3">
+    <h2 class="section-title">ACCOUNTS MANAGEMENT CENTER</h2>
+    <p class="section-lead">This page is just an example for you to create your own page.</p>
+</div>
+
+
+<div class="row mt-5 mb-2">
     <div class="form-group col-md-4">
-        <label class="my-3">Role:</label>
+        <!-- Filter by Company-->
         @(Html.DevExtreme().SelectBox()
-            .DataSource(d => d.Mvc().Controller("AspNetRolesAPI").LoadAction("Get").Key("RoleId"))
-            .DisplayExpr("Name")
-            .ValueExpr("Id")
+            .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId"))
+            .DisplayExpr("CompanyName")
+            .ValueExpr("CompanyId")
             .SearchEnabled(true)
             .ShowClearButton(true)
-            .Placeholder("Select Role")
+            .Placeholder("Filter by Company:")
             .Width("100%")
-            .ID("txt_role")
+            .ID("txt_company")
             .OnValueChanged(@<text>
             function(e){
-            // Refresh the grid when the role is changed
             const grid = $('#gv_userList').dxDataGrid('instance');
-            grid.refresh();  // Triggers a reload with the updated parameters
+            grid.refresh();  // Refresh grid to apply filter
             }
-        </text>))
+        </text>)
+            )
     </div>
+
+    <div class="col-md-4 form-group">
+        <!-- Add New User Button -->
+        @(Html.DevExtreme().Button()
+            .Text("Add New User")
+            .Icon("plus")
+            .OnClick("function() { $('#userFormPopup').dxPopup('instance').show(); }")
+            .Type(ButtonType.Normal)
+            .Width("100%")
+            )
+    </div>
+
+   <div class="col-md-4 form-group">
+        <!-- Manage Roles Button with a Group Icon -->
+        @(Html.DevExtreme().Button()
+            .Text("Manage Roles")
+            .Icon("group") 
+            .OnClick("function() { $('#RolesPopup').dxPopup('instance').show(); }")
+            .Type(ButtonType.Normal)
+            .Width("100%")
+        )
+    </div>
+
 </div>
+
+<script>
+    // Get the selected company ID
+    function getCompanyId() {
+        var companyId = $("#txt_company").dxSelectBox('option', 'value');
+        return companyId || null;  // Return null if no company is selected
+    }
+</script>
 
 <!-- DevExtreme DataGrid for User Accounts -->
 <div id="userGrid">
@@ -41,8 +78,7 @@
         .ShowBorders(true)
         .ID("gv_userList")
         .DataSource(d => d.Mvc().Controller("AspNetUsersAPI").LoadAction("Get").Key("Id")
-        .UpdateAction("Put")
-        .LoadParams(new { RoleId = new JS("getRoleId") }))
+        .LoadParams(new { companyId = new JS("getCompanyId") }))
         .ShowColumnLines(false)
         .ShowRowLines(true)
         .RowAlternationEnabled(true)
@@ -55,7 +91,6 @@
         .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
         .FocusedRowEnabled(true)
         .Paging(p => p.PageSize(10))
-        .RemoteOperations(true)
         .Editing(e => e
         .AllowAdding(false)  // Disable adding new users
         .AllowUpdating(true)  // Allow updating user details
@@ -77,13 +112,10 @@
         {
             columns.AddFor(m => m.UserName).Caption("Username").AllowEditing(true);
             columns.AddFor(m => m.Email).Caption("Email").AllowEditing(false);
-            columns.AddFor(m => m.Roles).Caption("Roles").AllowEditing(true); // Do not allow editing of roles in grid
             columns.AddFor(m => m.EmailConfirmed).Caption("Email Confirmed").DataType(GridColumnDataType.Boolean).AllowEditing(false);
             columns.AddFor(m => m.PhoneNumberConfirmed).Caption("Phone Number Confirmed").DataType(GridColumnDataType.Boolean).AllowEditing(false);
             columns.AddFor(m => m.LockoutEnabled).Caption("Account Locked").DataType(GridColumnDataType.Boolean).AllowEditing(true);
             columns.AddFor(m => m.PhoneNumber).Caption("Phone Number").AllowEditing(false);
-
-            
 
             // Manage Button Column (for Edit/Delete)
             columns.Add()
@@ -96,15 +128,240 @@
                 b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
                 b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
             });
-
         })
         )
 </div>
 
+<!-- DevExtreme Popup for account creation -->
+<div>
+    @(Html.DevExtreme().Popup()
+        .ID("userFormPopup")
+        .Title("Create New User")
+        .Width("60%")
+        .Height("auto")
+        .Visible(false)
+        .ShowCloseButton(true)
+        .ContentTemplate(@<text>
+        <div class="row">
+            <div class="form-group col-md-6 mb-3">
+                <label>User Name:</label>
+                @(Html.DevExtreme().TextBox()
+                .ID("txt_user_name")
+                .Width("100%")
+                .Placeholder("Enter user name")
+                )
+            </div>
+            <div class="form-group col-md-6 mb-3">
+                <label>Password:</label>
+                @(Html.DevExtreme().TextBox()
+                .ID("txt_password")
+                .Mode(TextBoxMode.Password)
+                .Width("100%")
+                .Placeholder("Enter password")
+                )
+            </div>
+            <div class="form-group col-md-6 mb-3">
+                <label>Phone Number:</label>
+                @(Html.DevExtreme().TextBox()
+                .ID("txt_phone")
+                .Width("100%")
+                .Placeholder("Enter phone number")
+                )
+            </div>
+            <div class="form-group col-md-6 mb-3">
+                <label>Email:</label>
+                @(Html.DevExtreme().TextBox()
+                .ID("txt_email")
+                .Width("100%")
+                .Placeholder("Enter email address")
+                )
+            </div>
+            <div class="form-group col-md-6 mb-3">
+                <label>Main Role:</label>
+                @(Html.DevExtreme().SelectBox()
+                .ID("txt_new_role")
+                .Width("100%")
+                .DataSource(d => d.Mvc().Controller("AspNetRolesAPI").LoadAction("Get").Key("Id")) 
+                .DisplayExpr("Name")
+                .ValueExpr("Id")
+                .Placeholder("Select Role")
+                )
+            </div>
+            <div class="form-group col-md-6 mb-3">
+                <label>Assign Company if Applicable:</label>
+                @(Html.DevExtreme().SelectBox()
+                .ShowClearButton(true)
+                .ID("txt_new_comp")
+                .Width("100%")
+                .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId"))
+                .DisplayExpr("CompanyName")
+                .ValueExpr("CompanyId")
+                .Placeholder("Select Company")
+                )
+            </div>
+            <div class="form-group col-md-12 mt-3">
+                @(Html.DevExtreme().Button()
+                .Text("Create Account")
+                .Icon("todo")
+                .Type(ButtonType.Normal)
+                .Width("auto")
+                .OnClick("function() { createUserAccount(); }")
+                )
+            </div>
+        </div>
+    </text>)
+        )
+</div>
+
+<div>
+    @(Html.DevExtreme().Popup()
+        .ID("RolesPopup")
+        .Title("Manage Roles")
+        .Width("60%")
+        .Height("auto")
+        .Visible(false)
+        .ShowCloseButton(true)
+        .ContentTemplate(@<text>
+            <div class="card" style="padding: 20px;">
+                @(Html.DevExtreme().DataGrid<AspNetRole>() 
+                    .ShowBorders(true)
+                    .ID("gv_rolesList")
+                    .DataSource(d => d.Mvc().Controller("AspNetRolesAPI").LoadAction("Get").Key("Id")
+                    .InsertAction("Post")
+                    .UpdateAction("Put")
+                    .DeleteAction("Delete"))
+                    .ShowColumnLines(false)
+                    .ShowRowLines(true)
+                    .RowAlternationEnabled(true)
+                    .FilterRow(f => f.Visible(false))
+                    .HeaderFilter(f => f.Visible(true))
+                    .RemoteOperations(true)
+                    .ColumnHidingEnabled(true)
+                    .ColumnAutoWidth(true)
+                    .Selection(s => s.Mode(SelectionMode.Multiple))
+                    .SearchPanel(sp => sp.Visible(true).Width(250).Placeholder("Search..."))
+                    .FocusedRowEnabled(true)
+                    .Columns(columns =>
+                    {
+                        columns.AddFor(m => m.Name).AllowEditing(true);
+                    })
+                    .Editing(e => e
+                        .AllowAdding(true)
+                        .AllowUpdating(true)
+                        .AllowDeleting(true)
+                        .UseIcons(true)
+                        .Mode(GridEditMode.Popup)
+                        .Popup(p => p
+                            .Title("Role Details")
+                            .Height("auto")
+                            .Width("50%")
+                            .ShowTitle(true)
+                            .Position(pos => pos
+                                .My(HorizontalAlignment.Center, VerticalAlignment.Center)
+                                .At(HorizontalAlignment.Center, VerticalAlignment.Center)
+                                .Of(new JS("window"))
+                            )
+                        )
+                    )
+                    .Paging(p => p.PageSize(10))
+                    .RemoteOperations(true)
+                    .Summary(s => s
+                        .TotalItems(totalItems =>
+                        {
+                            totalItems.AddFor(m => m.Name).SummaryType(SummaryType.Count);
+                        })
+                    )
+                )
+            </div>
+        </text>)
+    )
+</div>
+
+
 <script>
-    // Get the selected role ID
-    function getRoleId() {
-        var roleId = $("#txt_role").dxSelectBox('option', 'value');
-        return roleId;
-    }
+
+   function createUserAccount() {
+    // Retrieve values from the input fields
+    var userName = $("#txt_user_name").dxTextBox('option', 'value');
+    var password = $("#txt_password").dxTextBox('option', 'value');
+    var phone = $("#txt_phone").dxTextBox('option', 'value');
+    var email = $("#txt_email").dxTextBox('option', 'value');
+    var role = $("#txt_new_role").dxSelectBox('option', 'value'); // Role ID
+    var companyId = $("#txt_new_comp").dxSelectBox('option', 'value'); // Company ID --Only if applicable 
+
+    // Prepare the data to be sent as an AspNetUser object
+    var data = {
+        UserName: userName,
+        PasswordHash: password,
+        PhoneNumber: phone,
+        Email: email,
+        Roles: [{ Id: role }], // Send roles as an array of objects, each containing an Id
+        CompanyId: companyId 
+    };
+
+    // Log the object being sent to the console
+    console.log("Data being sent to server:", JSON.stringify(data));
+
+    // Define the API endpoint
+    const url = '/api/AspNetUsersAPI/Post';
+
+    // Show loading indicator
+    Notiflix.Loading.Dots('Creating user...');
+
+    // Make the API call using AJAX
+    $.ajax({
+        url: url,
+        type: 'POST',
+        data: JSON.stringify(data),
+        contentType: 'application/json',
+        success: function (response) {
+            // Remove loading indicator
+            Notiflix.Loading.Remove(500);
+
+            // Handle the success response
+            if (response && response.Id) {
+                // Show success message
+                Notiflix.Report.Success("User Created", "User account created successfully!", "OK");
+                
+                // Close the popup
+                $("#userFormPopup").dxPopup("instance").hide();
+                
+                // Refresh the DataGrid
+                var dataGrid = $("#gv_userList").dxDataGrid("instance"); 
+                dataGrid.refresh();  // Refresh the DataGrid to reload the data
+
+                // Clear the form fields
+                clearForm(); // Call a function to reset the form
+            }
+        },
+        error: function (xhr, status, error) {
+            // Remove loading indicator on error
+            Notiflix.Loading.Remove(500);
+
+            // Handle the error case
+            var errorMessage = "Failed to create user: " + error; // Default message if responseJSON is unavailable
+
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message; // Use the message from the backend if available
+            } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMessage = xhr.responseJSON.error; // Alternatively, check for error field
+            }
+
+            // Show error message using Notiflix
+            Notiflix.Report.Failure("Error", errorMessage, "OK");
+        }
+    });
+}
+
+// Function to clear form fields
+function clearForm() {
+    // Reset all input fields to empty or default values
+    $("#txt_user_name").dxTextBox('option', 'value', '');
+    $("#txt_password").dxTextBox('option', 'value', '');
+    $("#txt_phone").dxTextBox('option', 'value', '');
+    $("#txt_email").dxTextBox('option', 'value', '');
+    $("#txt_new_role").dxSelectBox('option', 'value', null); // Reset role selection to null or default value
+    $("#txt_new_comp").dxSelectBox('option', 'value', null); // Reset company selection to null or default value
+}
+
 </script>

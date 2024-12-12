@@ -1,0 +1,102 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Areas.CoreSystem.Models
+@model AspNetUser
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "UserProfile";
+}
+
+<div class="mb-4">
+    <!-- User Image -->
+    <img src="@(string.IsNullOrEmpty(Model.ProfileImagePath) ? Url.Content("~/img/userProfileImages/avatar.jpg") : Url.Content("~/img/userProfileImages/" + Model.ProfileImagePath))" class=" rounded-circle user-profile-img" alt="User Image" />
+</div>
+
+<div class="section my-3">
+    <h2 class="section-title">PROFILE</h2>
+    <p class="section-lead">This page is just an example for you to create your own page.</p>
+</div>
+
+<div class="section">
+    <div class="container">
+        <div class="row ">
+            <div class="col-md-6 mb-3">
+                <label>User Name:</label>
+                @(Html.DevExtreme().TextBox()
+                    .ID("txt_user_name")
+                    .Value(Model.UserName)
+                    .Width("100%")
+                    .ReadOnly(true)
+                    )
+            </div>
+            <div class="col-md-6 mb-3">
+                <label>Email:</label>
+                @(Html.DevExtreme().TextBox()
+                    .ID("txt_email")
+                    .Value(Model.Email)
+                    .Width("100%")
+                    .ReadOnly(true)
+                    )
+            </div>
+            <div class="col-md-6 mb-3">
+                <label>Phone Number:</label>
+                @(Html.DevExtreme().TextBox()
+                    .ID("txt_phone")
+                    .Value(Model.PhoneNumber)
+                    .Width("100%")
+                    .ReadOnly(true)
+                    )
+            </div>
+            <div class="col-md-6 mb-3">
+                <label>Password:</label>
+                @(Html.DevExtreme().TextBox()
+                    .ID("txt_password")
+                    .Mode(TextBoxMode.Password)
+                    .Value("*********")
+                    .Width("100%")
+                    .ReadOnly(true)
+                    )
+            </div>
+            <div class="col-md-6 mb-3">
+                <label>Main Role:</label>
+                @(Html.DevExtreme().TextBox()
+                    .ID("txt_main_role")
+                    .Value(Model.Roles?.FirstOrDefault()?.Name)
+                    .Width("100%")
+                    .ReadOnly(true)
+                    )
+            </div>
+            <div class="col-md-12 mb-3">
+                <label>Bio Data:</label>
+                @(Html.DevExtreme().TextArea()
+                    .ID("txt_bio_data")
+                    .Value(Model.BioData)
+                    .Height(100)
+                    .Width("100%")
+                    .ReadOnly(true)
+                    )
+            </div>
+         
+        </div>
+
+        <div>
+            @(Html.DevExtreme().Button()
+                .ID("btn_edit")
+                .Text("Edit")
+                .OnClick("editButtonClicked")  // Add a JavaScript click handler
+                )
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function editButtonClicked() {
+        // Enable the fields for editing
+        $("#txt_user_name").dxTextBox("option", "readOnly", false);
+        $("#txt_email").dxTextBox("option", "readOnly", false);
+        $("#txt_phone").dxTextBox("option", "readOnly", false);
+        $("#txt_password").dxTextBox("option", "readOnly", false);
+        $("#txt_bio_data").dxTextArea("option", "readOnly", false);
+    }
+</script>

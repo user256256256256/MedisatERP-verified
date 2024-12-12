@@ -14,6 +14,8 @@ using System.ComponentModel.Design;
 using Newtonsoft.Json.Linq;
 using MedisatERP.Areas.CoreSystem.Models;
 using MedisatERP.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
 
 namespace MedisatERP.Controllers
 {
@@ -21,10 +23,12 @@ namespace MedisatERP.Controllers
     public class AspNetUsersAPIController : Controller
     {
         private MedisatErpDbContext _context;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public AspNetUsersAPIController(MedisatErpDbContext context)
+        public AspNetUsersAPIController(MedisatErpDbContext context, UserManager<IdentityUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         /// <summary>
@@ -34,24 +38,32 @@ namespace MedisatERP.Controllers
         /// <param name="loadOptions">The options for filtering, sorting, and paging data.</param>
         /// <returns>Returns the processed User Accounts data.</returns>
         [HttpGet]
-        public async Task<IActionResult> Get(DataSourceLoadOptions loadOptions, string roleId)
+        public async Task<IActionResult> Get(DataSourceLoadOptions loadOptions, Guid? companyId)
         {
-            var users = _context.AspNetUsers
-                .Include(u => u.Roles)  // Include roles to display them
-                .Where(u => u.Roles.Any(r => r.Id == roleId))  // Filter users who have the given roleId
-                .Select(u => new
-                {
-                    u.Id,
-                    u.UserName,
-                    u.Email,
-                    u.PhoneNumber,
-                    u.EmailConfirmed,
-                    u.PhoneNumberConfirmed,
-                    u.LockoutEnabled,
-                    // You can also select roles, if needed, but ensure you handle the collection properly
-                    Roles = u.Roles.Select(r => r.Name).ToList()  // Example: selecting role names
-                })
-                .OrderBy(u => u.Id);  // You can adjust this sorting if needed
+            var usersQuery = _context.AspNetUsers.AsQueryable();
+
+            // Filter by CompanyId if provided, otherwise fetch users with a NULL CompanyId
+            if (companyId.HasValue)
+            {
+                usersQuery = usersQuery.Where(u => u.CompanyId == companyId.Value);
+            }
+            else
+            {
+                usersQuery = usersQuery.Where(u => u.CompanyId == null);
+            }
+
+            // Select the necessary user fields (excluding roles, as per your requirement)
+            var users = usersQuery.Select(u => new
+            {
+                u.Id,
+                u.UserName,
+                u.Email,
+                u.PhoneNumber,
+                u.EmailConfirmed,
+                u.PhoneNumberConfirmed,
+                u.LockoutEnabled
+            })
+            .OrderBy(u => u.Id); // Sorting users by Id, adjust if necessary
 
             // Apply filtering, sorting, and paging using DataSourceLoader
             var transformedData = await DataSourceLoader.LoadAsync(users, loadOptions);
@@ -59,25 +71,147 @@ namespace MedisatERP.Controllers
             return Json(transformedData); // Return the processed data
         }
 
-
-        // Not yet implemented --> While implementing you likely to abstract the Roles data;
         [HttpPost]
-        public async Task<IActionResult> Post(string values)
+        public async Task<IActionResult> Post([FromBody] AspNetUser userInput)
         {
-            var model = new AspNetUser();
-            var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
-            PopulateModel(model, valuesDict);
+            try
+            {
+                // Log the content of the incoming request for debugging
+                if (userInput == null)
+                {
+                    Console.WriteLine("Received user input: null");
+                    return BadRequest(new { message = "User input cannot be empty." });
+                }
 
-            if (!TryValidateModel(model))
-                return BadRequest(GetFullErrorMessage(ModelState));
+                var userInputJson = JsonConvert.SerializeObject(userInput, Formatting.Indented);
+                Console.WriteLine($"Received user input: {userInputJson}");
 
-            var result = _context.AspNetUsers.Add(model);
-            await _context.SaveChangesAsync();
+                // List of restricted roles (e.g., "System Administrator")
+                var restrictedRoles = new List<string> { "System Administrator" };
 
-            return Json(new { result.Entity.Id });
+                // Handle roles if provided in the user input
+                if (userInput.Roles != null && userInput.Roles.Any())
+                {
+                    foreach (var roleObject in userInput.Roles)
+                    {
+                        // Assuming each role is an object with an Id property (of type Guid)
+                        if (roleObject == null || roleObject.Id == null)
+                        {
+                            Console.WriteLine($"Invalid Role object: {roleObject}");
+                            return BadRequest(new { message = "Invalid Role object." });
+                        }
+
+                        var roleId = roleObject.Id;
+
+                        // Find the role in the database by role ID (Guid)
+                        var roleFromDb = await _context.AspNetRoles
+                            .FirstOrDefaultAsync(r => r.Id == roleId);
+
+                        if (roleFromDb == null)
+                        {
+                            // If the role doesn't exist, return an error
+                            Console.WriteLine($"Role with ID '{roleId}' not found.");
+                            return NotFound(new { message = $"Role with ID '{roleId}' not found." });
+                        }
+
+                        // Check if the role is restricted and if the user has a CompanyId
+                        if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleFromDb.Name))
+                        {
+                            // If the role is restricted and user has a CompanyId, terminate and return an error
+                            Console.WriteLine($"User has a CompanyId and role '{roleFromDb.Name}' is restricted. Terminating.");
+                            return BadRequest(new { message = "Role NOT applicable for user!" });
+                        }
+                    }
+                }
+
+                // Create an IdentityUser instance for UserManager only after role checks
+                var identityUser = new IdentityUser
+                {
+                    UserName = userInput.UserName,
+                    Email = userInput.Email,
+                    PhoneNumber = userInput.PhoneNumber,
+                };
+
+                // Password hashing
+                var passwordHasher = new PasswordHasher<IdentityUser>();
+                identityUser.PasswordHash = passwordHasher.HashPassword(identityUser, userInput.PasswordHash);
+
+                // Create the user using _userManager
+                var createResult = await _userManager.CreateAsync(identityUser);
+                if (!createResult.Succeeded)
+                {
+                    return BadRequest(new { message = "Failed to create user.", errors = createResult.Errors });
+                }
+
+                // Handle roles after user is created
+                if (userInput.Roles != null && userInput.Roles.Any())
+                {
+                    foreach (var roleObject in userInput.Roles)
+                    {
+                        var roleId = roleObject.Id;
+
+                        // Find the role in the database by role ID (Guid)
+                        var roleFromDb = await _context.AspNetRoles
+                            .FirstOrDefaultAsync(r => r.Id == roleId);
+
+                        if (roleFromDb != null)
+                        {
+                            var roleName = roleFromDb.Name;
+
+                            // Check if the role is restricted and if the user has a CompanyId
+                            if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleName))
+                            {
+                                // Skip assigning restricted roles
+                                Console.WriteLine($"User has a CompanyId and role '{roleName}' is restricted. Skipping assignment.");
+                                continue;
+                            }
+
+                            var addRoleResult = await _userManager.AddToRoleAsync(identityUser, roleName);
+
+                            if (!addRoleResult.Succeeded)
+                            {
+                                // If role assignment fails, delete the created user and return an error
+                                await _userManager.DeleteAsync(identityUser);
+                                Console.WriteLine("Role assignment failed. User deleted.");
+                                return BadRequest(new { message = "Failed to assign role." });
+                            }
+
+                            Console.WriteLine($"Role '{roleName}' assigned successfully.");
+                        }
+                    }
+                }
+
+                // Handle the company ID if provided
+                if (userInput.CompanyId.HasValue)
+                {
+                    // Update the CompanyId in the user record if it's provided
+                    var userFromDb = await _context.AspNetUsers
+                        .FirstOrDefaultAsync(u => u.UserName == identityUser.UserName);
+
+                    if (userFromDb != null)
+                    {
+                        userFromDb.CompanyId = userInput.CompanyId; // Assign the CompanyId from userInput
+                        await _context.SaveChangesAsync(); // Save changes to the database
+                        Console.WriteLine($"Company Id '{userFromDb.CompanyId}' assigned successfully.");
+                    }
+                }
+
+                return Json(new { Id = identityUser.Id });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                // Return a standardized error response
+                return StatusCode(500, new { message = "An internal server error occurred.", error = ex.Message });
+            }
         }
 
-        // Incomplete, on execution -- the UserRoles table need to be updated both userId and roleId
+
+
+
         /// <summary>
         /// Updates an existing User and its Roles Data.
         /// </summary>

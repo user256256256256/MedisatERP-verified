@@ -81,7 +81,7 @@
 		const data = { email: username, password: password }; // Use 'email' as the key
 
 		// Show loading indicator
-		Notiflix.Loading.Pulse('Authenticating...');
+		Notiflix.Loading.Dots('Authenticating...');
 
 		// Make the API call using jQuery's getJSON method
 		$.getJSON(url, data)
