@@ -44,7 +44,7 @@
         @(Html.DevExtreme().Button()
             .Text("Add New User")
             .Icon("plus")
-            .OnClick("function() { $('#userFormPopup').dxPopup('instance').show(); }")
+            .OnClick("function() { $('#userFormPopup').dxPopup('instance').show(); }") 
             .Type(ButtonType.Normal)
             .Width("100%")
             )
@@ -78,6 +78,9 @@
         .ShowBorders(true)
         .ID("gv_userList")
         .DataSource(d => d.Mvc().Controller("AspNetUsersAPI").LoadAction("Get").Key("Id")
+        .InsertAction("Post")
+        .UpdateAction("Put")
+        .DeleteAction("Delete")
         .LoadParams(new { companyId = new JS("getCompanyId") }))
         .ShowColumnLines(false)
         .ShowRowLines(true)
@@ -110,7 +113,7 @@
         )
         .Columns(columns =>
         {
-            columns.AddFor(m => m.UserName).Caption("Username").AllowEditing(true);
+            columns.AddFor(m => m.UserName).Caption("Username").AllowEditing(false);
             columns.AddFor(m => m.Email).Caption("Email").AllowEditing(false);
             columns.AddFor(m => m.EmailConfirmed).Caption("Email Confirmed").DataType(GridColumnDataType.Boolean).AllowEditing(false);
             columns.AddFor(m => m.PhoneNumberConfirmed).Caption("Phone Number Confirmed").DataType(GridColumnDataType.Boolean).AllowEditing(false);

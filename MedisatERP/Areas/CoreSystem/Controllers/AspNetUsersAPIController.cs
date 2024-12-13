@@ -301,13 +301,53 @@ namespace MedisatERP.Controllers
 
 
         [HttpDelete]
-        public async Task Delete(string key)
+        public async Task<IActionResult> Delete(string key)
         {
-            var model = await _context.AspNetUsers.FirstOrDefaultAsync(item => item.Id == key);
+            try
+            {
+                // Log the entry point with the key being used for deletion
+                Console.WriteLine($"Delete request received for user with ID: {key}");
 
-            _context.AspNetUsers.Remove(model);
-            await _context.SaveChangesAsync();
+                // Retrieve the user to delete
+                var model = await _context.AspNetUsers.FirstOrDefaultAsync(item => item.Id == key);
+
+                // Check if the user exists
+                if (model == null)
+                {
+                    // Log that the user was not found
+                    Console.WriteLine($"No user found with ID: {key}");
+                    // Return not found if the user does not exist
+                    return NotFound($"User with ID {key} not found.");
+                }
+
+                // Log that the user was found and is about to be deleted
+                Console.WriteLine($"Found user with ID: {key}. Preparing to delete.");
+
+                // Remove the user record
+                _context.AspNetUsers.Remove(model);
+
+                // Log the removal of the user
+                Console.WriteLine($"Removing user with ID: {key}");
+
+                // Save the changes to the database
+                await _context.SaveChangesAsync();
+
+                // Log successful deletion
+                Console.WriteLine($"Successfully deleted user with ID: {key}");
+
+                // Return No Content status after successful deletion
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine($"Error occurred while deleting user with ID: {key}. Error: {ex.Message}");
+
+                // Return an internal server error if an exception occurs
+                return StatusCode(500, $"An internal server error occurred: {ex.Message}");
+            }
         }
+
 
 
         private void PopulateModel(AspNetUser model, IDictionary values)

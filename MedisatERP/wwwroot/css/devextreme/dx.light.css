@@ -2500,11 +2500,11 @@
     border-color: #ddd;
 }
 .dx-button-mode-contained.dx-state-focused {
-  background-color: #ebebeb;
+  background-color: #5c636a;
   border-color: #ddd;
 }
 .dx-button-mode-contained.dx-state-active {
-    background-color: #0000;
+    background-color: #311465;
     border-color: #ddd;
     color: #fff;
 }
@@ -2821,7 +2821,7 @@
   background-color: #f5f5f5;
 }
 .dx-buttongroup-item.dx-button.dx-button-mode-contained.dx-button-normal.dx-state-focused {
-  background-color: #ebebeb;
+  background-color: #5c636a;
 }
 .dx-buttongroup-item.dx-button.dx-button-mode-contained.dx-button-normal.dx-item-selected {
   background-color: #d4d4d4;
@@ -2846,7 +2846,7 @@
   background-color: #f5f5f5;
 }
 .dx-buttongroup-item.dx-button.dx-button-mode-contained:not(.dx-item-selected).dx-button-default.dx-state-focused {
-  background-color: #ebebeb;
+  background-color: #5c636a;
 }
 .dx-buttongroup-item.dx-button.dx-button-mode-contained:not(.dx-item-selected).dx-button-default,
 .dx-buttongroup-item.dx-button.dx-button-mode-contained:not(.dx-item-selected).dx-button-default .dx-icon {
@@ -2859,7 +2859,7 @@
   background-color: #f5f5f5;
 }
 .dx-buttongroup-item.dx-button.dx-button-mode-contained:not(.dx-item-selected).dx-button-success.dx-state-focused {
-  background-color: #ebebeb;
+  background-color: #5c636a;
 }
 .dx-buttongroup-item.dx-button.dx-button-mode-contained:not(.dx-item-selected).dx-button-success,
 .dx-buttongroup-item.dx-button.dx-button-mode-contained:not(.dx-item-selected).dx-button-success .dx-icon {
@@ -2872,7 +2872,7 @@
   background-color: #f5f5f5;
 }
 .dx-buttongroup-item.dx-button.dx-button-mode-contained:not(.dx-item-selected).dx-button-danger.dx-state-focused {
-  background-color: #ebebeb;
+  background-color: #5c636a;
 }
 .dx-buttongroup-item.dx-button.dx-button-mode-contained:not(.dx-item-selected).dx-button-danger,
 .dx-buttongroup-item.dx-button.dx-button-mode-contained:not(.dx-item-selected).dx-button-danger .dx-icon {
@@ -4129,7 +4129,7 @@
 }
 .dx-overlay-shader {
   pointer-events: auto;
-  background-color: rgba(255,255,255,.8);
+  background-color: rgba(255,255,255,.1);
 }
 .dx-overlay-content {
   position: absolute;
@@ -9162,7 +9162,7 @@
   border-color: #ddd;
 }
 .dx-toolbar-menu-section .dx-button-mode-contained.dx-state-focused {
-  background-color: #ebebeb;
+  background-color: #5c636a;
   border-color: #ddd;
 }
 .dx-toolbar-menu-section .dx-button-mode-contained.dx-state-active {
@@ -19233,14 +19233,14 @@ input.dx-hidden {
 .dx-scheduler-header .dx-toolbar .dx-button.dx-item-selected,
 .dx-scheduler-header .dx-toolbar .dx-button.dx-state-focused,
 .dx-scheduler-header .dx-toolbar .dx-button.dx-state-hover {
-  background-color: #ebebeb;
+  background-color: #5c636a;
 }
 .dx-scheduler-header .dx-toolbar .dx-scheduler-navigator .dx-buttongroup .dx-button.dx-item-selected {
   background-color: #fff;
 }
 .dx-scheduler-header .dx-toolbar .dx-scheduler-navigator .dx-buttongroup .dx-button.dx-item-selected.dx-state-focused,
 .dx-scheduler-header .dx-toolbar .dx-scheduler-navigator .dx-buttongroup .dx-button.dx-item-selected.dx-state-hover {
-  background-color: #ebebeb;
+  background-color: #5c636a;
 }
 .dx-scheduler-header-panel .dx-scheduler-group-row:not(:first-child) {
   border-bottom: 1px solid rgba(221,221,221,.6);
@@ -20714,7 +20714,7 @@ input.dx-hidden {
   background-color: #f5f5f5;
 }
 .dx-htmleditor-toolbar .dx-format-active:not(.dx-color-format):not(.dx-background-format).dx-button-mode-contained.dx-state-focused {
-  background-color: #ebebeb;
+  background-color: #5c636a;
 }
 .dx-htmleditor-toolbar .dx-format-active:not(.dx-color-format):not(.dx-background-format).dx-button-mode-contained.dx-button-success {
   background-color: #5cb85c;
@@ -20964,7 +20964,7 @@ input.dx-hidden {
   margin-right: auto;
 }
 .dx-fa-button .dx-overlay-content.dx-state-hover .dx-fa-button-icon {
-  background-color: #ebebeb;
+  background-color: #5c636a;
 }
 .dx-fa-button .dx-overlay-content.dx-state-active .dx-fa-button-icon {
   background-color: #c2c2c2;
@@ -21619,13 +21619,13 @@ input.dx-hidden {
   background: #fff;
 }
 .dx-filemanager-dirs-tree.dx-treeview .dx-state-focused > .dx-treeview-item.dx-state-hover {
-  background: #ebebeb;
+  background: #5c636a;
 }
 .dx-filemanager-dirs-tree.dx-treeview .dx-state-focused > .dx-treeview-item * {
   color: #333;
 }
 .dx-filemanager-dirs-tree.dx-treeview .dx-treeview-item-without-checkbox > .dx-treeview-item.dx-filemanager-focused-item {
-  background: #ebebeb;
+  background: #5c636a;
 }
 .dx-filemanager-dirs-tree.dx-treeview .dx-treeview-item-without-checkbox > .dx-treeview-item.dx-filemanager-focused-item * {
   color: #333;

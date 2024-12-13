@@ -106,31 +106,48 @@ namespace MedisatERP.Controllers
         {
             try
             {
+                // Log the entry point with the key being used for deletion
+                Console.WriteLine($"Delete request received for Migration with ID: {key}");
+
                 // Retrieve the migration to delete
                 var model = await _context.DataMigrations.FirstOrDefaultAsync(item => item.MigrationId == key);
 
+                // Check if the model is null
                 if (model == null)
                 {
-                    // Return not found if does not exist
+                    // Log that the migration was not found
+                    Console.WriteLine($"No Migration found with ID: {key}");
+                    // Return not found if the migration does not exist
                     return NotFound($"Migration with ID {key} not found.");
                 }
 
-                // Remove the record
+                // Log the migration that was found for deletion
+                Console.WriteLine($"Found Migration with ID: {key}");
+
+                // Remove the migration record
                 _context.DataMigrations.Remove(model);
 
-                // Save changes to the database
+                // Log the removal of the migration
+                Console.WriteLine($"Removing Migration with ID: {key}");
+
+                // Save the changes to the database
                 await _context.SaveChangesAsync();
 
-                return NoContent(); // Return No Content status after successful deletion
+                // Log successful deletion
+                Console.WriteLine($"Successfully deleted Migration with ID: {key}");
 
+                return NoContent(); // Return No Content status after successful deletion
             }
             catch (Exception ex)
             {
+                // Log the exception
+                Console.WriteLine($"Error occurred while deleting Migration with ID: {key}. Error: {ex.Message}");
+
                 // Return an internal server error if an exception occurs
                 return StatusCode(500, $"An internal server error occurred: {ex.Message}");
             }
-
         }
+
 
         /// <summary>
         /// Populates the company model with the given values.

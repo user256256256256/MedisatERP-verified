@@ -102,6 +102,12 @@ namespace MedisatERP.Controllers
                     model.Address = new CompanyAddress();
                 }
 
+                // Generate a new AddressId if no AddressId is provided
+                if (model.Address.AddressId == Guid.Empty)
+                {
+                    model.Address.AddressId = Guid.NewGuid();
+                }
+
                 // If address data is provided, populate the address model
                 if (addressData != null)
                 {

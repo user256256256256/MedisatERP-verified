@@ -140,29 +140,48 @@ namespace MedisatERP.Controllers
         {
             try
             {
+                // Log the entry point with the key being used for deletion
+                Console.WriteLine($"Delete request received for Feedback with ID: {key}");
+
                 // Retrieve the feedback to delete
                 var model = await _context.Feedbacks.FirstOrDefaultAsync(item => item.FeedbackId == key);
 
+                // Check if the model is null
                 if (model == null)
                 {
-                    // Return not found if does not exist
+                    // Log that the model was not found
+                    Console.WriteLine($"No Feedback found with ID: {key}");
+                    // Return not found if the feedback does not exist
                     return NotFound($"Feedback with ID {key} not found.");
                 }
 
-                // Remove the record
+                // Log the model that was found for deletion
+                Console.WriteLine($"Found Feedback with ID: {key}");
+
+                // Remove the feedback record
                 _context.Feedbacks.Remove(model);
 
-                // Save changes to the database
+                // Log the removal of the feedback
+                Console.WriteLine($"Removing Feedback with ID: {key}");
+
+                // Save the changes to the database
                 await _context.SaveChangesAsync();
+
+                // Log successful deletion
+                Console.WriteLine($"Successfully deleted Feedback with ID: {key}");
 
                 return NoContent(); // Return No Content status after successful deletion
             }
             catch (Exception ex)
             {
+                // Log the exception
+                Console.WriteLine($"Error occurred while deleting Feedback with ID: {key}. Error: {ex.Message}");
+
                 // Return an internal server error if an exception occurs
                 return StatusCode(500, $"An internal server error occurred: {ex.Message}");
             }
         }
+
 
 
         [HttpGet]

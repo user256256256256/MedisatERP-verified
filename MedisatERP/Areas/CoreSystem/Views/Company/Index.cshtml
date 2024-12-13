@@ -349,7 +349,6 @@
         // Handle logic when the focused row changes (currently no logging)
         const rowData = e.row && e.row.data;
         compoId = rowData.CompanyId;  // Save the CompanyId of the focused row
-        console.log("Selected CompanyId:", compoId);  // Add this line to debug
         const grid = $('#gv_clientList').dxDataGrid('instance');  // Refresh the client list grid
         const logoGrid = $('#gv_companyLogo').dxDataGrid('instance');
         grid.refresh();

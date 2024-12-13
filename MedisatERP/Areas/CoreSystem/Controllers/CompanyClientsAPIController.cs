@@ -195,41 +195,56 @@ namespace MedisatERP.Controllers
         {
             try
             {
+                // Log the entry point with the key being used for deletion
+                Console.WriteLine($"Delete request received for CompanyClient with ID: {key}");
+
                 // Retrieve the company client to delete
                 var model = await _context.CompanyClients
                     .Include(c => c.Address) // Ensure Address data is eagerly loaded
                     .FirstOrDefaultAsync(item => item.ClientId == key);
 
+                // Check if the model is null
                 if (model == null)
                 {
+                    // Log that the model was not found
+                    Console.WriteLine($"No CompanyClient found with ID: {key}");
                     // Return not found if the company client does not exist
                     return NotFound($"Company client with ID {key} not found.");
                 }
 
+                // Log the model that was found for deletion
+                Console.WriteLine($"Found CompanyClient with ID: {key}. Address exists: {model.Address != null}");
+
                 // Remove the associated address, if it exists
                 if (model.Address != null)
                 {
+                    // Log the removal of the address
+                    Console.WriteLine($"Removing associated Address with ID: {model.Address.AddressId}");
                     _context.ClientAddresses.Remove(model.Address);
                 }
 
-                // Remove the company client record itself
+                // Log the removal of the company client itself
+                Console.WriteLine($"Removing CompanyClient with ID: {key}");
                 _context.CompanyClients.Remove(model);
 
                 // Save the changes to the database
                 await _context.SaveChangesAsync();
 
+                // Log successful deletion
+                Console.WriteLine($"Successfully deleted CompanyClient with ID: {key}");
+
                 return NoContent(); // Return No Content status after successful deletion
             }
             catch (Exception ex)
             {
+                // Log the exception
+                Console.WriteLine($"Error occurred while deleting CompanyClient with ID: {key}. Error: {ex.Message}");
+
                 // Return an internal server error if an exception occurs
                 return StatusCode(500, $"An internal server error occurred: {ex.Message}");
             }
-            //var model = await _context.CompanyClients.FirstOrDefaultAsync(item => item.ClientId == key);
-
-            //_context.CompanyClients.Remove(model);
-            //await _context.SaveChangesAsync();
         }
+
 
 
         [HttpGet]

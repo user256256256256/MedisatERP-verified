@@ -114,29 +114,48 @@ namespace MedisatERP.Controllers
         {
             try
             {
+                // Log the entry point with the key being used for deletion
+                Console.WriteLine($"Delete request received for Audit Log with ID: {key}");
+
                 // Retrieve the audit log to delete
                 var model = await _context.AuditLogs.FirstOrDefaultAsync(item => item.AuditLogId == key);
 
+                // Check if the model is null
                 if (model == null)
                 {
-                    // Return not found if does not exist
+                    // Log that the audit log was not found
+                    Console.WriteLine($"No Audit Log found with ID: {key}");
+                    // Return not found if the audit log does not exist
                     return NotFound($"Audit Log with ID {key} not found.");
                 }
+
+                // Log the audit log that was found for deletion
+                Console.WriteLine($"Found Audit Log with ID: {key}");
 
                 // Remove the record
                 _context.AuditLogs.Remove(model);
 
-                // Save changes to the database
+                // Log the removal of the audit log
+                Console.WriteLine($"Removing Audit Log with ID: {key}");
+
+                // Save the changes to the database
                 await _context.SaveChangesAsync();
+
+                // Log successful deletion
+                Console.WriteLine($"Successfully deleted Audit Log with ID: {key}");
 
                 return NoContent(); // Return No Content status after successful deletion
             }
             catch (Exception ex)
             {
+                // Log the exception
+                Console.WriteLine($"Error occurred while deleting Audit Log with ID: {key}. Error: {ex.Message}");
+
                 // Return an internal server error if an exception occurs
                 return StatusCode(500, $"An internal server error occurred: {ex.Message}");
             }
         }
+
 
 
         [HttpGet]
