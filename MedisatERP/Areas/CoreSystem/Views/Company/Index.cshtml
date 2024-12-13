@@ -71,7 +71,7 @@
             .AllowSorting(false)
             .CellTemplate(@<text>
             <div>
-                <img src="~/img/companyLogoImages/<%- value %>" alt="Company Logo" class="company-logo" />
+                <img src="<%- value && value.length > 0 ? '/img/companyLogoImages/' + value : '/img/companyLogoImages/defaultCompanyLogo.jpeg' %>" alt="Company Logo" class="company-logo" />
             </div>
             </text>);
 
@@ -284,27 +284,31 @@
 
 @using (Html.DevExtreme().NamedTemplate("embedded_upload_logo"))
 {
-    @(
-            Html.DevExtreme().DataGrid<Company>()
-                .ID("gv_companyLogo")
-                .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId"))
-                .ColumnAutoWidth(true)
-                .Columns(columns =>
-                {
-                    // Only show the Company Logo Column
-                    columns.AddFor(m => m.CompanyLogoFilePath)
-                        .Caption("Company Logo")
-                        .Width(200)  // Adjust the width of the column
-                        .AllowEditing(false)  // Prevent editing
-                        .AllowSorting(false)  // Disable sorting for this column since we are displaying a single image
-                        .CellTemplate(@<text>
-                        <div>
-                            <img src="~/img/companyLogoImages/<%- value %>" alt="Company Logo" class="company-logo" />
-                        </div>
-                    </text>); // Display the logo as an image
-                })
+    @(Html.DevExtreme().DataGrid<Company>()
+            .ID("gv_companyLogo")  // Set ID of the grid
+            .DataSource(d => d.Mvc()
+                .Controller("CompaniesAPI")  // Use the correct controller
+                .LoadAction("GetCompanyLogo")  // Use the correct action to get company logo
+                .Key("CompanyId")  // Define the Key to be used for the data source
+                .LoadParams(new { CompanyId = new JS("getCompanyId") }))  // Pass the CompanyId as a parameter to the LoadAction
+            .ColumnAutoWidth(true)
+            .Columns(columns =>
+            {
+                // Only show the Company Logo Column
+                columns.AddFor(m => m.CompanyLogoFilePath)
+                    .Caption("Company Logo")
+                    .Width(200)  // Adjust the width of the column
+                    .AllowEditing(false)  // Prevent editing
+                    .AllowSorting(false)  // Disable sorting for this column since we are displaying a single image
+                    .CellTemplate(@<text>
+    <div>
+        <img src="/img/companyLogoImages/<%- value %>" alt="Company Logo" class="company-logo" />
+    </div>
+</text>); // Display the logo as an image
+            })
         )
 }
+
 
 
 @(Html.DevExtreme().Popup()  // Create a popup for new user account
@@ -345,8 +349,11 @@
         // Handle logic when the focused row changes (currently no logging)
         const rowData = e.row && e.row.data;
         compoId = rowData.CompanyId;  // Save the CompanyId of the focused row
+        console.log("Selected CompanyId:", compoId);  // Add this line to debug
         const grid = $('#gv_clientList').dxDataGrid('instance');  // Refresh the client list grid
+        const logoGrid = $('#gv_companyLogo').dxDataGrid('instance');
         grid.refresh();
+        logoGrid.refresh();
     }
 
     function getCompanyId() {

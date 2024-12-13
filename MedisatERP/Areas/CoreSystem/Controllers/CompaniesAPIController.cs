@@ -448,5 +448,54 @@ namespace MedisatERP.Controllers
         {
             return string.Join(" ", modelState.SelectMany(entry => entry.Value.Errors).Select(error => error.ErrorMessage));
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCompanyLogo(Guid companyId)
+        {
+            // Log the companyId to the console to track if it's null or invalid
+            Console.WriteLine($"Received CompanyId: {companyId}");
+
+            // If CompanyId is null or invalid, we return an error response
+            if (companyId == Guid.Empty)
+            {
+                Console.WriteLine("CompanyId is empty or null");
+                return BadRequest("Unauthorized access: Invalid Company Id!");
+            }
+
+            // Fetch the company logo file path
+            var companyLogo = await _context.Companies
+                .Where(c => c.CompanyId == companyId)
+                .Select(c => c.CompanyLogoFilePath)
+                .FirstOrDefaultAsync();
+
+            // Log the logo path or default fallback
+            if (string.IsNullOrEmpty(companyLogo))
+            {
+                companyLogo = "defaultCompanyLogo.jpeg";  // Default logo if not found
+                Console.WriteLine("No logo found, using default: " + companyLogo);
+            }
+            else
+            {
+                Console.WriteLine($"Found company logo: {companyLogo}");
+            }
+
+            // Log the final data being returned
+            Console.WriteLine($"Returning logo file path: {companyLogo}");
+
+            // Return the data in the expected format for DevExtreme (including CompanyId)
+            return Json(new
+            {
+                data = new[] {
+            new {
+                CompanyId = companyId,  // Include the CompanyId as the key field
+                CompanyLogoFilePath = companyLogo
+            }
+        }
+            });
+        }
+
+
+
+
     }
 }
