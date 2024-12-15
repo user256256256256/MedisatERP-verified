@@ -52,18 +52,25 @@ namespace MedisatERP.Controllers
                 usersQuery = usersQuery.Where(u => u.CompanyId == null);
             }
 
-            // Select the necessary user fields (excluding roles, as per your requirement)
-            var users = usersQuery.Select(u => new
-            {
-                u.Id,
-                u.UserName,
-                u.Email,
-                u.PhoneNumber,
-                u.EmailConfirmed,
-                u.PhoneNumberConfirmed,
-                u.LockoutEnabled
-            })
-            .OrderBy(u => u.Id); // Sorting users by Id, adjust if necessary
+            // Select the necessary user fields, including roles
+            var users = usersQuery
+                .Select(u => new
+                {
+                    u.Id,
+                    u.UserName,
+                    u.Email,
+                    u.PhoneNumber,
+                    u.EmailConfirmed,
+                    u.PhoneNumberConfirmed,
+                    u.LockoutEnabled,
+                    u.LockoutEnd,
+                    u.AccessFailedCount,
+                    u.BioData,
+                    u.ProfileImagePath,
+                    // Generate a comma-separated list of roles
+                    CurrentRoles = string.Join(", ", u.Roles.Select(r => r.Name)), // Join roles as a comma-separated string
+                })
+                .OrderBy(u => u.Id); // Sorting users by Id, adjust if necessary
 
             // Apply filtering, sorting, and paging using DataSourceLoader
             var transformedData = await DataSourceLoader.LoadAsync(users, loadOptions);
@@ -88,6 +95,9 @@ namespace MedisatERP.Controllers
 
                 // List of restricted roles (e.g., "System Administrator")
                 var restrictedRoles = new List<string> { "System Administrator" };
+
+                // ******To do ********** //
+                // if account is just being created and role is restricted roles add account lockup enable
 
                 // Handle roles if provided in the user input
                 if (userInput.Roles != null && userInput.Roles.Any())
@@ -210,8 +220,6 @@ namespace MedisatERP.Controllers
         }
 
 
-
-
         /// <summary>
         /// Updates an existing User and its Roles Data.
         /// </summary>
@@ -223,13 +231,19 @@ namespace MedisatERP.Controllers
         {
             try
             {
-                // Retrieve the user by unique identifier and include the roles
+                Console.WriteLine($"Attempting to update user with key: {key}");
+
+                // Retrieve the user by unique identifier without including roles
                 var model = await _context.AspNetUsers
-                    .Include(u => u.Roles)  // Include the Roles collection to manage the user's roles
                     .FirstOrDefaultAsync(u => u.Id == key);
 
                 if (model == null)
+                {
+                    Console.WriteLine("User not found.");
                     return StatusCode(409, "User not found");
+                }
+
+                Console.WriteLine("User found, proceeding with updates.");
 
                 // Deserialize the incoming updated values
                 var valuesDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(values);
@@ -238,67 +252,33 @@ namespace MedisatERP.Controllers
                 Console.WriteLine("Deserialized values:");
                 Console.WriteLine(JsonConvert.SerializeObject(valuesDict, Formatting.Indented)); // Pretty-print the JSON
 
-                // Extract roles data from the request if provided
-                var rolesData = valuesDict.ContainsKey("Roles") ? valuesDict["Roles"] : null;
-
-                // If roles data is provided, update the user's roles
-                if (rolesData != null)
-                {
-                    Console.WriteLine("Received Roles data:");
-                    Console.WriteLine(JsonConvert.SerializeObject(rolesData, Formatting.Indented)); // Pretty-print roles data
-
-                    // Clear the existing roles if necessary
-                    model.Roles.Clear();
-
-                    // Loop through the role names (rolesData is expected to be an object with role names as keys)
-                    // If Roles is a string, treat it as a single role, otherwise as an array
-                    if (rolesData is string roleName)
-                    {
-                        // Handle the case where Roles is a single string (e.g., "SystemAdministrator")
-                        var role = await _context.AspNetRoles
-                            .FirstOrDefaultAsync(r => r.Name == roleName);
-
-                        if (role != null && !model.Roles.Contains(role))
-                        {
-                            model.Roles.Add(role); // Add the role to the user's roles
-                        }
-                    }
-                    else if (rolesData is JArray roleArray)
-                    {
-                        // Handle the case where Roles is an array (e.g., ["SystemAdmin", "Editor"])
-                        foreach (var roleArrayName in roleArray)  // Renamed to roleArrayName
-                        {
-                            var role = await _context.AspNetRoles
-                                .FirstOrDefaultAsync(r => r.Name == roleArrayName.ToString());
-
-                            if (role != null && !model.Roles.Contains(role))
-                            {
-                                model.Roles.Add(role); // Add the role to the user's roles
-                            }
-                        }
-                    }
-                }
-
                 // Update other user information based on the provided values
                 PopulateModel(model, valuesDict);
 
                 // Validate the updated model
                 if (!TryValidateModel(model))
+                {
+                    Console.WriteLine("Model validation failed.");
                     return BadRequest(GetFullErrorMessage(ModelState));
+                }
+                else
+                {
+                    Console.WriteLine("Model validated successfully.");
+                }
 
                 // Save the changes to the database
                 await _context.SaveChangesAsync();
+                Console.WriteLine("User updated successfully in the database.");
 
                 return Ok();
             }
             catch (Exception ex)
             {
                 // Return an internal server error if an exception occurs
+                Console.WriteLine($"Exception occurred: {ex.Message}");
                 return StatusCode(500, $"Internal Server error: {ex.Message}");
             }
         }
-
-
 
         [HttpDelete]
         public async Task<IActionResult> Delete(string key)
@@ -349,7 +329,6 @@ namespace MedisatERP.Controllers
         }
 
 
-
         private void PopulateModel(AspNetUser model, IDictionary values)
         {
             string ID = nameof(AspNetUser.Id);
@@ -367,7 +346,9 @@ namespace MedisatERP.Controllers
             string LOCKOUT_END = nameof(AspNetUser.LockoutEnd);
             string LOCKOUT_ENABLED = nameof(AspNetUser.LockoutEnabled);
             string ACCESS_FAILED_COUNT = nameof(AspNetUser.AccessFailedCount);
+            string BIO_DATA = nameof(AspNetUser.BioData);  // Add BioData to the list
 
+            // Existing property mappings
             if (values.Contains(ID))
             {
                 model.Id = Convert.ToString(values[ID]);
@@ -442,7 +423,14 @@ namespace MedisatERP.Controllers
             {
                 model.AccessFailedCount = Convert.ToInt32(values[ACCESS_FAILED_COUNT]);
             }
+
+            // New addition for BioData
+            if (values.Contains(BIO_DATA))
+            {
+                model.BioData = Convert.ToString(values[BIO_DATA]);  // Update BioData field
+            }
         }
+
 
         private T ConvertTo<T>(object value)
         {

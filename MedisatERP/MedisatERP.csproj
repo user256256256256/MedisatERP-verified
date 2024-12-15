@@ -21,7 +21,6 @@
 
     <ItemGroup>
       <Folder Include="Areas\NutritionCompany\Models\" />
-      <Folder Include="Code Bin\" />
       <Folder Include="Data\Enum\" />
     </ItemGroup>
 

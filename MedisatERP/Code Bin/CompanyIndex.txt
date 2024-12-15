@@ -1064,3 +1064,94 @@ who oversees multiple companies, would not have a CompanyId and thus is not rest
                 .Height(200)
                 )
           </div>
+
+
+
+          Common Workflow in ASP.NET Identity:
+Configure Lockout: You can configure the behavior of account lockouts in your Startup.cs file, under the ConfigureServices method, when setting up the Identity system. Example:
+
+csharp
+Copy code
+services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15); // Set lockout duration
+    options.Lockout.MaxFailedAccessAttempts = 5; // Set max failed attempts before lockout
+    options.Lockout.AllowedForNewUsers = true; // Apply lockout to new users
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+Checking Lockout: During a login attempt, the SignInManager will check if the account is locked by checking the LockoutEnabled and LockoutEnd fields. Example login check:
+
+csharp
+Copy code
+var result = await signInManager.PasswordSignInAsync(user, password, false, true);
+if (result.IsLockedOut)
+{
+    // Handle locked-out user scenario
+}
+
+More info
+public async Task<SignInResult> SignInUserAsync(string username, string password)
+{
+    var user = await _userManager.FindByNameAsync(username);
+
+    if (user == null)
+    {
+        return SignInResult.Failed;
+    }
+
+    // Check if the account is locked
+    if (user.LockoutEnabled && user.AccessFailedCount >= 3)
+    {
+        return SignInResult.LockedOut;  // User is locked out after 3 failed attempts
+    }
+
+    var result = await _signInManager.PasswordSignInAsync(user, password, false, false);
+
+    if (result.Succeeded)
+    {
+        // Reset failed count on successful login
+        user.AccessFailedCount = 0;
+        await _userManager.UpdateAsync(user);
+        return SignInResult.Success;
+    }
+    else
+    {
+        // Increment failed attempt count on unsuccessful login
+        user.AccessFailedCount++;
+        if (user.AccessFailedCount >= 3)
+        {
+            user.LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(15);  // Lockout for 15 minutes
+            user.LockoutEnabled = true;
+        }
+        await _userManager.UpdateAsync(user);
+        return SignInResult.Failed;
+    }
+}
+
+
+services.Configure<IdentityOptions>(options =>
+{
+    options.Lockout.MaxFailedAccessAttempts = 3;  // Maximum number of failed attempts
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);  // Lockout duration
+    options.Lockout.AllowedForNewUsers = true;  // Lockout applies to new users as well
+});
+
+
+Handling Concurrency Conflicts:
+
+If there is a conflict (the ConcurrencyStamp in the database doesn't match the ConcurrencyStamp in the update request), 
+a DbUpdateConcurrencyException is thrown.
+The application can catch this exception and handle it, often by prompting the user to reload the data and retry the operation.
+
+try
+{
+    // Save changes to the user
+    await _context.SaveChangesAsync();
+}
+catch (DbUpdateConcurrencyException)
+{
+    // Handle the concurrency exception, e.g., show an error message to the user
+    ModelState.AddModelError(string.Empty, "The record you attempted to edit was modified by another user.");
+}
+

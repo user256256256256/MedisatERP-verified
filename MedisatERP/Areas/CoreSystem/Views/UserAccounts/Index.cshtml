@@ -71,69 +71,133 @@
     }
 </script>
 
-<!-- DevExtreme DataGrid for User Accounts -->
+<!-- User Data Grid -->
 <div id="userGrid">
     @(
         Html.DevExtreme().DataGrid<AspNetUser>()
-        .ShowBorders(true)
-        .ID("gv_userList")
-        .DataSource(d => d.Mvc().Controller("AspNetUsersAPI").LoadAction("Get").Key("Id")
-        .InsertAction("Post")
-        .UpdateAction("Put")
-        .DeleteAction("Delete")
-        .LoadParams(new { companyId = new JS("getCompanyId") }))
-        .ShowColumnLines(false)
-        .ShowRowLines(true)
-        .RowAlternationEnabled(true)
-        .FilterRow(f => f.Visible(false))
-        .HeaderFilter(f => f.Visible(true))
-        .RemoteOperations(true)
-        .ColumnHidingEnabled(true)
-        .ColumnAutoWidth(true)
-        .Selection(s => s.Mode(SelectionMode.Multiple))
-        .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
-        .FocusedRowEnabled(true)
-        .Paging(p => p.PageSize(10))
-        .Editing(e => e
-        .AllowAdding(false)  // Disable adding new users
-        .AllowUpdating(true)  // Allow updating user details
-        .AllowDeleting(true)  // Allow deleting users
-        .UseIcons(true) // Use Icons
-        .Mode(GridEditMode.Popup)
-        .Popup(p => p
-        .Title("User Account")
-        .Height(450)
-        .ShowTitle(true)
-        .Position(pos => pos
-        .My(HorizontalAlignment.Center, VerticalAlignment.Center)
-        .At(HorizontalAlignment.Center, VerticalAlignment.Center)
-        .Of(new JS("window"))
-        )
-        )
-        )
-        .Columns(columns =>
-        {
-            columns.AddFor(m => m.UserName).Caption("Username").AllowEditing(false);
-            columns.AddFor(m => m.Email).Caption("Email").AllowEditing(false);
-            columns.AddFor(m => m.EmailConfirmed).Caption("Email Confirmed").DataType(GridColumnDataType.Boolean).AllowEditing(false);
-            columns.AddFor(m => m.PhoneNumberConfirmed).Caption("Phone Number Confirmed").DataType(GridColumnDataType.Boolean).AllowEditing(false);
-            columns.AddFor(m => m.LockoutEnabled).Caption("Account Locked").DataType(GridColumnDataType.Boolean).AllowEditing(true);
-            columns.AddFor(m => m.PhoneNumber).Caption("Phone Number").AllowEditing(false);
+                .ShowBorders(true)
+                .ID("gv_userList")
+                .DataSource(d => d.Mvc().Controller("AspNetUsersAPI").LoadAction("Get").Key("Id")
+                .InsertAction("Post")
+                .UpdateAction("Put")
+                .DeleteAction("Delete")
+                .LoadParams(new { companyId = new JS("getCompanyId") }))
+                .ShowColumnLines(false)
+                .ShowRowLines(true)
+                .RowAlternationEnabled(true)
+                .FilterRow(f => f.Visible(false))
+                .HeaderFilter(f => f.Visible(true))
+                .RemoteOperations(true)
+                .ColumnHidingEnabled(true)
+                .ColumnAutoWidth(true)
+                .Selection(s => s.Mode(SelectionMode.Multiple))
+                .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
+                .FocusedRowEnabled(true)
+                .Paging(p => p.PageSize(10))
+                .Editing(e => e
+                .AllowAdding(false)
+                .AllowUpdating(true)
+                .AllowDeleting(true)
+                .UseIcons(true)
+                .Mode(GridEditMode.Popup)
+                .Popup(p => p
+                .Title("User Account")
+                .Height(450)
+                .ShowTitle(true)
+                .Position(pos => pos
+                .My(HorizontalAlignment.Center, VerticalAlignment.Center)
+                .At(HorizontalAlignment.Center, VerticalAlignment.Center)
+                .Of(new JS("window"))
+                )
+                )
+                .Form(f => f
+                .ID("userForm")
+                .Items(items =>
+                {
+                    // Group 1: User Information
+                    items.AddGroup()
+                .Caption("User Information")
+                .ColCount(2)
+                .ColSpan(2)
+                .Items(groupItems =>
+                {
+                    groupItems.AddSimpleFor(m => m.UserName).Visible(true);
+                    groupItems.AddSimpleFor(m => m.Email).Visible(true);
+                    groupItems.AddSimpleFor(m => m.PhoneNumber).Visible(true);
+                    groupItems.AddSimpleFor(m => m.LockoutEnabled).Visible(true);
+                    groupItems.AddSimpleFor(m => m.PhoneNumberConfirmed).Visible(true);
+                    groupItems.AddSimpleFor(m => m.EmailConfirmed).Visible(true);
 
-            // Manage Button Column (for Edit/Delete)
-            columns.Add()
-            .Type(GridCommandColumnType.Buttons)
-            .Width(80)
-            .Caption("Manage")
-            .Name("ManageButton")
-            .Buttons(b =>
+                });
+
+                // Group 2: Profile Information
+                items.AddGroup()
+            .Caption("Profile Information")
+            .ColCount(2)
+            .ColSpan(2)
+            .Items(groupItems =>
             {
+                groupItems.AddSimpleFor(m => m.BioData).Visible(true);
+            });
+
+               
+            })
+            )
+            )
+            .Columns(columns =>
+            {
+                columns.AddFor(m => m.UserName).Caption("Username").AllowEditing(true);
+                columns.AddFor(m => m.Email).Caption("Email").AllowEditing(true);
+                columns.AddFor(m => m.EmailConfirmed).Caption("Email Confirmed").DataType(GridColumnDataType.Boolean).AllowEditing(true);
+                columns.AddFor(m => m.PhoneNumberConfirmed).Caption("Phone Number Confirmed").DataType(GridColumnDataType.Boolean).AllowEditing(false);
+                columns.AddFor(m => m.LockoutEnabled).Caption("Account Lock Out Enabled").DataType(GridColumnDataType.Boolean).AllowEditing(false);
+                columns.AddFor(m => m.AccessFailedCount).Caption("Access Failed Count").AllowEditing(false).DataType(GridColumnDataType.Number);                                                                                                                                       // Add LockoutEnd and AccessFailedCount columns with AllowEditing(false)
+                columns.AddFor(m => m.LockoutEnd).Caption("End Date for Locked Out Account").AllowEditing(false).DataType(GridColumnDataType.DateTime).Format("MM/dd/yyyy HH:mm"); 
+                columns.AddFor(m => m.PhoneNumber).Caption("Phone Number").AllowEditing(true);
+
+                // Display current roles as a comma-separated string
+                columns.Add()
+            .Caption("Current Roles")
+            .DataField("CurrentRoles")
+            .AllowEditing(false);
+
+                // Display userProfileLogoPath as an img using CellTemplate
+                columns.AddFor(m => m.ProfileImagePath).AllowEditing(false)
+            .Caption("Profile Image")
+            .Width(100)
+            .AllowFiltering(false)
+            .AllowSorting(false)
+            .CellTemplate(@<text>
+        <div>
+            <img src="<%- value && value.length > 0 ? '/img/userProfileImages/' + value : '/img/avatars/avatar.jpg' %>" alt="Profile Image" class="rounded-circle user-profile-img" />
+        </div>
+    </text>);
+
+                // Bio Data with wrapping and hiding overflow
+                columns.AddFor(m => m.BioData).Caption("Bio Info").AllowEditing(true)
+            .CellTemplate(@<text>
+        <div class="text-wrap text-break overflow-hidden" style="max-height: 100px; display: block;">
+            <%- value %>
+        </div>
+    </text>);
+
+                // Manage Button Column (for Edit/Delete)
+                columns.Add()
+    .Type(GridCommandColumnType.Buttons)
+    .Width(80)
+    .Caption("Manage")
+    .Name("ManageButton")
+    .Buttons(b =>
+    {
                 b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
                 b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
             });
-        })
+            })
         )
 </div>
+
+
+
 
 <!-- DevExtreme Popup for account creation -->
 <div>

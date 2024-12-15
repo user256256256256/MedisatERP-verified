@@ -125,7 +125,7 @@ public partial class MedisatErpDbContext : DbContext
 
             // Configure the new BioData property
             entity.Property(e => e.BioData)
-                .HasMaxLength(1000)  // Adjust the max length as needed
+                .HasMaxLength(500)  // Adjust the max length as needed
                 .IsRequired(false);
         });
 
