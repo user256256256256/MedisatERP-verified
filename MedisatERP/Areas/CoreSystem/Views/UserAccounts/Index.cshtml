@@ -53,7 +53,7 @@
    <div class="col-md-4 form-group">
         <!-- Manage Roles Button with a Group Icon -->
         @(Html.DevExtreme().Button()
-            .Text("Manage Roles")
+            .Text("View Roles")
             .Icon("group") 
             .OnClick("function() { $('#RolesPopup').dxPopup('instance').show(); }")
             .Type(ButtonType.Normal)
@@ -153,7 +153,7 @@
                 columns.AddFor(m => m.LockoutEnabled).Caption("Account Lock Out Enabled").DataType(GridColumnDataType.Boolean).AllowEditing(false);
                 columns.AddFor(m => m.AccessFailedCount).Caption("Access Failed Count").AllowEditing(false).DataType(GridColumnDataType.Number);                                                                                                                                       // Add LockoutEnd and AccessFailedCount columns with AllowEditing(false)
                 columns.AddFor(m => m.LockoutEnd).Caption("End Date for Locked Out Account").AllowEditing(false).DataType(GridColumnDataType.DateTime).Format("MM/dd/yyyy HH:mm"); 
-                columns.AddFor(m => m.PhoneNumber).Caption("Phone Number").AllowEditing(true);
+                columns.AddFor(m => m.PhoneNumber).Caption("Phone Number").AllowEditing(false);
 
                 // Display current roles as a comma-separated string
                 columns.Add()
@@ -195,9 +195,6 @@
             })
         )
 </div>
-
-
-
 
 <!-- DevExtreme Popup for account creation -->
 <div>
@@ -280,6 +277,7 @@
         )
 </div>
 
+<!-- DevExtreme Popup for view roles -->
 <div>
     @(Html.DevExtreme().Popup()
         .ID("RolesPopup")
@@ -289,59 +287,44 @@
         .Visible(false)
         .ShowCloseButton(true)
         .ContentTemplate(@<text>
-            <div class="card" style="padding: 20px;">
-                @(Html.DevExtreme().DataGrid<AspNetRole>() 
-                    .ShowBorders(true)
-                    .ID("gv_rolesList")
-                    .DataSource(d => d.Mvc().Controller("AspNetRolesAPI").LoadAction("Get").Key("Id")
-                    .InsertAction("Post")
-                    .UpdateAction("Put")
-                    .DeleteAction("Delete"))
-                    .ShowColumnLines(false)
-                    .ShowRowLines(true)
-                    .RowAlternationEnabled(true)
-                    .FilterRow(f => f.Visible(false))
-                    .HeaderFilter(f => f.Visible(true))
-                    .RemoteOperations(true)
-                    .ColumnHidingEnabled(true)
-                    .ColumnAutoWidth(true)
-                    .Selection(s => s.Mode(SelectionMode.Multiple))
-                    .SearchPanel(sp => sp.Visible(true).Width(250).Placeholder("Search..."))
-                    .FocusedRowEnabled(true)
-                    .Columns(columns =>
-                    {
-                        columns.AddFor(m => m.Name).AllowEditing(true);
-                    })
-                    .Editing(e => e
-                        .AllowAdding(true)
-                        .AllowUpdating(true)
-                        .AllowDeleting(true)
-                        .UseIcons(true)
-                        .Mode(GridEditMode.Popup)
-                        .Popup(p => p
-                            .Title("Role Details")
-                            .Height("auto")
-                            .Width("50%")
-                            .ShowTitle(true)
-                            .Position(pos => pos
-                                .My(HorizontalAlignment.Center, VerticalAlignment.Center)
-                                .At(HorizontalAlignment.Center, VerticalAlignment.Center)
-                                .Of(new JS("window"))
-                            )
-                        )
-                    )
-                    .Paging(p => p.PageSize(10))
-                    .RemoteOperations(true)
-                    .Summary(s => s
-                        .TotalItems(totalItems =>
-                        {
-                            totalItems.AddFor(m => m.Name).SummaryType(SummaryType.Count);
-                        })
-                    )
-                )
-            </div>
-        </text>)
-    )
+        <div class="card" style="padding: 20px;">
+            @(Html.DevExtreme().DataGrid<AspNetRole>()
+            .ShowBorders(true)
+            .ID("gv_rolesList")
+            .DataSource(d => d.Mvc().Controller("AspNetRolesAPI").LoadAction("Get").Key("Id"))
+            .ShowColumnLines(false)
+            .ShowRowLines(true)
+            .RowAlternationEnabled(true)
+            .FilterRow(f => f.Visible(false))
+            .HeaderFilter(f => f.Visible(true))
+            .RemoteOperations(true)
+            .ColumnHidingEnabled(true)
+            .ColumnAutoWidth(true)
+            .Selection(s => s.Mode(SelectionMode.Multiple))
+            .SearchPanel(sp => sp.Visible(true).Width(250).Placeholder("Search..."))
+            .FocusedRowEnabled(true)
+            .Columns(columns =>
+            {
+                columns.AddFor(m => m.Name);  // No AllowEditing here, just displaying the role name
+            })
+            .Editing(e => e
+            .AllowAdding(false)  // Disables adding new roles
+            .AllowUpdating(false)  // Disables updating roles
+            .AllowDeleting(false)  // Disables deleting roles
+            .UseIcons(false)  // Disable icons for actions
+            )
+            .Paging(p => p.PageSize(10))
+            .RemoteOperations(true)
+            .Summary(s => s
+            .TotalItems(totalItems =>
+            {
+            totalItems.AddFor(m => m.Name).SummaryType(SummaryType.Count);
+            })
+            )
+            )
+        </div>
+    </text>)
+        )
 </div>
 
 

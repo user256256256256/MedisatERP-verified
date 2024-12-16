@@ -5,6 +5,7 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "UserProfile";
+    var userId = Model.Id;
 }
 
 <div class="mb-4">
@@ -19,16 +20,19 @@
 
 <div class="section">
     <div class="container">
-        <div class="row ">
+        <div class="row">
+            <!-- User Name -->
             <div class="col-md-6 mb-3">
                 <label>User Name:</label>
                 @(Html.DevExtreme().TextBox()
                     .ID("txt_user_name")
                     .Value(Model.UserName)
                     .Width("100%")
-                    .ReadOnly(true)
+                    .ReadOnly(true) 
                     )
             </div>
+
+            <!-- Email -->
             <div class="col-md-6 mb-3">
                 <label>Email:</label>
                 @(Html.DevExtreme().TextBox()
@@ -38,6 +42,8 @@
                     .ReadOnly(true)
                     )
             </div>
+
+            <!-- Phone Number -->
             <div class="col-md-6 mb-3">
                 <label>Phone Number:</label>
                 @(Html.DevExtreme().TextBox()
@@ -47,25 +53,32 @@
                     .ReadOnly(true)
                     )
             </div>
+
+            <!-- Password -->
             <div class="col-md-6 mb-3">
                 <label>Password:</label>
                 @(Html.DevExtreme().TextBox()
                     .ID("txt_password")
                     .Mode(TextBoxMode.Password)
-                    .Value("*********")
+                    .Placeholder("Password...")
+                    .Value("")
                     .Width("100%")
                     .ReadOnly(true)
                     )
             </div>
+
+            <!-- Roles -->
             <div class="col-md-6 mb-3">
-                <label>Main Role:</label>
+                <label>Roles:</label>
                 @(Html.DevExtreme().TextBox()
                     .ID("txt_main_role")
-                    .Value(Model.Roles?.FirstOrDefault()?.Name)
+                    .Value(ViewData["Roles"]?.ToString())
                     .Width("100%")
                     .ReadOnly(true)
                     )
             </div>
+
+            <!-- Bio Data -->
             <div class="col-md-12 mb-3">
                 <label>Bio Data:</label>
                 @(Html.DevExtreme().TextArea()
@@ -76,27 +89,132 @@
                     .ReadOnly(true)
                     )
             </div>
-         
         </div>
 
+        <!-- Edit and Save Buttons -->
         <div>
-            @(Html.DevExtreme().Button()
-                .ID("btn_edit")
-                .Text("Edit")
-                .OnClick("editButtonClicked")  // Add a JavaScript click handler
-                )
+            <!-- Edit button (text will change to "Cancel" when clicked) -->
+            <button id="btn_edit" class="btn btn-primary d-inline-block" onclick="editCancelButtonClicked()">Edit</button>
+
+            <!-- Save button is initially hidden using Bootstrap's d-none class -->
+            <button id="btn_save" class="btn btn-success d-none" onclick="saveButtonClicked()">Save</button>
         </div>
 
     </div>
 </div>
 
 <script>
-    function editButtonClicked() {
-        // Enable the fields for editing
-        $("#txt_user_name").dxTextBox("option", "readOnly", false);
-        $("#txt_email").dxTextBox("option", "readOnly", false);
-        $("#txt_phone").dxTextBox("option", "readOnly", false);
-        $("#txt_password").dxTextBox("option", "readOnly", false);
-        $("#txt_bio_data").dxTextArea("option", "readOnly", false);
+
+        // Track the original values of the fields
+        let originalValues = {};
+
+        // When the Edit/Cancel button is clicked
+        function editCancelButtonClicked() {
+            if ($("#btn_edit").text() === "Edit") {
+                // Switch to Edit mode
+                // Store the original values of the fields before editing
+                originalValues.userName = $("#txt_user_name").dxTextBox("option", "value");
+                originalValues.email = $("#txt_email").dxTextBox("option", "value");
+                originalValues.phoneNumber = $("#txt_phone").dxTextBox("option", "value");
+                originalValues.password = $("#txt_password").dxTextBox("option", "value");
+                originalValues.bioData = $("#txt_bio_data").dxTextArea("option", "value");
+
+                // Enable the fields for editing
+                $("#txt_user_name").dxTextBox("option", "readOnly", false);
+                $("#txt_email").dxTextBox("option", "readOnly", false);
+                $("#txt_phone").dxTextBox("option", "readOnly", false);
+                $("#txt_password").dxTextBox("option", "readOnly", false);
+                $("#txt_bio_data").dxTextArea("option", "readOnly", false);
+
+                // Show the Save button, hide the Edit button
+                $("#btn_save").removeClass("d-none").addClass("d-inline-block");
+
+                // Change Edit button text to Cancel and add danger color (Bootstrap)
+                $("#btn_edit").text("Cancel").removeClass("btn-primary").addClass("btn-danger");
+            } else {
+                // Switch back to Cancel mode, revert changes
+                cancelButtonClicked();
+            }
+        }
+
+    function saveButtonClicked() {
+        // Collect the updated data from the fields
+        var updatedUserData = {
+            UserName: $("#txt_user_name").dxTextBox("option", "value"),
+            
+        };
+
+        // Convert the updatedUserData object to a query string
+        // var queryString = $.param(updatedUserData);
+
+        // Convert the updatedUserData object to a JSON string
+        var jsonString = JSON.stringify(updatedUserData);
+
+        // The userId should be set correctly here
+        var userId = '@Model.Id';  // Assuming @Model.Id contains the correct user ID
+
+        console.log("Sending data:", {
+            key: userId,
+            values: updatedUserData  // Send the object directly instead of a string
+        });
+
+        // Show loading indicator with Notiflix
+        Notiflix.Loading.Dots('Saving your profile...');
+
+        // Make the AJAX request to save the user data (excluding roles)
+        $.ajax({
+            url: `/api/AspNetUsersAPI/Put?key=${encodeURIComponent(userId)}&values=${encodeURIComponent(jsonString)}`,  // Include the userId and data as URL parameters
+            method: 'PUT',
+            contentType: 'application/json',
+            success: function (response) {
+                // Remove the loading indicator
+                Notiflix.Loading.Remove(500);
+
+                // Since the method returns Ok(), we can assume the operation was successful if we reach here
+                Notiflix.Report.Success('Profile Updated', 'Your profile has been successfully updated.', 'OK');
+
+                // After saving, switch back to read-only mode and reset button
+                switchToReadOnly();
+            },
+            error: function (jqxhr, textStatus, error) {
+                // Remove the loading indicator on failure
+                Notiflix.Loading.Remove(500);
+
+                // Notify failure with Notiflix
+                Notiflix.Report.Failure('Profile Update Failed', 'An error occurred while saving your profile: ' + textStatus + ', ' + error, 'OK');
+            }
+        });
     }
+
+
+
+
+        // Cancel the edit (revert changes to original values)
+        function cancelButtonClicked() {
+            // Revert the fields to their original values
+            $("#txt_user_name").dxTextBox("option", "value", originalValues.userName);
+            $("#txt_email").dxTextBox("option", "value", originalValues.email);
+            $("#txt_phone").dxTextBox("option", "value", originalValues.phoneNumber);
+            $("#txt_password").dxTextBox("option", "value", originalValues.password);
+            $("#txt_bio_data").dxTextArea("option", "value", originalValues.bioData);
+
+            // Switch the fields back to read-only mode
+            switchToReadOnly();
+        }
+
+        // Helper function to switch fields back to read-only mode
+        function switchToReadOnly() {
+            $("#txt_user_name").dxTextBox("option", "readOnly", true);
+            $("#txt_email").dxTextBox("option", "readOnly", true);
+            $("#txt_phone").dxTextBox("option", "readOnly", true);
+            $("#txt_password").dxTextBox("option", "readOnly", true);
+            $("#txt_bio_data").dxTextArea("option", "readOnly", true);
+
+            // Restore the Edit button with its original text, hide Save button
+            $("#btn_edit").removeClass("d-none").addClass("d-inline-block").text("Edit").removeClass("btn-danger").addClass("btn-primary");
+            $("#btn_save").addClass("d-none").removeClass("d-inline-block");
+        }
+  
 </script>
+
+

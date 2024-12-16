@@ -72,6 +72,11 @@ app.MapControllerRoute(
     name: "areaRoute",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
+// Map the API controller route for the LogoutAPI
+app.MapControllerRoute(
+    name: "LogoutAPI",
+    pattern: "api/{controller}/{action}");
+
 // Maps routes for the "NutritionCompany" area, allowing a specific controller and action.
 // The {companyId:guid?} is an optional GUID parameter for company-specific routing.
 app.MapAreaControllerRoute(

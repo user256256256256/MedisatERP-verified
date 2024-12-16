@@ -195,6 +195,46 @@
 
         </nav>
 
+        <!-- Logout function -->
+        <script>
+            function Logout() {
+                var encodedUserId = '@encodedUserId';  // Assuming this is populated with the user ID from Razor.
+
+                // Show loading indicator with Notiflix
+                Notiflix.Loading.Dots('Logging out...');
+
+                $.ajax({
+                    url: '/api/LogoutAPI/LogoutCheck',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(encodedUserId),  // Send the userId as a plain string in the request body
+                    success: function (json) {
+                        // Remove loading indicator
+                        Notiflix.Loading.Remove(500);
+
+                        if (json.success) {                           
+                            // Redirect to the root URL or provided redirect URL
+                            window.location.href = json.redirectUrl || '/';
+                        } else {
+                            // Notify failure with Notiflix
+                            Notiflix.Report.Failure('Logout Failed', json.message, 'OK');
+                        }
+                    },
+                    error: function (jqxhr, textStatus, error) {
+                        // Remove loading indicator on failure
+                        Notiflix.Loading.Remove(500);
+
+                        // Notify failure with Notiflix
+                        Notiflix.Report.Failure('Logout Failed', 'An error occurred while logging out: ' + textStatus + ', ' + error, 'OK');
+                    }
+                });
+            }
+        </script>
+
+
+
+
+
         <!-- Main Content Area -->
         <main class="content">
             <div class="container-fluid p-0">

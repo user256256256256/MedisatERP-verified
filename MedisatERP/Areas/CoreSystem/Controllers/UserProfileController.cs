@@ -30,9 +30,10 @@ namespace MedisatERP.Areas.CoreSystem.Controllers
                 // Decode the userId from the URL
                 var decodedUserId = HashingHelper.DecodeString(userId);
 
-                // Retrieve the user using the decodedUserId from the db
+                // Retrieve the user and include the roles (eager loading)
                 var user = await _dbContext.AspNetUsers
                                            .Where(c => c.Id == decodedUserId)
+                                           .Include(u => u.Roles)  // Include roles
                                            .FirstOrDefaultAsync();
 
                 if (user == null)
@@ -40,8 +41,13 @@ namespace MedisatERP.Areas.CoreSystem.Controllers
                     return NotFound(); // Return a 404 if the user is not found
                 }
 
-                // Pass the user model to the view, which will be available in the layout
-                return View(user);
+                // Convert roles to a comma-separated string
+                var rolesString = string.Join(", ", user.Roles.Select(r => r.Name));
+
+                // Pass the user and the roles string directly to the view
+                ViewData["Roles"] = rolesString;
+
+                return View(user);  // Passing the user model to the view
             }
             catch (FormatException)
             {
@@ -49,5 +55,6 @@ namespace MedisatERP.Areas.CoreSystem.Controllers
                 return BadRequest("Invalid User ID format.");
             }
         }
+
     }
 }

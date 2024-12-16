@@ -44,47 +44,47 @@ namespace MedisatERP.Controllers
             return Json(await DataSourceLoader.LoadAsync(aspnetroles, loadOptions));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Post(string values)
-        {
-            var model = new AspNetRole();
-            var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
-            PopulateModel(model, valuesDict);
+        //[HttpPost]
+        //public async Task<IActionResult> Post(string values)
+        //{
+        //    var model = new AspNetRole();
+        //    var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
+        //    PopulateModel(model, valuesDict);
 
-            if (!TryValidateModel(model))
-                return BadRequest(GetFullErrorMessage(ModelState));
+        //    if (!TryValidateModel(model))
+        //        return BadRequest(GetFullErrorMessage(ModelState));
 
-            var result = _context.AspNetRoles.Add(model);
-            await _context.SaveChangesAsync();
+        //    var result = _context.AspNetRoles.Add(model);
+        //    await _context.SaveChangesAsync();
 
-            return Json(new { result.Entity.Id });
-        }
+        //    return Json(new { result.Entity.Id });
+        //}
 
-        [HttpPut]
-        public async Task<IActionResult> Put(string key, string values)
-        {
-            var model = await _context.AspNetRoles.FirstOrDefaultAsync(item => item.Id == key);
-            if (model == null)
-                return StatusCode(409, "Object not found");
+        //[HttpPut]
+        //public async Task<IActionResult> Put(string key, string values)
+        //{
+        //    var model = await _context.AspNetRoles.FirstOrDefaultAsync(item => item.Id == key);
+        //    if (model == null)
+        //        return StatusCode(409, "Object not found");
 
-            var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
-            PopulateModel(model, valuesDict);
+        //    var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
+        //    PopulateModel(model, valuesDict);
 
-            if (!TryValidateModel(model))
-                return BadRequest(GetFullErrorMessage(ModelState));
+        //    if (!TryValidateModel(model))
+        //        return BadRequest(GetFullErrorMessage(ModelState));
 
-            await _context.SaveChangesAsync();
-            return Ok();
-        }
+        //    await _context.SaveChangesAsync();
+        //    return Ok();
+        //}
 
-        [HttpDelete]
-        public async Task Delete(string key)
-        {
-            var model = await _context.AspNetRoles.FirstOrDefaultAsync(item => item.Id == key);
+        //[HttpDelete]
+        //public async Task Delete(string key)
+        //{
+        //    var model = await _context.AspNetRoles.FirstOrDefaultAsync(item => item.Id == key);
 
-            _context.AspNetRoles.Remove(model);
-            await _context.SaveChangesAsync();
-        }
+        //    _context.AspNetRoles.Remove(model);
+        //    await _context.SaveChangesAsync();
+        //}
 
 
         private void PopulateModel(AspNetRole model, IDictionary values)

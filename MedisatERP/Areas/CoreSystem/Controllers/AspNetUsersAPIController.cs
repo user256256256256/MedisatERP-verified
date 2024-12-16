@@ -231,6 +231,9 @@ namespace MedisatERP.Controllers
         {
             try
             {
+                var rawData = await new StreamReader(Request.Body).ReadToEndAsync();
+                Console.WriteLine($"Raw Request Data: {rawData}");
+
                 Console.WriteLine($"Attempting to update user with key: {key}");
 
                 // Retrieve the user by unique identifier without including roles
