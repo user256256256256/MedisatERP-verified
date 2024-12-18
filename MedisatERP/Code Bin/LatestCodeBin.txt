@@ -294,3 +294,59 @@ system, making claims a crucial part of your application's **security** and **ac
                 return StatusCode(500, new { message = "An internal server error occurred.", error = ex.Message });
             }
         }
+
+
+
+        You're correct that there are several other events in DevExtreme's DataGrid, such as `onEditingPrepared`, `onEditingPreparing`, `onEditingCanceled`, and `onEditingCanceling`, which may be more appropriate depending on the specific behavior you want to achieve.
+
+### Let's clarify the difference between `onEditingStart` and these other events:
+
+1. **`onEditingStart`**:  
+   - This event is triggered when the user starts editing a row. This is an ideal place to set up initial data or perform some validation before editing starts. 
+   - However, it may not be the best place to modify data dynamically like `NormalizedUserName` or `NormalizedEmail`, since the user is already interacting with the grid.
+   
+2. **`onEditingPrepared`**:  
+   - This event is triggered after the editor for a particular cell is prepared. This might be a good place to adjust the value of `NormalizedUserName` or `NormalizedEmail` dynamically as the user interacts with the editor, but not yet after the user submits the edit.
+
+3. **`onEditingPreparing`**:  
+   - This event occurs before the row enters the edit mode, allowing you to modify or prevent the edit action. It can be used for validating or altering the initial values right before the editor opens, but it’s not typically used for dynamically adjusting data as in your scenario.
+
+4. **`onEditingCanceled` / `onEditingCanceling`**:
+   - These events are triggered when the editing operation is canceled, either because the user pressed cancel or the operation was programmatically canceled. They are not relevant for your use case, as they happen after the user exits editing.
+
+### So, what's the right choice here?
+
+**`onEditingPrepared`** might be the most appropriate event in this scenario to dynamically update the `NormalizedUserName` and `NormalizedEmail` values as the user begins editing. This event fires after the editor is prepared, but before the user starts editing, which means you can modify the values before the editing process is fully activated.
+
+### Updated Approach using `onEditingPrepared`:
+
+```html
+<script>
+    // Update NormalizedUserName and NormalizedEmail when editing starts
+    $("#gv_userList").dxDataGrid({
+        onEditingPrepared: function (e) {
+            // Ensure the NormalizedUserName is updated when UserName is changed
+            if (e.column.dataField === "UserName" && e.value) {
+                e.component.cellValue(e.rowIndex, "NormalizedUserName", e.value.toUpperCase());
+            }
+            // Ensure the NormalizedEmail is updated when Email is changed
+            if (e.column.dataField === "Email" && e.value) {
+                e.component.cellValue(e.rowIndex, "NormalizedEmail", e.value.toUpperCase());
+            }
+        }
+    });
+</script>
+```
+
+### Explanation of this approach:
+
+- **`onEditingPrepared`**:
+   - This event is fired right after the editor is initialized but before the user starts editing the cell. This is the perfect moment to manipulate or initialize any data before the user interacts with the grid.
+   - We check if the column being edited is `UserName` or `Email`, and then we use `e.component.cellValue` to set the value for the corresponding `NormalizedUserName` or `NormalizedEmail` columns (which are hidden from the user).
+
+### Why is this approach better?
+
+- **Non-intrusive**: You don't have to rely on user actions to update the `NormalizedUserName` and `NormalizedEmail` values after they start editing. Instead, the values are updated right when the editor is ready.
+- **Avoids unnecessary user interaction**: The user doesn't have to perform additional actions to ensure `NormalizedUserName` and `NormalizedEmail` are updated, which improves the user experience.
+
+This should be a cleaner, more appropriate approach for updating these fields without involving the user directly in the process.

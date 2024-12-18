@@ -140,6 +140,8 @@ namespace MedisatERP.Controllers
                     UserName = userInput.UserName,
                     Email = userInput.Email,
                     PhoneNumber = userInput.PhoneNumber,
+                    NormalizedUserName = userInput.NormalizedUserName,
+                    NormalizedEmail = userInput.NormalizedEmail
                 };
 
                 // Password hashing

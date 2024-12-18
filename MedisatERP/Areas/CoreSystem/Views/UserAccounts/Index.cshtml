@@ -155,6 +155,11 @@
                 columns.AddFor(m => m.LockoutEnd).Caption("End Date for Locked Out Account").AllowEditing(false).DataType(GridColumnDataType.DateTime).Format("MM/dd/yyyy HH:mm"); 
                 columns.AddFor(m => m.PhoneNumber).Caption("Phone Number").AllowEditing(false);
 
+                // Normalized uneccessary to be visible --Used to listen to UserName / Email changes
+                columns.AddFor(m => m.NormalizedUserName).Visible(false);
+                columns.AddFor(m => m.NormalizedEmail).Visible(false);
+
+
                 // Display current roles as a comma-separated string
                 columns.Add()
             .Caption("Current Roles")
@@ -192,7 +197,11 @@
                 b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
                 b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
             });
+
+
             })
+        .OnRowUpdating("onRowUpdating") // Bind the editor prepared event
+        
         )
 </div>
 
@@ -337,17 +346,25 @@
     var phone = $("#txt_phone").dxTextBox('option', 'value');
     var email = $("#txt_email").dxTextBox('option', 'value');
     var role = $("#txt_new_role").dxSelectBox('option', 'value'); // Role ID
-    var companyId = $("#txt_new_comp").dxSelectBox('option', 'value'); // Company ID --Only if applicable 
+    var companyId = $("#txt_new_comp").dxSelectBox('option', 'value'); // Company ID --Only if applicable
+    
+    // Capitalized for NormalizedUserName and NormalizedEmail
+    var normalizedUserName = userName.toUpperCase();
+    var normalizedEmail = email.toUpperCase();
+
 
     // Prepare the data to be sent as an AspNetUser object
     var data = {
         UserName: userName,
+        NormalizedUserName: normalizedUserName,
         PasswordHash: password,
         PhoneNumber: phone,
         Email: email,
+        NormalizedEmail: normalizedEmail,
         Roles: [{ Id: role }], // Send roles as an array of objects, each containing an Id
-        CompanyId: companyId 
+        CompanyId: companyId,
     };
+
 
     // Log the object being sent to the console
     console.log("Data being sent to server:", JSON.stringify(data));
@@ -403,15 +420,36 @@
     });
 }
 
-// Function to clear form fields
-function clearForm() {
-    // Reset all input fields to empty or default values
-    $("#txt_user_name").dxTextBox('option', 'value', '');
-    $("#txt_password").dxTextBox('option', 'value', '');
-    $("#txt_phone").dxTextBox('option', 'value', '');
-    $("#txt_email").dxTextBox('option', 'value', '');
-    $("#txt_new_role").dxSelectBox('option', 'value', null); // Reset role selection to null or default value
-    $("#txt_new_comp").dxSelectBox('option', 'value', null); // Reset company selection to null or default value
-}
+    // Function to clear form fields
+    function clearForm() {
+        // Reset all input fields to empty or default values
+        $("#txt_user_name").dxTextBox('option', 'value', '');
+        $("#txt_password").dxTextBox('option', 'value', '');
+        $("#txt_phone").dxTextBox('option', 'value', '');
+        $("#txt_email").dxTextBox('option', 'value', '');
+        $("#txt_new_role").dxSelectBox('option', 'value', null); // Reset role selection to null or default value
+        $("#txt_new_comp").dxSelectBox('option', 'value', null); // Reset company selection to null or default value
+    }
+
+    // Ensuring NormalizedUserName & NormalizedEmail are Updated 
+    function onRowUpdating(e) {
+        // Check if UserName is being updated and is not null or empty
+        if (e.newData.UserName && e.newData.UserName !== e.oldData.UserName) {
+            // Normalize the UserName and update NormalizedUserName
+            e.newData.NormalizedUserName = e.newData.UserName.toUpperCase();
+        }
+
+        // Check if Email is being updated and is not null or empty
+        if (e.newData.Email && e.newData.Email !== e.oldData.Email) {
+            // Normalize the Email and update NormalizedEmail
+            e.newData.NormalizedEmail = e.newData.Email.toUpperCase();
+        }
+
+        // Log the new data to confirm the update
+        console.log("Updated data:", e.newData);
+    }
+
+
+   
 
 </script>
