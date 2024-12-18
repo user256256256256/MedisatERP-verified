@@ -227,16 +227,45 @@ namespace MedisatERP.Controllers
                     return NotFound($"Company with ID {key} not found.");
                 }
 
-                // Remove the associated address, if it exists
+                // Step 1: Retrieve the current logo file path from the database
+                string currentLogoFilePath = model.CompanyLogoFilePath;  // Fetch the current logo file name from DB (e.g., "oldLogo.jpg")
+
+                // Step 2: Check if the logo exists and delete it if necessary
+                if (!string.IsNullOrEmpty(currentLogoFilePath))
+                {
+                    // Ensure the folder path where logos are stored
+                    string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "companyLogoImages");
+
+                    // Step 3: Construct the full path for the current logo file
+                    string currentLogoFullPath = Path.Combine(folderPath, currentLogoFilePath);
+
+                    // Step 4: Delete the existing logo file if it exists
+                    if (System.IO.File.Exists(currentLogoFullPath))
+                    {
+                        try
+                        {
+                            Console.WriteLine($"Deleting old logo file: {currentLogoFullPath}");
+                            System.IO.File.Delete(currentLogoFullPath);  // Delete the old logo file
+                            Console.WriteLine("Old logo file deleted successfully.");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error while deleting the old logo file: {ex.Message}");
+                            // Optionally, log the error and continue with the company deletion
+                        }
+                    }
+                }
+
+                // Step 5: Remove the associated address, if it exists
                 if (model.Address != null)
                 {
                     _context.CompanyAddresses.Remove(model.Address);
                 }
 
-                // Remove the company record itself
+                // Step 6: Remove the company record itself
                 _context.Companies.Remove(model);
 
-                // Save the changes to the database
+                // Step 7: Save the changes to the database
                 await _context.SaveChangesAsync();
 
                 return NoContent(); // Return No Content status after successful deletion
@@ -249,60 +278,81 @@ namespace MedisatERP.Controllers
         }
 
 
-        // Update the UploadLogo method to use IFormFile
-        [HttpPost]
-        public async Task<ActionResult> UploadLogo(IFormFile companyLogo)
+        [HttpPut]
+        public async Task<ActionResult> UploadLogo(string companyId, IFormFile companyLogo)
         {
             // Log the start of the method
-            Console.WriteLine("UploadLogo method started.");
+            Console.WriteLine("UploadLogo method started for CompanyId: " + companyId);
 
             if (companyLogo != null && companyLogo.Length > 0)
             {
-                Console.WriteLine("File received: " + companyLogo.FileName);
+                // Step 1: Retrieve the current logo file path from the database using companyId
+                string currentLogoFilePath = GetCurrentLogoFilePath(companyId);  // This should fetch the current file name from DB (e.g., "oldLogo.jpg")
 
-                // Generate a unique name for the image file to avoid overwriting
-                string fileName = Path.GetFileName(companyLogo.FileName);
-                Console.WriteLine("Generated file name: " + fileName);
-
-                // Determine the folder path to store the image
+                // Step 2: Ensure the folder path where logos are stored
                 string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "companyLogoImages");
-                Console.WriteLine("Folder path: " + folderPath);
 
-                // Ensure the directory exists
-                if (!Directory.Exists(folderPath))
+                // Step 3: Check if there is a valid current logo file path, and delete the existing logo if it exists
+                if (!string.IsNullOrEmpty(currentLogoFilePath))
                 {
-                    Console.WriteLine("Directory does not exist. Creating directory...");
-                    Directory.CreateDirectory(folderPath);
+                    string currentLogoFullPath = Path.Combine(folderPath, currentLogoFilePath);
+
+                    // Step 4: Delete the existing logo file if it exists
+                    if (System.IO.File.Exists(currentLogoFullPath))
+                    {
+                        try
+                        {
+                            Console.WriteLine("Deleting old logo file: " + currentLogoFullPath);
+                            System.IO.File.Delete(currentLogoFullPath);  // Delete the old logo
+                            Console.WriteLine("Old logo file deleted.");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error while deleting old file: " + ex.Message);
+                            return StatusCode(500, new { error = "Error while deleting the old file: " + ex.Message });
+                        }
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("Directory already exists.");
+                    Console.WriteLine("No current logo file path found. Skipping logo deletion.");
                 }
 
-                // Combine the folder path and file name to create the full file path
-                string filePath = Path.Combine(folderPath, fileName);
-                Console.WriteLine("Full file path: " + filePath);
+                // Step 5: Generate a new unique file name for the logo to avoid conflicts
+                string newFileName = $"{companyId}_{Path.GetFileName(companyLogo.FileName)}";  // You can change the naming logic as per your needs
 
-                // Save the file to the server
+                // Step 6: Construct the full path for the new logo
+                string newLogoFilePath = Path.Combine(folderPath, newFileName);
+
+                // Step 7: Save the new logo file to the server
                 try
                 {
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    using (var fileStream = new FileStream(newLogoFilePath, FileMode.Create))
                     {
-                        Console.WriteLine("Saving file to the server...");
+                        Console.WriteLine("Saving new logo file to the server...");
                         await companyLogo.CopyToAsync(fileStream);
-                        Console.WriteLine("File saved successfully.");
+                        Console.WriteLine("New logo file saved successfully.");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error while saving the file: " + ex.Message);
-                    return Json(new { error = "Error while saving the file: " + ex.Message });
+                    Console.WriteLine("Error while saving the new file: " + ex.Message);
+                    return StatusCode(500, new { error = "Error while saving the new file: " + ex.Message });
                 }
 
-                // Return the relative path to be stored in the database
-                string relativeFilePath = "../../img/companyLogoImages/" + fileName;
-                Console.WriteLine("File saved successfully. Returning relative path: " + relativeFilePath);
+                // Step 8: Update the company's logo file path in the database with the new file name
+                bool updateSuccess = UpdateCompanyLogoFilePath(companyId, newFileName);
+                if (!updateSuccess)
+                {
+                    Console.WriteLine("Error while updating the company logo path in the database.");
+                    return StatusCode(500, new { error = "Error while updating the company logo path in the database." });
+                }
 
+                // Step 9: Return the relative file path 
+                string relativeFilePath = $"../../img/companyLogoImages/{newFileName}";
+                Console.WriteLine("New logo file saved successfully. Returning relative path: " + relativeFilePath);
+
+                // Return success response with the relative file path
                 return Json(new { filePath = relativeFilePath });
             }
             else
@@ -312,6 +362,150 @@ namespace MedisatERP.Controllers
 
             return Json(new { error = "No file uploaded" });
         }
+
+
+        // Method to retrieve the current logo file path from the database 
+        private string GetCurrentLogoFilePath(string companyId)
+        {
+            // Convert the companyId from string to Guid
+            if (Guid.TryParse(companyId, out Guid companyIdGuid))
+            {
+                // Find the company by CompanyId (Guid)
+                var company = _context.Companies.FirstOrDefault(c => c.CompanyId == companyIdGuid);
+
+                // Check if the company exists
+                if (company != null)
+                {
+                    Console.WriteLine($"Retrieved company logo path: {company.CompanyLogoFilePath}");
+                    // Return the CompanyLogoFilePath if found
+                    return company.CompanyLogoFilePath;
+                }
+                else
+                {
+                    // Handle the case when the company is not found
+                    return null;
+                }
+            }
+            else
+            {
+                // If the companyId is not valid, return null or handle error as needed
+                Console.WriteLine("Invalid companyId format.");
+                return null;
+            }
+        }
+
+        // Method to update the company's logo path in the database
+        private bool UpdateCompanyLogoFilePath(string companyId, string newFileName)
+        {
+            // Convert the companyId from string to Guid
+            if (Guid.TryParse(companyId, out Guid companyIdGuid))
+            {
+                // Find the company by CompanyId (Guid)
+                var company = _context.Companies.FirstOrDefault(c => c.CompanyId == companyIdGuid);
+
+                // Check if the company exists
+                if (company != null)
+                {
+                    try
+                    {
+                        // Update the CompanyLogoFilePath with the new file name
+                        company.CompanyLogoFilePath = newFileName;
+
+                        // Save changes to the database
+                        _context.SaveChanges();
+
+                        // Log success
+                        Console.WriteLine("Successfully updated the company logo file path in the database.");
+
+                        // Return true indicating the update was successful
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the error and return false if there's an issue
+                        Console.WriteLine("Error while updating the company logo file path: " + ex.Message);
+                        return false;
+                    }
+                }
+                else
+                {
+                    // If the company doesn't exist, log the error
+                    Console.WriteLine("Company not found in the database.");
+                    return false;
+                }
+            }
+            else
+            {
+                // If the companyId is invalid, log the error
+                Console.WriteLine("Invalid companyId format.");
+                return false;
+            }
+        }
+
+
+        // Update the UploadLogo method to use IFormFile
+        //[HttpPost]
+        //public async Task<ActionResult> UploadLogo(IFormFile companyLogo)
+        //{
+        //    // Log the start of the method
+        //    Console.WriteLine("UploadLogo method started.");
+
+        //    if (companyLogo != null && companyLogo.Length > 0)
+        //    {
+        //        Console.WriteLine("File received: " + companyLogo.FileName);
+
+        //        // Generate a unique name for the image file to avoid overwriting
+        //        string fileName = Path.GetFileName(companyLogo.FileName);
+        //        Console.WriteLine("Generated file name: " + fileName);
+
+        //        // Determine the folder path to store the image
+        //        string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "companyLogoImages");
+        //        Console.WriteLine("Folder path: " + folderPath);
+
+        //        // Ensure the directory exists
+        //        if (!Directory.Exists(folderPath))
+        //        {
+        //            Console.WriteLine("Directory does not exist. Creating directory...");
+        //            Directory.CreateDirectory(folderPath);
+        //        }
+        //        else
+        //        {
+        //            Console.WriteLine("Directory already exists.");
+        //        }
+
+        //        // Combine the folder path and file name to create the full file path
+        //        string filePath = Path.Combine(folderPath, fileName);
+        //        Console.WriteLine("Full file path: " + filePath);
+
+        //        // Save the file to the server
+        //        try
+        //        {
+        //            using (var fileStream = new FileStream(filePath, FileMode.Create))
+        //            {
+        //                Console.WriteLine("Saving file to the server...");
+        //                await companyLogo.CopyToAsync(fileStream);
+        //                Console.WriteLine("File saved successfully.");
+        //            }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            Console.WriteLine("Error while saving the file: " + ex.Message);
+        //            return Json(new { error = "Error while saving the file: " + ex.Message });
+        //        }
+
+        //        // Return the relative path to be stored in the database
+        //        string relativeFilePath = "../../img/companyLogoImages/" + fileName;
+        //        Console.WriteLine("File saved successfully. Returning relative path: " + relativeFilePath);
+
+        //        return Json(new { filePath = relativeFilePath });
+        //    }
+        //    else
+        //    {
+        //        Console.WriteLine("No file uploaded or file is empty.");
+        //    }
+
+        //    return Json(new { error = "No file uploaded" });
+        //}
 
 
         /// <summary>
@@ -499,9 +693,5 @@ namespace MedisatERP.Controllers
         }
             });
         }
-
-
-
-
     }
 }

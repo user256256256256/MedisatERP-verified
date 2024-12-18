@@ -80,6 +80,7 @@
             .Type(GridCommandColumnType.Buttons)
             .Width(80)
             .Caption("Profile")
+            .Name("ProfileButton")
             .Buttons(b =>
             {
                 b.Add()
@@ -99,7 +100,24 @@
             {
                 b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
                 b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
+                
             });
+
+            // Select Company Colum Button
+            columns.Add()
+            .Type(GridCommandColumnType.Buttons)
+            .Width(80)
+            .Caption("Select")
+            .Name("SelectButton")
+            .Buttons(b =>
+            {
+                b.Add()
+                    .Name("Select")
+                    .Hint("Select Company")
+            .Icon("fas fa-eye") // Use an appropriate icon, like checkmark
+                    .OnClick("onSelectCompany"); // Event handler for when the button is clicked
+            });
+
             })
         .Selection(s => s.Mode(SelectionMode.Multiple))
         .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
@@ -206,17 +224,17 @@
             {
                 tab.Add()  // Add the first tab
                     .Title("CLIENTS")  // Set the title of the tab
-                    .Icon("columnchooser")  // Set the icon for the tab
+                    .Icon("fas fa-users")  // Set the icon for the tab
                     .Template(new TemplateName("embedded_clients"));  // Set the template for the tab content
 
                 tab.Add()  // Add the second tab
                     .Title("SUBSCRIPTION")  // Set the title of the tab
-                    .Icon("bulletlist")  // Set the icon for the tab
+                    .Icon("fas fa-credit-card")  // Set the icon for the tab
                     .Template(new TemplateName("embedded_new_payment"));  // Set the template for the tab content
 
                 tab.Add()  // Add the third tab
                     .Title("Upload Company Logo")  // Set the title of the tab
-                    .Icon("paste")  // Set the icon for the tab
+                    .Icon("fas fa-upload")  // Set the icon for the tab
                     .Template(new TemplateName("embedded_upload_logo"));  // Set the template for the tab content
             })
         )
@@ -284,64 +302,78 @@
 
 @using (Html.DevExtreme().NamedTemplate("embedded_upload_logo"))
 {
+   <div>
     @(Html.DevExtreme().DataGrid<Company>()
-            .ID("gv_companyLogo")  // Set ID of the grid
-            .DataSource(d => d.Mvc()
-                .Controller("CompaniesAPI")  // Use the correct controller
-                .LoadAction("GetCompanyLogo")  // Use the correct action to get company logo
-                .Key("CompanyId")  // Define the Key to be used for the data source
-                .LoadParams(new { CompanyId = new JS("getCompanyId") }))  // Pass the CompanyId as a parameter to the LoadAction
-            .ColumnAutoWidth(true)
-            .Columns(columns =>
-            {
-                // Only show the Company Logo Column
-                columns.AddFor(m => m.CompanyLogoFilePath)
-                    .Caption("Company Logo")
-                    .Width(200)  // Adjust the width of the column
-                    .AllowEditing(false)  // Prevent editing
-                    .AllowSorting(false)  // Disable sorting for this column since we are displaying a single image
-                    .CellTemplate(@<text>
-    <div>
-        <img src="/img/companyLogoImages/<%- value %>" alt="Company Logo" class="company-logo" />
+         .ID("gv_companyLogo")  // Set ID of the grid
+         .DataSource(d => d.Mvc()
+             .Controller("CompaniesAPI")  // Use the correct controller
+             .LoadAction("GetCompanyLogo")  // Use the correct action to get company logo
+             .Key("CompanyId")  // Define the Key to be used for the data source
+             .LoadParams(new { CompanyId = new JS("getCompanyId") }))  // Pass the CompanyId as a parameter to the LoadAction
+         .ColumnAutoWidth(true)
+         .Columns(columns =>
+         {
+             // Only show the Company Logo Column
+             columns.AddFor(m => m.CompanyLogoFilePath)
+                 .Caption("Logo")
+                 .Width(200)  // Adjust the width of the column
+                 .AllowEditing(false)  // Prevent editing
+                 .AllowSorting(false)  // Disable sorting for this column since we are displaying a single image
+                 .CellTemplate(@<text>
+                     <div>
+                         <img src="/img/companyLogoImages/<%- value %>" alt="Company Logo" class="company-logo" />
+                     </div>
+                 </text>); // Display the logo as an image
+         })
+    )
     </div>
-</text>); // Display the logo as an image
-            })
-        )
+
+
+    <!-- Below the DataGrid, add a section to upload a new logo -->
+    <div class="upload-logo-section">
+        @(Html.DevExtreme().FileUploader()
+            .ID("companyLogoUploader")
+            .Name("Company Logo")
+            .LabelText("")
+            .Accept("image/*")
+            .UploadMode(FileUploadMode.UseButtons)
+            .AllowCanceling(true)
+            .UploadButtonText("Upload logo")
+            .AllowedFileExtensions(new[] { ".jpg", ".jpeg", ".png" })
+            .InputAttr("aria-lable", "Select image")
+            .OnUploaded("onUpload"))
+    </div>
+
 }
 
 
 
-@(Html.DevExtreme().Popup()  // Create a popup for new user account
-    .ID("pop_comp_profile")  // Set ID of the popup
-    .Width("80%")  // Set width of the popup
-    .Height("550")  // Set height of the popup
-    
-    .ShowTitle(true)  // Show title in the popup
-    //.ShadingColor("Purple")
-    .Title("Company Profile")  // Set title of the popup
-    .Visible(false)  // Initially hide the popup
-    .ShowCloseButton(true)  // Show close button
-    .DragEnabled(true)  // Disable dragging of the popup
-    .DeferRendering(false)  // Disable deferred rendering for the popup content
-    .OnContentReady(@<text>
-    function(e){
-    const template = $('#embedded_comp_profile');  // Select the embedded template
-    e.component.option('contentTemplate',template);  // Set the popup content template
-    }
-</text>)
-)
+<div>
+    @(Html.DevExtreme().Popup()  // Create a popup for new user account
+        .ID("pop_comp_profile")  // Set ID of the popup
+        .Width("80%")  // Set width of the popup
+        .Height("550")  // Set height of the popup
 
+        .ShowTitle(true)  // Show title in the popup
+                          //.ShadingColor("Purple")
+        .Title("Company Profile")  // Set title of the popup
+        .Visible(false)  // Initially hide the popup
+        .ShowCloseButton(true)  // Show close button
+        .DragEnabled(true)  // Disable dragging of the popup
+        .DeferRendering(false)  // Disable deferred rendering for the popup content
+        .OnContentReady(@<text>
+        function(e){
+        const template = $('#embedded_comp_profile');  // Select the embedded template
+        e.component.option('contentTemplate',template);  // Set the popup content template
+        }
+    </text>)
+        )
+</div>
 
 <script>
 
-    let compoId = "";  // Variable to hold the CompanyId
 
-    $(function () {
-        // Initialize DataGrid component for company list
-        $('#gv_companyList').dxDataGrid({
-            // Any additional setup code for DataGrid can be added here
-        });
-    });
+    let compoId = "";  // Variable to hold the CompanyId
 
     // Event handler for focused row change
     function onMainRowChanged(e) {
@@ -372,6 +404,70 @@
         const popup = $('#pop_comp_profile').dxPopup('instance');  // Get the popup instance
         popup.show();  // Show the popup
     }
+
+    function onSelectCompany(e) {
+        var rowIndex = e.rowIndex;
+        var company = e.row.data;  // The row data (company data)
+
+        // You can now perform any logic needed when a company is selected.
+        // For example, you could highlight the selected row, store the selected company ID, etc.
+
+        console.log("Selected Company:", company);
+        // Do something with the selected company, like update UI or trigger other actions.
+    }
+
+    function onUpload(e) {
+        var file = e.file;  // The uploaded file
+
+        // Assuming `getCompanyId()` retrieves the current CompanyId
+        var companyId = getCompanyId();  // Get the CompanyId
+
+        var formData = new FormData();
+        formData.append('companyLogo', file);  // Add the file to FormData
+
+        // Show loading indicator before the request starts
+        Notiflix.Loading.Dots("Uploading your logo...");
+
+        // Make the PUT request to upload the file with companyId in the URL
+        $.ajax({
+            url: `/api/CompaniesAPI/UploadLogo?companyId=${encodeURIComponent(companyId)}`,  // Add companyId as query parameter
+            type: 'PUT',
+            data: formData,
+            contentType: false,  // Important to not set contentType when sending FormData
+            processData: false,  // Prevent jQuery from processing the data
+        })
+            .done(function (json) {
+                // Remove loading indicator on success
+                Notiflix.Loading.Remove(500);
+
+                // Check if the upload was successful
+                if (json.filePath) {
+                    // Show success message with Notiflix
+                    Notiflix.Report.Success(
+                        "Upload Success",
+                        "Your logo has been successfully uploaded!",
+                        "OK",
+                        function () {
+                            // Refresh the page when the user clicks "OK"
+                            location.reload();  // This will reload the page to reflect the updated logo path everywhere
+                        }
+                    );
+                } else {
+                    // Handle failure if the file path is not returned
+                    Notiflix.Report.Failure("Upload Failure", json.error || "Error uploading the logo", "OK");
+                }
+            })
+            .fail(function (jqxhr, textStatus, error) {
+                // Remove loading indicator on failure
+                Notiflix.Loading.Remove(500);
+
+                // Handle the error case
+                var err = textStatus + ", " + error;
+                Notiflix.Report.Failure("Upload Failed", "Failed to upload the logo: " + err, "OK");
+            });
+    }
+
+
 
 
 </script>
