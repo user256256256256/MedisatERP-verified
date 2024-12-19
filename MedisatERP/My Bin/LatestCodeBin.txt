@@ -350,3 +350,10 @@ system, making claims a crucial part of your application's **security** and **ac
 - **Avoids unnecessary user interaction**: The user doesn't have to perform additional actions to ensure `NormalizedUserName` and `NormalizedEmail` are updated, which improves the user experience.
 
 This should be a cleaner, more appropriate approach for updating these fields without involving the user directly in the process.
+
+
+// Retrieve subscription logs associated with the user
+                var subscriptionLogs = await _dbContext.SubscriptionLogs.Where(s => s.UserId == decodedUserId).ToListAsync();
+
+                // Attach the logs to the user model
+                user.SubscriptionLogs = subscriptionLogs;

@@ -202,7 +202,16 @@
             })
         .OnRowUpdating("onRowUpdating") // Bind the editor prepared event
         
+        .Paging(p => p.PageSize(10))
+        .Summary(s => s
+        .TotalItems(totalItems =>
+        {
+            totalItems.AddFor(m => m.UserName).SummaryType(SummaryType.Count);
+        })
         )
+
+        )
+
 </div>
 
 <!-- DevExtreme Popup for account creation -->

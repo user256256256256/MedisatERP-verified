@@ -115,6 +115,13 @@
             });
 
         })
+        .Paging(p => p.PageSize(10))
+        .Summary(s => s
+        .TotalItems(totalItems =>
+        {
+            totalItems.AddFor(m => m.User.UserName).SummaryType(SummaryType.Count);
+        })
+        )
         )
 </div>
 

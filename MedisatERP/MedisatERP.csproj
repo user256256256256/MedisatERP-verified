@@ -20,6 +20,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Areas\CoreSystem\Views\TrialNotifications\" />
+      <Folder Include="Areas\CoreSystem\Views\SubscriptionPlans\" />
+      <Folder Include="Areas\CoreSystem\Views\SubscriptionLogs\" />
+      <Folder Include="Areas\CoreSystem\Views\Payments\" />
+      <Folder Include="Areas\CoreSystem\Views\Subscriptions\" />
+      <Folder Include="Areas\CoreSystem\Views\SubscriptionManager\" />
       <Folder Include="Areas\NutritionCompany\Models\" />
       <Folder Include="Data\Enum\" />
     </ItemGroup>

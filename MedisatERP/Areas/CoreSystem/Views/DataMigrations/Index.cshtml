@@ -110,6 +110,13 @@
             });
 
         })
+        .Paging(p => p.PageSize(10))
+        .Summary(s => s
+        .TotalItems(totalItems =>
+        {
+            totalItems.AddFor(m => m.Company.CompanyName).SummaryType(SummaryType.Count);
+        })
+        )
         )
 </div>
 

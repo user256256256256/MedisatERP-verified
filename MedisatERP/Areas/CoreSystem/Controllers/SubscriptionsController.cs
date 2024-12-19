@@ -1,23 +1,21 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using MedisatERP.Data;  
-using Microsoft.EntityFrameworkCore;
+﻿using MedisatERP.Data;
 using MedisatERP.Library;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-
-namespace MedisatERP.Areas.SystemManager.Controllers
+namespace MedisatERP.Areas.CoreSystem.Controllers
 {
     [Area("CoreSystem")]
     [Route("CoreSystem/[controller]/[action]/{userId?}")]
-    public class SystemManagerController : Controller
+    public class SubscriptionsController : Controller
     {
         private readonly MedisatErpDbContext _dbContext;
 
         // Constructor to inject DbContext
-        public SystemManagerController(MedisatErpDbContext dbContext)
+        public SubscriptionsController(MedisatErpDbContext dbContext)
         {
             _dbContext = dbContext;
         }
-
         // GET
         public async Task<IActionResult> Index(string userId)
         {
@@ -46,7 +44,9 @@ namespace MedisatERP.Areas.SystemManager.Controllers
                 // Handle invalid Base64 string
                 return BadRequest("Invalid User ID format.");
             }
-            
+
         }
+
+
     }
 }

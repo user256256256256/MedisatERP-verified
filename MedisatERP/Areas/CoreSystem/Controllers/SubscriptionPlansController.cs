@@ -1,33 +1,32 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using MedisatERP.Data;  
-using Microsoft.EntityFrameworkCore;
+﻿using MedisatERP.Data;
 using MedisatERP.Library;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-
-namespace MedisatERP.Areas.SystemManager.Controllers
+namespace MedisatERP.Areas.CoreSystem.Controllers
 {
     [Area("CoreSystem")]
-    [Route("CoreSystem/[controller]/[action]/{userId?}")]
-    public class SystemManagerController : Controller
+    [Route("CoreSystem/[controller]/[action]")]
+    public class SubscriptionPlansController : Controller
     {
         private readonly MedisatErpDbContext _dbContext;
 
-        // Constructor to inject DbContext
-        public SystemManagerController(MedisatErpDbContext dbContext)
+        public SubscriptionPlansController(MedisatErpDbContext dbContext)
         {
             _dbContext = dbContext;
         }
 
-        // GET
+        // GET: Payments associated with a specific user
         public async Task<IActionResult> Index(string userId)
         {
             if (string.IsNullOrEmpty(userId))
             {
                 return BadRequest("User ID is required.");
             }
+
             try
             {
-                // Decode the userId fromt the URL
+                // Decode the userId from the URL
                 var decodedUserId = HashingHelper.DecodeString(userId);
 
                 // Retrieve the user using the decodedUserId from the db
@@ -36,17 +35,17 @@ namespace MedisatERP.Areas.SystemManager.Controllers
 
                 if (user == null)
                 {
-                    return NotFound(); // Return a 404 if the company is not found
+                    return NotFound(); // Return a 404 if the user is not found
                 }
+
 
                 return View(user);
             }
             catch (FormatException)
             {
-                // Handle invalid Base64 string
                 return BadRequest("Invalid User ID format.");
             }
-            
         }
+
     }
 }

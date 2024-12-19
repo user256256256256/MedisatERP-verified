@@ -68,6 +68,64 @@
                     </ul>
                 </li>
 
+                <!-- Section Header: FINANCE CENTRE -->
+                <li class="nav-item dropdown">
+                    <a href="#" class="sidebar-header nav-link has-dropdown" id="subscriptionDropdown" data-bs-toggle="collapse" data-bs-target="#subscriptionDropdownMenu" aria-expanded="false" aria-controls="subscriptionDropdownMenu">
+                        <span>FINANCE CENTRE</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="subscriptionDropdownMenu">
+
+                        <!-- Sidebar Item: Dashboard -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("SubscriptionManager")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "SubscriptionManager", new { area = "CoreSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="sliders"></i>
+                                <span class="align-middle">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Subscriptions -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Subscriptions")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Subscriptions", new { area = "CoreSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="package"></i>
+                                <span class="align-middle">Subscriptions</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Payments -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Payments")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Payments", new { area = "CoreSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="credit-card"></i>
+                                <span class="align-middle">Payments</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Subscription Logs -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("SubscriptionLogs")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "SubscriptionLogs", new { area = "CoreSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="activity"></i>
+                                <span class="align-middle">Subscription Logs</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Subscription Plans -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("SubscriptionPlans")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "SubscriptionPlans", new { area = "CoreSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="layers"></i>
+                                <span class="align-middle">Subscription Plans</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Trial Notifications -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("TrialNotifications")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "TrialNotifications", new { area = "CoreSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="bell"></i>
+                                <span class="align-middle">Trial Notifications</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
                 <!-- Section Header: SECURITY CENTRE -->
                 <li class="nav-item dropdown">
                     <a href="#" class="sidebar-header nav-link has-dropdown" id="securityDropdown" data-bs-toggle="collapse" data-bs-target="#securityDropdownMenu" aria-expanded="false" aria-controls="securityDropdownMenu">
