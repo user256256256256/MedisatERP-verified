@@ -2629,22 +2629,22 @@
   color: #4cae4c;
 }
 .dx-button-mode-outlined.dx-button-default {
-  background-color: transparent;
-  border-color: #2d6da3;
-  color: #2d6da3;
+    background-color: #208611;
+    border-color: #333;
+    color: #fff;
 }
 .dx-button-mode-outlined.dx-button-default .dx-icon {
-  color: #2d6da3;
+  color: #fff;
 }
 .dx-button-mode-outlined.dx-button-default.dx-state-focused,
 .dx-button-mode-outlined.dx-button-default.dx-state-hover {
-  background-color: rgba(45,109,163,.1);
-  border-color: #2d6da3;
+    background-color: #311465;
+    border-color: #333;
 }
 .dx-button-mode-outlined.dx-button-default.dx-state-active {
-  background-color: rgba(45,109,163,.4);
+  background-color: #333;
   border-color: #2d6da3;
-  color: #2d6da3;
+  color: #fff;
 }
 .dx-button-mode-text {
   background-color: transparent;

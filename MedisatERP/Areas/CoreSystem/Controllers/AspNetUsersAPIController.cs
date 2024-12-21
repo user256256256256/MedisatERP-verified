@@ -78,157 +78,315 @@ namespace MedisatERP.Controllers
             return Json(transformedData); // Return the processed data
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Post([FromBody] AspNetUser userInput)
-        {
-            try
-            {
-                // Log the content of the incoming request for debugging
-                if (userInput == null)
-                {
-                    Console.WriteLine("Received user input: null");
-                    return BadRequest(new { message = "User input cannot be empty." });
-                }
+		[HttpPost]
+		public async Task<IActionResult> Post([FromBody] AspNetUser userInput)
+		{
+			try
+			{
+				// Log the content of the incoming request for debugging
+				if (userInput == null)
+				{
+					Console.WriteLine("Received user input: null");
+					return BadRequest(new { message = "User input cannot be empty." });
+				}
 
-                var userInputJson = JsonConvert.SerializeObject(userInput, Formatting.Indented);
-                Console.WriteLine($"Received user input: {userInputJson}");
+				var userInputJson = JsonConvert.SerializeObject(userInput, Formatting.Indented);
+				Console.WriteLine($"Received user input: {userInputJson}");
 
-                // List of restricted roles (e.g., "System Administrator")
-                var restrictedRoles = new List<string> { "System Administrator" };
+				// List of restricted roles (e.g., "System Administrator")
+				var restrictedRoles = new List<string> { "System Administrator" };
 
-                // ******To do ********** //
-                // if account is just being created and role is restricted roles add account lockup enable
+				// List of roles that require enabling TwoFactorAuthentication (e.g., "System Administrator", "Company Administrator")
+				var rolesAssigned2FA = new List<string> { "System Administrator", "Company Administrator" };
 
-                // Handle roles if provided in the user input
-                if (userInput.Roles != null && userInput.Roles.Any())
-                {
-                    foreach (var roleObject in userInput.Roles)
-                    {
-                        // Assuming each role is an object with an Id property (of type Guid)
-                        if (roleObject == null || roleObject.Id == null)
-                        {
-                            Console.WriteLine($"Invalid Role object: {roleObject}");
-                            return BadRequest(new { message = "Invalid Role object." });
-                        }
+				// Handle roles if provided in the user input
+				if (userInput.Roles != null && userInput.Roles.Any())
+				{
+					foreach (var roleObject in userInput.Roles)
+					{
+						// Assuming each role is an object with an Id property (of type Guid)
+						if (roleObject == null || roleObject.Id == null)
+						{
+							Console.WriteLine($"Invalid Role object: {roleObject}");
+							return BadRequest(new { message = "Invalid Role object." });
+						}
 
-                        var roleId = roleObject.Id;
+						var roleId = roleObject.Id;
 
-                        // Find the role in the database by role ID (Guid)
-                        var roleFromDb = await _context.AspNetRoles
-                            .FirstOrDefaultAsync(r => r.Id == roleId);
+						// Find the role in the database by role ID (Guid)
+						var roleFromDb = await _context.AspNetRoles
+							.FirstOrDefaultAsync(r => r.Id == roleId);
 
-                        if (roleFromDb == null)
-                        {
-                            // If the role doesn't exist, return an error
-                            Console.WriteLine($"Role with ID '{roleId}' not found.");
-                            return NotFound(new { message = $"Role with ID '{roleId}' not found." });
-                        }
+						if (roleFromDb == null)
+						{
+							// If the role doesn't exist, return an error
+							Console.WriteLine($"Role with ID '{roleId}' not found.");
+							return NotFound(new { message = $"Role with ID '{roleId}' not found." });
+						}
 
-                        // Check if the role is restricted and if the user has a CompanyId
-                        if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleFromDb.Name))
-                        {
-                            // If the role is restricted and user has a CompanyId, terminate and return an error
-                            Console.WriteLine($"User has a CompanyId and role '{roleFromDb.Name}' is restricted. Terminating.");
-                            return BadRequest(new { message = "Role NOT applicable for user!" });
-                        }
-                    }
-                }
+						// Check if the role is restricted and if the user has a CompanyId
+						if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleFromDb.Name))
+						{
+							// If the role is restricted and user has a CompanyId, terminate and return an error
+							Console.WriteLine($"User has a CompanyId and role '{roleFromDb.Name}' is restricted. Terminating.");
+							return BadRequest(new { message = "Role NOT applicable for user!" });
+						}
 
-                // Create an IdentityUser instance for UserManager only after role checks
-                var identityUser = new IdentityUser
-                {
-                    UserName = userInput.UserName,
-                    Email = userInput.Email,
-                    PhoneNumber = userInput.PhoneNumber,
-                    NormalizedUserName = userInput.NormalizedUserName,
-                    NormalizedEmail = userInput.NormalizedEmail
-                };
+						// If the role is in rolesAssigned2FA, set TwoFactorEnabled to true
+						if (rolesAssigned2FA.Contains(roleFromDb.Name))
+						{
+							Console.WriteLine($"Role '{roleFromDb.Name}' requires 2FA, enabling TwoFactorEnabled.");
+							userInput.TwoFactorEnabled = true;
+						}
+					}
+				}
 
-                // Password hashing
-                var passwordHasher = new PasswordHasher<IdentityUser>();
-                identityUser.PasswordHash = passwordHasher.HashPassword(identityUser, userInput.PasswordHash);
+				// Create an IdentityUser instance for UserManager only after role checks
+				var identityUser = new IdentityUser
+				{
+					UserName = userInput.UserName,
+					Email = userInput.Email,
+					PhoneNumber = userInput.PhoneNumber,
+					NormalizedUserName = userInput.NormalizedUserName,
+					NormalizedEmail = userInput.NormalizedEmail
+				};
 
-                // Create the user using _userManager
-                var createResult = await _userManager.CreateAsync(identityUser);
-                if (!createResult.Succeeded)
-                {
-                    return BadRequest(new { message = "Failed to create user.", errors = createResult.Errors });
-                }
+				// Password hashing
+				var passwordHasher = new PasswordHasher<IdentityUser>();
+				identityUser.PasswordHash = passwordHasher.HashPassword(identityUser, userInput.PasswordHash);
 
-                // Handle roles after user is created
-                if (userInput.Roles != null && userInput.Roles.Any())
-                {
-                    foreach (var roleObject in userInput.Roles)
-                    {
-                        var roleId = roleObject.Id;
+				// Create the user using _userManager
+				var createResult = await _userManager.CreateAsync(identityUser);
+				if (!createResult.Succeeded)
+				{
+					return BadRequest(new { message = "Failed to create user.", errors = createResult.Errors });
+				}
 
-                        // Find the role in the database by role ID (Guid)
-                        var roleFromDb = await _context.AspNetRoles
-                            .FirstOrDefaultAsync(r => r.Id == roleId);
+				// If the role requires 2FA, ensure it's enabled for the user
+				if (userInput.TwoFactorEnabled)
+				{
+					await _userManager.SetTwoFactorEnabledAsync(identityUser, true);
+					Console.WriteLine("2FA enabled for the user.");
+				}
 
-                        if (roleFromDb != null)
-                        {
-                            var roleName = roleFromDb.Name;
+				// Handle roles after user is created
+				if (userInput.Roles != null && userInput.Roles.Any())
+				{
+					foreach (var roleObject in userInput.Roles)
+					{
+						var roleId = roleObject.Id;
 
-                            // Check if the role is restricted and if the user has a CompanyId
-                            if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleName))
-                            {
-                                // Skip assigning restricted roles
-                                Console.WriteLine($"User has a CompanyId and role '{roleName}' is restricted. Skipping assignment.");
-                                continue;
-                            }
+						// Find the role in the database by role ID (Guid)
+						var roleFromDb = await _context.AspNetRoles
+							.FirstOrDefaultAsync(r => r.Id == roleId);
 
-                            var addRoleResult = await _userManager.AddToRoleAsync(identityUser, roleName);
+						if (roleFromDb != null)
+						{
+							var roleName = roleFromDb.Name;
 
-                            if (!addRoleResult.Succeeded)
-                            {
-                                // If role assignment fails, delete the created user and return an error
-                                await _userManager.DeleteAsync(identityUser);
-                                Console.WriteLine("Role assignment failed. User deleted.");
-                                return BadRequest(new { message = "Failed to assign role." });
-                            }
+							// Check if the role is restricted and if the user has a CompanyId
+							if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleName))
+							{
+								// Skip assigning restricted roles
+								Console.WriteLine($"User has a CompanyId and role '{roleName}' is restricted. Skipping assignment.");
+								continue;
+							}
 
-                            Console.WriteLine($"Role '{roleName}' assigned successfully.");
-                        }
-                    }
-                }
+							var addRoleResult = await _userManager.AddToRoleAsync(identityUser, roleName);
 
-                // Handle the company ID if provided
-                if (userInput.CompanyId.HasValue)
-                {
-                    // Update the CompanyId in the user record if it's provided
-                    var userFromDb = await _context.AspNetUsers
-                        .FirstOrDefaultAsync(u => u.UserName == identityUser.UserName);
+							if (!addRoleResult.Succeeded)
+							{
+								// If role assignment fails, delete the created user and return an error
+								await _userManager.DeleteAsync(identityUser);
+								Console.WriteLine("Role assignment failed. User deleted.");
+								return BadRequest(new { message = "Failed to assign role." });
+							}
 
-                    if (userFromDb != null)
-                    {
-                        userFromDb.CompanyId = userInput.CompanyId; // Assign the CompanyId from userInput
-                        await _context.SaveChangesAsync(); // Save changes to the database
-                        Console.WriteLine($"Company Id '{userFromDb.CompanyId}' assigned successfully.");
-                    }
-                }
+							Console.WriteLine($"Role '{roleName}' assigned successfully.");
+						}
+					}
+				}
 
-                return Json(new { Id = identityUser.Id });
-            }
-            catch (Exception ex)
-            {
-                // Log the exception message and stack trace for debugging purposes
-                Console.WriteLine($"An error occurred: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+				// Handle the company ID if provided
+				if (userInput.CompanyId.HasValue)
+				{
+					// Update the CompanyId in the user record if it's provided
+					var userFromDb = await _context.AspNetUsers
+						.FirstOrDefaultAsync(u => u.UserName == identityUser.UserName);
 
-                // Return a standardized error response
-                return StatusCode(500, new { message = "An internal server error occurred.", error = ex.Message });
-            }
-        }
+					if (userFromDb != null)
+					{
+						userFromDb.CompanyId = userInput.CompanyId; // Assign the CompanyId from userInput
+						await _context.SaveChangesAsync(); // Save changes to the database
+						Console.WriteLine($"Company Id '{userFromDb.CompanyId}' assigned successfully.");
+					}
+				}
+
+				return Json(new { Id = identityUser.Id });
+			}
+			catch (Exception ex)
+			{
+				// Log the exception message and stack trace for debugging purposes
+				Console.WriteLine($"An error occurred: {ex.Message}");
+				Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+				// Return a standardized error response
+				return StatusCode(500, new { message = "An internal server error occurred.", error = ex.Message });
+			}
+		}
 
 
-        /// <summary>
-        /// Updates an existing User and its Roles Data.
-        /// </summary>
-        /// <param name="key">The unique identifier of the user to update.</param>
-        /// <param name="values">The incoming updated values as a JSON string.</param>
-        /// <returns>Returns a success status if update is successful.</returns>
-        [HttpPut]
+		//[HttpPost]
+		//public async Task<IActionResult> Post([FromBody] AspNetUser userInput)
+		//{
+		//    try
+		//    {
+		//        // Log the content of the incoming request for debugging
+		//        if (userInput == null)
+		//        {
+		//            Console.WriteLine("Received user input: null");
+		//            return BadRequest(new { message = "User input cannot be empty." });
+		//        }
+
+		//        var userInputJson = JsonConvert.SerializeObject(userInput, Formatting.Indented);
+		//        Console.WriteLine($"Received user input: {userInputJson}");
+
+		//        // List of restricted roles (e.g., "System Administrator")
+		//        var restrictedRoles = new List<string> { "System Administrator" };
+
+		//        // ******To do ********** //
+		//        // if account is just being created and role is restricted roles add account lockup enable
+
+		//        // Handle roles if provided in the user input
+		//        if (userInput.Roles != null && userInput.Roles.Any())
+		//        {
+		//            foreach (var roleObject in userInput.Roles)
+		//            {
+		//                // Assuming each role is an object with an Id property (of type Guid)
+		//                if (roleObject == null || roleObject.Id == null)
+		//                {
+		//                    Console.WriteLine($"Invalid Role object: {roleObject}");
+		//                    return BadRequest(new { message = "Invalid Role object." });
+		//                }
+
+		//                var roleId = roleObject.Id;
+
+		//                // Find the role in the database by role ID (Guid)
+		//                var roleFromDb = await _context.AspNetRoles
+		//                    .FirstOrDefaultAsync(r => r.Id == roleId);
+
+		//                if (roleFromDb == null)
+		//                {
+		//                    // If the role doesn't exist, return an error
+		//                    Console.WriteLine($"Role with ID '{roleId}' not found.");
+		//                    return NotFound(new { message = $"Role with ID '{roleId}' not found." });
+		//                }
+
+		//                // Check if the role is restricted and if the user has a CompanyId
+		//                if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleFromDb.Name))
+		//                {
+		//                    // If the role is restricted and user has a CompanyId, terminate and return an error
+		//                    Console.WriteLine($"User has a CompanyId and role '{roleFromDb.Name}' is restricted. Terminating.");
+		//                    return BadRequest(new { message = "Role NOT applicable for user!" });
+		//                }
+		//            }
+		//        }
+
+		//        // Create an IdentityUser instance for UserManager only after role checks
+		//        var identityUser = new IdentityUser
+		//        {
+		//            UserName = userInput.UserName,
+		//            Email = userInput.Email,
+		//            PhoneNumber = userInput.PhoneNumber,
+		//            NormalizedUserName = userInput.NormalizedUserName,
+		//            NormalizedEmail = userInput.NormalizedEmail
+		//        };
+
+		//        // Password hashing
+		//        var passwordHasher = new PasswordHasher<IdentityUser>();
+		//        identityUser.PasswordHash = passwordHasher.HashPassword(identityUser, userInput.PasswordHash);
+
+		//        // Create the user using _userManager
+		//        var createResult = await _userManager.CreateAsync(identityUser);
+		//        if (!createResult.Succeeded)
+		//        {
+		//            return BadRequest(new { message = "Failed to create user.", errors = createResult.Errors });
+		//        }
+
+		//        // Handle roles after user is created
+		//        if (userInput.Roles != null && userInput.Roles.Any())
+		//        {
+		//            foreach (var roleObject in userInput.Roles)
+		//            {
+		//                var roleId = roleObject.Id;
+
+		//                // Find the role in the database by role ID (Guid)
+		//                var roleFromDb = await _context.AspNetRoles
+		//                    .FirstOrDefaultAsync(r => r.Id == roleId);
+
+		//                if (roleFromDb != null)
+		//                {
+		//                    var roleName = roleFromDb.Name;
+
+		//                    // Check if the role is restricted and if the user has a CompanyId
+		//                    if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleName))
+		//                    {
+		//                        // Skip assigning restricted roles
+		//                        Console.WriteLine($"User has a CompanyId and role '{roleName}' is restricted. Skipping assignment.");
+		//                        continue;
+		//                    }
+
+		//                    var addRoleResult = await _userManager.AddToRoleAsync(identityUser, roleName);
+
+		//                    if (!addRoleResult.Succeeded)
+		//                    {
+		//                        // If role assignment fails, delete the created user and return an error
+		//                        await _userManager.DeleteAsync(identityUser);
+		//                        Console.WriteLine("Role assignment failed. User deleted.");
+		//                        return BadRequest(new { message = "Failed to assign role." });
+		//                    }
+
+		//                    Console.WriteLine($"Role '{roleName}' assigned successfully.");
+		//                }
+		//            }
+		//        }
+
+		//        // Handle the company ID if provided
+		//        if (userInput.CompanyId.HasValue)
+		//        {
+		//            // Update the CompanyId in the user record if it's provided
+		//            var userFromDb = await _context.AspNetUsers
+		//                .FirstOrDefaultAsync(u => u.UserName == identityUser.UserName);
+
+		//            if (userFromDb != null)
+		//            {
+		//                userFromDb.CompanyId = userInput.CompanyId; // Assign the CompanyId from userInput
+		//                await _context.SaveChangesAsync(); // Save changes to the database
+		//                Console.WriteLine($"Company Id '{userFromDb.CompanyId}' assigned successfully.");
+		//            }
+		//        }
+
+		//        return Json(new { Id = identityUser.Id });
+		//    }
+		//    catch (Exception ex)
+		//    {
+		//        // Log the exception message and stack trace for debugging purposes
+		//        Console.WriteLine($"An error occurred: {ex.Message}");
+		//        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+		//        // Return a standardized error response
+		//        return StatusCode(500, new { message = "An internal server error occurred.", error = ex.Message });
+		//    }
+		//}
+
+
+		/// <summary>
+		/// Updates an existing User and its Roles Data.
+		/// </summary>
+		/// <param name="key">The unique identifier of the user to update.</param>
+		/// <param name="values">The incoming updated values as a JSON string.</param>
+		/// <returns>Returns a success status if update is successful.</returns>
+		[HttpPut]
         public async Task<IActionResult> Put(string key, string values)
         {
             try
@@ -252,6 +410,22 @@ namespace MedisatERP.Controllers
 
                 // Deserialize the incoming updated values
                 var valuesDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(values);
+
+                // Check if password is provided and hash it
+                if (valuesDict.ContainsKey("Password") && valuesDict["Password"] != null)
+                {
+                    var password = valuesDict["Password"].ToString();
+
+                    // Initialize PasswordHasher
+                    var passwordHasher = new PasswordHasher<AspNetUser>(); 
+
+                    // Hash the new password
+                    var hashedPassword = passwordHasher.HashPassword(model, password);
+
+                    // Update the password hash in the model
+                    model.PasswordHash = hashedPassword;
+                    Console.WriteLine($"Password has been hashed and updated: {hashedPassword}");
+                }
 
                 // Log the deserialized dictionary for easier inspection
                 Console.WriteLine("Deserialized values:");
@@ -284,6 +458,7 @@ namespace MedisatERP.Controllers
                 return StatusCode(500, $"Internal Server error: {ex.Message}");
             }
         }
+
 
         [HttpDelete]
         public async Task<IActionResult> Delete(string key)

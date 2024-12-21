@@ -368,3 +368,310 @@ This should be a cleaner, more appropriate approach for updating these fields wi
 .ValueExpr("ID")
 .DisplayExpr("Name")
 );
+
+
+
+
+The issue you're encountering—getting a **bad request** due to 2FA being required—means that the `PasswordSignInAsync` method is detecting that the user has 2FA enabled but you're not handling the 2FA verification properly in your code.
+
+When `PasswordSignInAsync` detects that the user has 2FA enabled, it returns a result indicating that the user needs to complete a 2FA check (typically `SignInResult.RequiresTwoFactor`). You need to catch this result and handle the 2FA process accordingly.
+
+Here's a breakdown of what needs to be done:
+
+1. **Detect the 2FA Requirement**: After attempting to sign in with `PasswordSignInAsync`, if 2FA is required, the result will indicate that, and you need to redirect the user to a 2FA verification page.
+
+2. **Handle 2FA Verification**: If 2FA is enabled, you need to prompt the user for a 2FA code (either via email or SMS), and then verify that the code matches the one sent to the user.
+
+3. **Return Response Based on 2FA**: If the 2FA verification is successful, proceed with the login process, otherwise return a failure message.
+
+### Updated Code with 2FA Handling
+
+Here's how you can modify your `LoginCheck` action to handle 2FA:
+
+```csharp
+[HttpGet]
+public async Task<ActionResult> LoginCheck(string email, string password)
+{
+    // Log the start of the login attempt
+    Console.WriteLine($"Login attempt started for email: {email}");
+
+    // Find user by email
+    var user = await _userManager.FindByEmailAsync(email);
+    if (user == null)
+    {
+        // Log when the user is not found
+        Console.WriteLine($"User not found for email: {email}");
+        return BadRequest(new { success = false, mresponse = "User not found" });
+    }
+
+    // Log when the user is found
+    Console.WriteLine($"User found for email: {email}");
+
+    // Attempt login
+    var result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: false);
+
+    if (result.Succeeded)
+    {
+        // Log successful login
+        Console.WriteLine("Login successful.");
+
+        // Check if the user needs 2FA verification
+        if (await _userManager.GetTwoFactorEnabledAsync(user))
+        {
+            // If 2FA is required, check the user's preferred method (SMS or Email)
+            var preferred2FAMethod = user.Preferred2FAMethod;
+
+            // Send 2FA code based on preferred method
+            if (preferred2FAMethod == "SMS")
+            {
+                var code = await _userManager.GenerateTwoFactorTokenAsync(user, "Phone");
+                await _smsService.SendSmsAsync(user.PhoneNumber, code); // Implement SMS service
+                Console.WriteLine("2FA code sent via SMS.");
+            }
+            else if (preferred2FAMethod == "Email")
+            {
+                var code = await _userManager.GenerateTwoFactorTokenAsync(user, "Email");
+                await _emailService.SendEmailAsync(user.Email, "Your 2FA Code", code); // Implement Email service
+                Console.WriteLine("2FA code sent via Email.");
+            }
+
+            // Return a response indicating the user should enter their 2FA code
+            return Ok(new { success = true, mresponse = "2FA code sent", requires2FA = true });
+        }
+
+        // If no 2FA required, continue processing roles and redirect
+        var roles = await _userManager.GetRolesAsync(user);
+
+        var aspNetUser = await _dbContext.Set<AspNetUser>().FirstOrDefaultAsync(u => u.Email == email);
+
+        if (roles.Contains("System Administrator"))
+        {
+            if (aspNetUser == null)
+            {
+                // Log when the user is not found in the custom table
+                Console.WriteLine($"Custom user not found for email: {email}");
+                return BadRequest(new { success = false, mresponse = "User not found." });
+            }
+
+            // Log the found AspNetUser
+            Console.WriteLine($"Custom user found with CompanyId: {aspNetUser.Id}");
+
+            var userId = aspNetUser.Id;
+
+            if (userId != null)
+            {
+                // Encode the User Id using HashingHelper
+                var encodedUserId = HashingHelper.EncodeString(userId);
+
+                // Log the encoded CompanyId
+                Console.WriteLine($"Encoded UserId: {encodedUserId}");
+
+                // Construct the redirect URL
+                var redirectUrl = $"/CoreSystem/SystemManager/Index/{encodedUserId}";
+
+                // Return the response with the redirect URL
+                return Ok(new { success = true, mresponse = "Login successful", redirectUrl });
+            }
+        }
+        else if (roles.Contains("Company Administrator"))
+        {
+            if (aspNetUser == null)
+            {
+                // Log when the user is not found in the custom table
+                Console.WriteLine($"Custom user not found for email: {email}");
+                return BadRequest(new { success = false, mresponse = "User not found." });
+            }
+
+            // Log the found AspNetUser
+            Console.WriteLine($"Custom user found with CompanyId: {aspNetUser.CompanyId}");
+
+            var companyId = aspNetUser.CompanyId;
+
+            if (companyId != null)
+            {
+                // Encode the CompanyId using HashingHelper
+                var encodedCompanyId = HashingHelper.EncodeGuidID(companyId.Value);
+
+                // Log the encoded CompanyId
+                Console.WriteLine($"Encoded CompanyId: {encodedCompanyId}");
+
+                // Construct the redirect URL
+                var redirectUrl = $"/NutritionCompany/NutritionSystem/Index/{encodedCompanyId}";
+
+                // Return the response with the redirect URL
+                return Ok(new { success = true, mresponse = "Login successful", redirectUrl });
+            }
+        }
+        else
+        {
+            // Log when the user is neither a System Administrator nor a Company Administrator
+            Console.WriteLine("User is neither a System Administrator nor a Company Administrator.");
+            return Ok(new { success = true, mresponse = "Login successful" });
+        }
+    }
+
+    // Log for failed login attempt
+    Console.WriteLine("Invalid login attempt for email: " + email);
+    return BadRequest(new { success = false, mresponse = "Invalid login attempt" });
+}
+```
+
+### Key Changes:
+1. **Checking if 2FA is enabled**: After a successful password sign-in, we check if the user has 2FA enabled using `await _userManager.GetTwoFactorEnabledAsync(user)`.
+2. **Sending the 2FA code**: Based on the user's preferred 2FA method (SMS or email), we send the code using the appropriate service (SMS or email).
+3. **Handling the 2FA Requirement**: If 2FA is enabled, we return a response indicating that the 2FA code has been sent and the user needs to provide it.
+4. **Redirecting after successful login**: If no 2FA is required, the code proceeds to process roles and redirect the user to the appropriate page.
+
+### Next Steps:
+1. **2FA Code Verification**: You'll need an additional endpoint that verifies the 2FA code once the user enters it.
+   
+   For example:
+
+   ```csharp
+   [HttpPost]
+   public async Task<IActionResult> Verify2FA(string email, string code)
+   {
+       var user = await _userManager.FindByEmailAsync(email);
+       if (user == null)
+       {
+           return BadRequest(new { success = false, mresponse = "User not found" });
+       }
+
+       // Check if the user has 2FA enabled and verify the code
+       var is2FACodeValid = await _userManager.VerifyTwoFactorTokenAsync(user, "Phone", code); // or "Email"
+       if (is2FACodeValid)
+       {
+           await _signInManager.SignInAsync(user, isPersistent: false);
+           return Ok(new { success = true, mresponse = "2FA successful, logged in." });
+       }
+
+       return BadRequest(new { success = false, mresponse = "Invalid 2FA code" });
+   }
+   ```
+
+2. **User Interface**: You'll need to implement a UI where the user can input the 2FA code (sent via email or SMS) after login.
+
+
+[ApiController]
+[Route("api/[controller]/[action]")]
+public class LoginAPIController : ControllerBase
+{
+    private readonly UserManager<IdentityUser> _userManager;
+    private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly MedisatErpDbContext _dbContext;
+
+    public LoginAPIController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, MedisatErpDbContext dbContext)
+    {
+        _userManager = userManager;
+        _signInManager = signInManager;
+        _dbContext = dbContext;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult> LoginCheck(string email, string password)
+    {
+        // Log the start of the login attempt
+        Console.WriteLine($"Login attempt started for email: {email}");
+
+        // Find user by email
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            // Log when the user is not found
+            Console.WriteLine($"User not found for email: {email}");
+            return BadRequest(new { success = false, mresponse = "User not found" });
+        }
+
+        // Log when the user is found
+        Console.WriteLine($"User found for email: {email}");
+
+        // Attempt login
+        var result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: false);
+
+        if (result.Succeeded)
+        {
+            // Log successful login
+            Console.WriteLine("Login successful.");
+
+            // Get the roles of the user
+            var roles = await _userManager.GetRolesAsync(user);
+
+            // Retrieve the custom AspNetUser
+            var aspNetUser = await _dbContext.Set<AspNetUser>().FirstOrDefaultAsync(u => u.Email == email);     
+
+            if (roles.Contains("System Administrator"))
+            {
+                if (aspNetUser == null)
+                {
+                    // Log when the user is not found in the custom table
+                    Console.WriteLine($"Custom user not found for email: {email}");
+                    return BadRequest(new { success = false, mresponse = "User not found." });
+                }
+
+                // Log the found AspNetUser
+                Console.WriteLine($"Custom user found with CompanyId: {aspNetUser.Id}");
+
+                var userId = aspNetUser.Id;
+
+                if(userId != null)
+                {
+                    // Encode the User Id using HashingHelper
+                    var encodedUserId = HashingHelper.EncodeString(userId);
+
+                    // Log the encoded CompanyId
+                    Console.WriteLine($"Encoded UserId: {encodedUserId}");
+
+                    // Construct the redirect URL
+                    var redirectUrl = $"/2FA/Index/{encodedUserId}";
+
+                    // Return the response with the redirect URL
+                    return Ok(new { success = true, mresponse = "Login successful", redirectUrl });
+                }
+
+              
+            }
+            else if (roles.Contains("Company Administrator"))
+            {
+                
+
+                if (aspNetUser == null)
+                {
+                    // Log when the user is not found in the custom table
+                    Console.WriteLine($"Custom user not found for email: {email}");
+                    return BadRequest(new { success = false, mresponse = "User not found." });
+                }
+
+                // Log the found AspNetUser
+                Console.WriteLine($"Custom user found with CompanyId: {aspNetUser.CompanyId}");
+
+                var companyId = aspNetUser.CompanyId;
+
+                if (companyId != null)
+                {
+                    // Encode the CompanyId using HashingHelper
+                    var encodedCompanyId = HashingHelper.EncodeGuidID(companyId.Value);
+
+                    // Log the encoded CompanyId
+                    Console.WriteLine($"Encoded CompanyId: {encodedCompanyId}");
+
+                    // Construct the redirect URL
+                    var redirectUrl = $"/NutritionCompany/NutritionSystem/Index/{encodedCompanyId}";
+
+                    // Return the response with the redirect URL
+                    return Ok(new { success = true, mresponse = "Login successful", redirectUrl });
+                }
+            }
+            else
+            {
+                // Log when the user is neither a System Administrator nor a Company Administrator
+                Console.WriteLine("User is neither a System Administrator nor a Company Administrator.");
+                return Ok(new { success = true, mresponse = "Login successful" });
+            }
+        }
+
+        // Log for failed login attempt
+        Console.WriteLine("Invalid login attempt for email: " + email);
+        return BadRequest(new { success = false, mresponse = "Invalid login attempt" });
+    }
+
+}

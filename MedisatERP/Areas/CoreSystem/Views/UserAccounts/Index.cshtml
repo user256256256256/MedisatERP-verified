@@ -120,6 +120,7 @@
                     groupItems.AddSimpleFor(m => m.Email).Visible(true);
                     groupItems.AddSimpleFor(m => m.PhoneNumber).Visible(true);
                     groupItems.AddSimpleFor(m => m.LockoutEnabled).Visible(true);
+                    groupItems.AddSimpleFor(m => m.TwoFactorEnabled).Visible(true);
                     groupItems.AddSimpleFor(m => m.PhoneNumberConfirmed).Visible(true);
                     groupItems.AddSimpleFor(m => m.EmailConfirmed).Visible(true);
 
@@ -145,6 +146,7 @@
                 columns.AddFor(m => m.Email).Caption("Email").AllowEditing(true);
                 columns.AddFor(m => m.EmailConfirmed).Caption("Email Confirmed").DataType(GridColumnDataType.Boolean).AllowEditing(true);
                 columns.AddFor(m => m.PhoneNumberConfirmed).Caption("Phone Number Confirmed").DataType(GridColumnDataType.Boolean).AllowEditing(false);
+                columns.AddFor(m => m.TwoFactorEnabled).Caption("2FA Enabled").DataType(GridColumnDataType.Boolean).AllowEditing(false);
                 columns.AddFor(m => m.LockoutEnabled).Caption("Account Lock Out Enabled").DataType(GridColumnDataType.Boolean).AllowEditing(false);
                 columns.AddFor(m => m.AccessFailedCount).Caption("Access Failed Count").AllowEditing(false).DataType(GridColumnDataType.Number);                                                                                                                                       // Add LockoutEnd and AccessFailedCount columns with AllowEditing(false)
                 columns.AddFor(m => m.LockoutEnd).Caption("End Date for Locked Out Account").AllowEditing(false).DataType(GridColumnDataType.DateTime).Format("MM/dd/yyyy HH:mm"); 

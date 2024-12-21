@@ -97,10 +97,4 @@ app.MapDefaultControllerRoute();
 // Map Razor Pages
 app.MapRazorPages();
 
-//Hashing Password 
-//var password = "@Lyfex?";
-//var passwordHasher = new PasswordHasher<object>();
-//var hashedPassword = passwordHasher.HashPassword(null, password);
-//Console.WriteLine("Hashed Password " + hashedPassword);
-
 app.Run();
