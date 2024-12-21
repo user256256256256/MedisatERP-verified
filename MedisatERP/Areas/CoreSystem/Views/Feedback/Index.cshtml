@@ -12,15 +12,8 @@
     <center><span><i data-feather="edit-2"></i> CUSTOMER FEEDBACK</span></center>
 </div>
 
-<div class="section my-3">
-    <h2 class="section-title">FEEDBACK MANAGEMENT CENTER</h2>
-    <p class="section-lead">This page is just an example for you to create your own page.</p>
-</div>
-
-
-
 <!-- Section Search for the Company-->
-<div class="row">
+<div class="row mb-3">
     <div class="form-group col-md-4">
         <label class="my-3">Company Name:</label>
         @(Html.DevExtreme().SelectBox()
@@ -44,7 +37,7 @@
 </div>
 
 <!-- DevExtreme DataGrid for Feedbacks -->
-<div id="feedbackGrid">
+<div class="card p-3" id="feedbackGrid">
     @(
         Html.DevExtreme().DataGrid<Feedback>()
         .ShowBorders(true)
@@ -132,6 +125,7 @@
 </div>
 
 <script>
+
     // Handling row change for the client grid
     function onMainRowChanged(e) {
         const rowData = e.row && e.row.data;

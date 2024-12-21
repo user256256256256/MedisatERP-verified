@@ -8,7 +8,7 @@ dotnet ef dbcontext scaffold "Data Source=medisaterp.lyfexafrica.com;uid=adminMe
 
 Example of usage:
 
-dotnet ef dbcontext scaffold "Data Source=medisaterp.lyfexafrica.com;uid=adminMedisatERP;pwd=Planchinobo256;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -o Areas/CoreSystem/Models -f --table AspNetUsers --table Companies 
+dotnet ef dbcontext scaffold "Data Source=medisaterp.lyfexafrica.com;uid=adminMedisatERP;pwd=Planchinobo256;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -o Areas/CoreSystem/Models -f --table Companies --table Subscription --table Payment --table SubscriptionActivityLookup  --table BillingCycleLookup --table PaymentMethodLookup --table PaymentStatusLookup --table SubscriptionLog --table SubscriptionPlan --table SubscriptionPlanNameLookup --table TrialNotificationLookup --table TrialNotification
 
 
 

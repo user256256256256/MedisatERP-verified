@@ -12,11 +12,6 @@
     <center><span><i data-feather="users"></i> USER ACCOUNTS </span></center>
 </div>
 
-<div class="section my-3">
-    <h2 class="section-title">ACCOUNTS MANAGEMENT CENTER</h2>
-    <p class="section-lead">This page is just an example for you to create your own page.</p>
-</div>
-
 
 <div class="row mt-5 mb-2">
     <div class="form-group col-md-4">
@@ -72,7 +67,7 @@
 </script>
 
 <!-- User Data Grid -->
-<div id="userGrid">
+<div class="card" id="userGrid">
     @(
         Html.DevExtreme().DataGrid<AspNetUser>()
                 .ShowBorders(true)

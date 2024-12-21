@@ -15,7 +15,7 @@
     <center><span><i data-feather="briefcase"></i> COMPANY INFORMATION</span></center>
 </div>
 
-<div class="card" style="padding:20px">
+<div class="card p-3">
     @(
         Html.DevExtreme().DataGrid<Company>()
             .ShowBorders(true)
@@ -223,14 +223,19 @@
             .Items(tab =>  // Define tabs for the TabPanel
             {
                 tab.Add()  // Add the first tab
-                    .Title("CLIENTS")  // Set the title of the tab
+                    .Title("Clients")  // Set the title of the tab
                     .Icon("fas fa-users")  // Set the icon for the tab
                     .Template(new TemplateName("embedded_clients"));  // Set the template for the tab content
 
                 tab.Add()  // Add the second tab
-                    .Title("SUBSCRIPTION")  // Set the title of the tab
+                    .Title("Subscription Info")  // Set the title of the tab
                     .Icon("fas fa-credit-card")  // Set the icon for the tab
-                    .Template(new TemplateName("embedded_new_payment"));  // Set the template for the tab content
+                    .Template(new TemplateName("embedded_subscription_info"));  // Set the template for the tab content
+                
+                tab.Add()
+                    .Title("Payment Info")
+                    .Icon("fas fa-wallet")
+                    .Template(new TemplateName("embedded_payment_info"));
 
                 tab.Add()  // Add the third tab
                     .Title("Upload Company Logo")  // Set the title of the tab
@@ -242,27 +247,27 @@
 
 @using (Html.DevExtreme().NamedTemplate("embedded_clients"))
 {
-    @(Html.DevExtreme().DataGrid<CompanyClient>()  // Create a DataGrid for displaying Company Clients
+  <div class="p-3">
+        @(Html.DevExtreme().DataGrid<CompanyClient>()  // Create a DataGrid for displaying Company Clients
             .ShowBorders(true)  // Show borders around the grid
             .ID("gv_clientList")  // Set the ID of the grid
             .DataSource(d => d.Mvc().Controller("CompanyClientsAPI").LoadAction("Get").Key("ClientId")  // Set the data source for the grid
-                .InsertAction("Post")  // Define the insert action for the grid
-                .UpdateAction("Put")  // Define the update action for the grid
-                .DeleteAction("Delete")  // Define the delete action for the grid
-                .LoadParams(new { CompanyId = new JS("getCompanyId") }))  // Pass the CompanyId to the API as a load parameter
+            .InsertAction("Post")  // Define the insert action for the grid
+            .UpdateAction("Put")  // Define the update action for the grid
+            .DeleteAction("Delete")  // Define the delete action for the grid
+            .LoadParams(new { CompanyId = new JS("getCompanyId") }))  // Pass the CompanyId to the API as a load parameter
             .Height("400px")  // Add height for scrollable grid
             .ShowColumnLines(false)  // Disable column lines
             .ShowRowLines(false)  // Enable row lines
             .RowAlternationEnabled(true)  // Enable row alternation (striped rows)
             .FilterRow(f => f.Visible(false))  // Hide the filter row
             .HeaderFilter(f => f.Visible(true))  // Enable header filtering
-            
+
             .RemoteOperations(true)  // Enable remote operations (for paging, sorting, etc.)
 
             .ShowBorders(false)  // Hide borders around the grid
             .ColumnHidingEnabled(true)  // Enable column hiding
             .ColumnAutoWidth(true)  // Enable automatic column width adjustment
-            .OnFocusedRowChanged("onMainRowChanged")  // Set the event handler for focused row change
             .Columns(columns =>  // Define columns for the grid
             {
                 // Company Clients Data Columns
@@ -292,12 +297,115 @@
             .Paging(p => p.PageSize(10))  // Enable paging with page size of 10
             .RemoteOperations(true)  // Enable remote operations (for paging, sorting, etc.)
             .Summary(s => s  // Configure summary row
-                .TotalItems(totalItems =>  // Configure total items summary
-                {
-                    totalItems.AddFor(m => m.ClientName).SummaryType(SummaryType.Count);  // Count the number of clients
-                })
+            .TotalItems(totalItems =>  // Configure total items summary
+            {
+                totalItems.AddFor(m => m.ClientName).SummaryType(SummaryType.Count);  // Count the number of clients
+            })
             )
-        )
+            )
+  </div>
+}
+
+@using (Html.DevExtreme().NamedTemplate("embedded_subscription_info"))
+{
+    <div id="subscriptionTileView">
+        @(
+            Html.DevExtreme().TileView()
+            .ID("gv_compSubscriptionInfo")
+            .DataSource(d => d.Mvc().Controller("SubscriptionsAPI").LoadAction("GetCompanySubscription").Key("Id")
+            .LoadParams(new { CompanyId = new JS("getCompanyId") }))
+
+            .ItemMargin(10)
+            .ItemTemplate(@<text>
+        <div class="tile-item">
+            <!-- Using template expressions to access properties dynamically -->
+            <h4><%- Company.CompanyName %></h4>  <!-- Company name -->
+            <p><strong>Start Date:</strong> <%- StartDate %></p>
+            <p><strong>End Date:</strong> <%- EndDate %></p>
+            <p><strong>Status:</strong> <%- IsActive ? "Active" : "Inactive" %></p>
+            <p><strong>Payment Status:</strong> <%- PaymentStatus %></p>
+            <p><strong>Plan Name:</strong> <%- SubscriptionPlan.PlanName.PlanName %></p>
+            <p><strong>Price:</strong> <%- SubscriptionPlan.PlanName.Price %>$</p>
+            <p><strong>Duration:</strong> <%- SubscriptionPlan.Duration %> Months</p>
+            <p><strong>Description:</strong> <%- SubscriptionPlan.Description %></p>
+            <p><strong>Billing Cycle:</strong> <%- SubscriptionPlan.BillingCycle.CycleName %></p>
+        </div>
+
+    </text>)
+            )
+    </div>
+
+}
+
+@using (Html.DevExtreme().NamedTemplate("embedded_payment_info"))
+{
+    <!-- DevExtreme DataGrid for Feedbacks -->
+    <div class="card p-3" id="paymentsGrid">
+        @(
+            Html.DevExtreme().DataGrid<Payment>()
+            .ShowBorders(true)
+            .ID("gv_payments_comp_info")
+            .DataSource(d => d.Mvc().Controller("PaymentsAPI").LoadAction("GetPaymentsInfo").Key("Id")
+            .LoadParams(new { CompanyId = new JS("getCompanyId") }))
+            .ShowColumnLines(false)
+            .ShowRowLines(true)
+            .RowAlternationEnabled(true)
+            .FilterRow(f => f.Visible(false))
+            .HeaderFilter(f => f.Visible(true))
+            .RemoteOperations(true)
+            .ColumnHidingEnabled(true)
+            .Height("400px")
+            .ColumnAutoWidth(true)
+            .Selection(s => s.Mode(SelectionMode.Multiple))
+            .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
+            .FocusedRowEnabled(true)
+            .Paging(p => p.PageSize(10))
+            .RemoteOperations(true)
+            .Summary(s => s.TotalItems(totalItems => { totalItems.AddFor(m => m.Id).SummaryType(SummaryType.Count); }))
+            .Editing(e => e
+            .AllowAdding(false)  // Disable adding new feedback
+            .AllowUpdating(false)  // Allow editing feedback
+            .AllowDeleting(false)  // Allow deleting feedback
+            .UseIcons(true) // Use Icons
+            .Mode(GridEditMode.Popup)
+            .Popup(p => p
+            .Title("Customer Payments")
+            .Height(450)
+            .ShowTitle(true)
+            .Position(pos => pos
+            .My(HorizontalAlignment.Center, VerticalAlignment.Center)
+            .At(HorizontalAlignment.Center, VerticalAlignment.Center)
+            .Of(new JS("window"))
+            )
+            )
+            )
+            .Sorting(s => s
+            .Mode(GridSortingMode.Multiple)  // Allows sorting by multiple columns
+            )
+            .Columns(columns =>
+            {
+                columns.AddFor(m => m.Subscription.Company.CompanyName).Caption("Company Name").AllowEditing(false);
+                columns.AddFor(m => m.PaymentDate).Caption("Payment Date").AllowEditing(false);
+                columns.AddFor(m => m.PaymentMethod.Method).Caption("Payment Method").AllowEditing(false);
+                columns.AddFor(m => m.PaymentStatus.Status).Caption("Transaction Status").AllowEditing(false);
+                columns.AddFor(m => m.Subscription.SubscriptionPlan.PlanName.PlanName).Caption("Plan Name").AllowEditing(false); ;
+                columns.AddFor(m => m.Subscription.SubscriptionPlan.PlanName.Price).Caption("Plan Price($)").AllowEditing(false);
+                columns.AddFor(m => m.TransactionId).Caption("Transaction ID").AllowEditing(false);
+                columns.AddFor(m => m.Subscription.SubscriptionPlan.Description).Caption("Plan Description").AllowEditing(false);
+                columns.AddFor(m => m.Subscription.SubscriptionPlan.Duration).Caption("Plan Duration (Months)").AllowEditing(false);
+                columns.AddFor(m => m.Subscription.Company.CompanyEmail).Caption("Company Email").AllowEditing(false);
+                columns.AddFor(m => m.Subscription.Company.CompanyPhone).Caption("Company Phone").AllowEditing(false);
+
+            })
+            .Paging(p => p.PageSize(10))
+            .Summary(s => s
+            .TotalItems(totalItems =>
+            {
+                totalItems.AddFor(m => m.Subscription.Company.CompanyName).SummaryType(SummaryType.Count);
+            })
+            )
+            )
+    </div>
 }
 
 @using (Html.DevExtreme().NamedTemplate("embedded_upload_logo"))
@@ -347,7 +455,6 @@
 }
 
 
-
 <div>
     @(Html.DevExtreme().Popup()  // Create a popup for new user account
         .ID("pop_comp_profile")  // Set ID of the popup
@@ -383,8 +490,13 @@
         compoId = rowData.CompanyId;  // Save the CompanyId of the focused row
         const grid = $('#gv_clientList').dxDataGrid('instance');  // Refresh the client list grid
         const logoGrid = $('#gv_companyLogo').dxDataGrid('instance');
+        const subscriptionInfo = $('#gv_compSubscriptionInfo').dxTileView('instance'); 
+        const paymentsInfo = $('#gv_payments_comp_info').dxDataGrid('instance');
+
         grid.refresh();
         logoGrid.refresh();
+        subscriptionInfo.getDataSource().load();
+        paymentsInfo.refresh();
     }
 
     function getCompanyId() {
@@ -466,8 +578,6 @@
                 Notiflix.Report.Failure("Upload Failed", "Failed to upload the logo: " + err, "OK");
             });
     }
-
-
 
 
 </script>

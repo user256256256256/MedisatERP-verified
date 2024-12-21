@@ -107,14 +107,6 @@
                             </a>
                         </li>
 
-                        <!-- Sidebar Item: Subscription Plans -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("SubscriptionPlans")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "SubscriptionPlans", new { area = "CoreSystem", userId = encodedUserId })">
-                                <i class="align-middle" data-feather="layers"></i>
-                                <span class="align-middle">Subscription Plans</span>
-                            </a>
-                        </li>
-
                         <!-- Sidebar Item: Trial Notifications -->
                         <li class="sidebar-item @((Context.Request.Path.Value.Contains("TrialNotifications")) ? "active" : "")">
                             <a class="sidebar-link" href="@Url.Action("Index", "TrialNotifications", new { area = "CoreSystem", userId = encodedUserId })">

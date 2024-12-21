@@ -60,6 +60,28 @@ public partial class MedisatErpDbContext : DbContext
 
     public virtual DbSet<Report> Reports { get; set; }
 
+    public virtual DbSet<BillingCycleLookup> BillingCycleLookups { get; set; }
+
+    public virtual DbSet<Payment> Payments { get; set; }
+
+    public virtual DbSet<PaymentMethodLookup> PaymentMethodLookups { get; set; }
+
+    public virtual DbSet<PaymentStatusLookup> PaymentStatusLookups { get; set; }
+
+    public virtual DbSet<Subscription> Subscriptions { get; set; }
+
+    public virtual DbSet<SubscriptionActivityLookup> SubscriptionActivityLookups { get; set; }
+
+    public virtual DbSet<SubscriptionLog> SubscriptionLogs { get; set; }
+
+    public virtual DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
+
+    public virtual DbSet<SubscriptionPlanNameLookup> SubscriptionPlanNameLookups { get; set; }
+
+    public virtual DbSet<TrialNotification> TrialNotifications { get; set; }
+
+    public virtual DbSet<TrialNotificationLookup> TrialNotificationLookups { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Data Source=medisaterp.lyfexafrica.com;uid=adminMedisatERP;pwd=Planchinobo256;TrustServerCertificate=True;");
 
@@ -544,6 +566,194 @@ public partial class MedisatErpDbContext : DbContext
             entity.HasOne(d => d.Client).WithMany(p => p.Reports)
                 .HasForeignKey(d => d.ClientId)
                 .HasConstraintName("FK__Report__ClientId__6CA31EA0");
+        });
+
+        modelBuilder.Entity<BillingCycleLookup>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__BillingC__3214EC07271F0E00");
+
+            entity.ToTable("BillingCycleLookup", "dbo");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.CycleName)
+                .IsRequired()
+                .HasMaxLength(50);
+        });
+
+
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Payment__3214EC072C033188");
+
+            entity.ToTable("Payment", "dbo");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.PaymentDate).HasColumnType("datetime");
+            entity.Property(e => e.TransactionId).HasMaxLength(255);
+
+            entity.HasOne(d => d.PaymentMethod).WithMany(p => p.Payments)
+                .HasForeignKey(d => d.PaymentMethodId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Payment__Payment__60FC61CA");
+
+            entity.HasOne(d => d.PaymentStatus).WithMany(p => p.Payments)
+                .HasForeignKey(d => d.PaymentStatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Payment__Payment__60083D91");
+
+            entity.HasOne(d => d.Subscription).WithMany(p => p.Payments)
+                .HasForeignKey(d => d.SubscriptionId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK__Payment__Subscri__5F141958");
+        });
+
+        modelBuilder.Entity<PaymentMethodLookup>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__PaymentM__3214EC073CC5077C");
+
+            entity.ToTable("PaymentMethodLookup", "dbo");
+
+            entity.Property(e => e.Method)
+                .IsRequired()
+                .HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<PaymentStatusLookup>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__PaymentS__3214EC07340D8E27");
+
+            entity.ToTable("PaymentStatusLookup", "dbo");
+
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<Subscription>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Subscrip__3214EC07EB97F597");
+
+            entity.ToTable("Subscription", "dbo");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.PaymentStatus)
+                .IsRequired()
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Company).WithMany(p => p.Subscriptions)
+                .HasForeignKey(d => d.CompanyId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Company_Subscription");
+
+            entity.HasOne(d => d.SubscriptionPlan).WithMany(p => p.Subscriptions)
+                .HasForeignKey(d => d.SubscriptionPlanId)
+                .HasConstraintName("FK_SubscriptionPlan_Subscription");
+        });
+
+        modelBuilder.Entity<SubscriptionActivityLookup>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Subscrip__3214EC070751D0BB");
+
+            entity.ToTable("SubscriptionActivityLookup", "dbo");
+
+            entity.Property(e => e.ActivityName)
+                .IsRequired()
+                .HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<SubscriptionLog>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Subscrip__3214EC070EA444F0");
+
+            entity.ToTable("SubscriptionLog", "dbo");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.LogDate).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Activity).WithMany(p => p.SubscriptionLogs)
+                .HasForeignKey(d => d.ActivityId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Subscript__Activ__0539C240");
+
+            entity.HasOne(d => d.Subscription).WithMany(p => p.SubscriptionLogs)
+                .HasForeignKey(d => d.SubscriptionId)
+                .HasConstraintName("FK__Subscript__Subsc__04459E07");
+        });
+
+        modelBuilder.Entity<SubscriptionPlan>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Subscrip__3214EC077710149E");
+
+            entity.ToTable("SubscriptionPlan", "dbo");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.Description).HasMaxLength(500);
+
+            entity.HasOne(d => d.BillingCycle).WithMany(p => p.SubscriptionPlans)
+                .HasForeignKey(d => d.BillingCycleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_BillingCycle_SubscriptionPlan");
+
+            entity.HasOne(d => d.PlanName).WithMany(p => p.SubscriptionPlans)
+                .HasForeignKey(d => d.PlanNameId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PlanName_SubscriptionPlan");
+        });
+
+        modelBuilder.Entity<SubscriptionPlanNameLookup>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Subscrip__3214EC0726F9188B");
+
+            entity.ToTable("SubscriptionPlanNameLookup", "dbo");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.PlanName)
+                .IsRequired()
+                .HasMaxLength(255);
+            entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
+        });
+
+        modelBuilder.Entity<TrialNotification>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TrialNot__3214EC07BD034B76");
+
+            entity.ToTable("TrialNotification", "dbo");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.ReminderDate).HasColumnType("datetime");
+            entity.Property(e => e.SentAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.TrialEndDate).HasColumnType("datetime");
+            entity.Property(e => e.TrialStartDate).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Company).WithMany(p => p.TrialNotifications)
+                .HasForeignKey(d => d.CompanyId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Company_TrialNotification");
+
+            entity.HasOne(d => d.NotificationType).WithMany(p => p.TrialNotifications)
+                .HasForeignKey(d => d.NotificationTypeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_NotificationType_TrialNotification");
+        });
+
+        modelBuilder.Entity<TrialNotificationLookup>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__TrialNot__3214EC0794269932");
+
+            entity.ToTable("TrialNotificationLookup", "dbo");
+
+            entity.Property(e => e.Message)
+                .IsRequired()
+                .HasColumnType("text");
+            entity.Property(e => e.Type)
+                .IsRequired()
+                .HasMaxLength(50)
+                .IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);

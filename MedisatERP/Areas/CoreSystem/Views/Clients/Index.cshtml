@@ -14,7 +14,7 @@
 </div>
 
 <!-- Filter by Company-->
-<div class="row">
+<div class="row mb-3">
     <div class="form-group col-md-4">
         <label class="my-3">Company Name:</label>
         @(Html.DevExtreme().SelectBox()
@@ -37,7 +37,7 @@
 </div>
 
 <!-- Client List DataGrid -->
-<div class="card" style="padding:20px">
+<div class="card p-3" >
     @(Html.DevExtreme().DataGrid<CompanyClient>()
         .ShowBorders(true)
         .ID("gv_clientList")

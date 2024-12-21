@@ -116,3 +116,5 @@ Admins should be able to view and interact with the following tables on the fron
 - **Trial Notifications**: To manage and monitor trial-related communications with users.
 
 By keeping the admin interface focused on these tables, you will provide them with the essential tools to manage subscriptions efficiently while keeping the UI clean and intuitive.
+
+

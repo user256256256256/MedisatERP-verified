@@ -357,3 +357,14 @@ This should be a cleaner, more appropriate approach for updating these fields wi
 
                 // Attach the logs to the user model
                 user.SubscriptionLogs = subscriptionLogs;
+
+
+.Lookup(lookup => lookup
+.DataSource(ds => ds.Mvc()
+.Controller("TreeListTasks")
+.LoadAction("TaskEmployees")
+.Key("ID")
+)
+.ValueExpr("ID")
+.DisplayExpr("Name")
+);

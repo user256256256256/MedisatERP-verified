@@ -13,7 +13,7 @@
 </div>
 
 <!-- Section Search for the Company-->
-<div class="row">
+<div class="row mb-3">
     <div class="form-group col-md-4">
         <label class="my-3">Company Name:</label>
         @(Html.DevExtreme().SelectBox()
@@ -36,7 +36,7 @@
 </div>
 
 <!-- DevExtreme DataGrid for Activity Logs -->
-<div id="auditLogGrid">
+<div class="card p-3" id="auditLogGrid">
     @(Html.DevExtreme().DataGrid<AuditLog>()
         .ShowBorders(true)
         .ID("gv_auditLogList")
