@@ -92,6 +92,11 @@ namespace MedisatERP.Controllers
                 var model = new CompanyClient();
                 var companyClientsData = valuesDict.Where(kv => kv.Key != "Address")
                     .ToDictionary(kv => kv.Key, kv => kv.Value);
+                    if (model.CompanyId == Guid.Empty)  // Check if the CompanyId is an empty Guid
+                    {
+                        model.CompanyId = Guid.Parse("8F2722EE-1E0F-48F0-9205-CCA24F03049C");
+                    }
+
                 PopulateModel(model, companyClientsData); // Populate the company clients model.
 
                 // Initialize Address if not provided
