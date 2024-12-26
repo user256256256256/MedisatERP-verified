@@ -1,7 +1,9 @@
+using MedisatERP.Areas.CoreSystem.Models;
 using MedisatERP.Data;
+using MedisatERP.Library;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,8 +27,6 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 
     // Configure user settings
     options.User.RequireUniqueEmail = true;
-
-    // User settings
     options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
 
     // Lockout settings
@@ -36,38 +36,63 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 
     // Sign-in settings
     options.SignIn.RequireConfirmedAccount = false;
+    options.SignIn.RequireConfirmedEmail = true; 
+    options.SignIn.RequireConfirmedPhoneNumber = false;
+
+
+
+    // Configure token providers
+    options.Tokens.EmailConfirmationTokenProvider = "Default";
+    options.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultAuthenticatorProvider;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-//  Register HttpClient as a service
-builder.Services.AddHttpClient(); // Registers the HttpClient service globally
+// Configure the token lifespan for all token providers
+builder.Services.Configure<DataProtectionTokenProviderOptions>(opt =>
+    opt.TokenLifespan = TimeSpan.FromMinutes(5));  // Ensures 5-minute expiry for tokens
 
-// Add services to the container.
-builder.Services
-    .AddRazorPages()
-    .AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
+// Add Session services
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
-// Register Areas
+// Register EmailSender and SmsSender services
+builder.Services.AddTransient<IEmailSender, CodeEmailSender>();
+
+// Register RoleRedirectService
+builder.Services.AddTransient<RoleRedirectService>();
+
+// Register HttpClient as a service
+builder.Services.AddHttpClient();
+
+// Add services to the container
+builder.Services.AddRazorPages().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 builder.Services.AddControllersWithViews();
+
+builder.Logging.ClearProviders(); 
+builder.Logging.AddConsole();
 
 // Create the app
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
 }
 
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.UseAuthorization();
 
+// Enable session middleware
+app.UseSession();
 
-// Add this line to enable areas support
+// Enable areas support
 app.MapControllerRoute(
     name: "areaRoute",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
@@ -77,15 +102,13 @@ app.MapControllerRoute(
     name: "LogoutAPI",
     pattern: "api/{controller}/{action}");
 
-// Maps routes for the "NutritionCompany" area, allowing a specific controller and action.
-// The {companyId:guid?} is an optional GUID parameter for company-specific routing.
+// Map routes for the "NutritionCompany" area
 app.MapAreaControllerRoute(
     name: "NutritionCompany",
     areaName: "NutritionCompany",
     pattern: "NutritionCompany/{controller=Home}/{action=Index}/{companyId:guid?}");
 
-// Specifically routes to the "NutritionSystem" controller within the "NutritionCompany" area.
-// The {companyId:guid?} is a required GUID parameter for company-specific routing.
+// Specifically routes to the "NutritionSystem" controller within the "NutritionCompany" area
 app.MapAreaControllerRoute(
     name: "nutritionSystemRoute",
     areaName: "NutritionCompany",

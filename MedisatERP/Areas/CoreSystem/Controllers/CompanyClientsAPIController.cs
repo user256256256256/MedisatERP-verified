@@ -90,8 +90,14 @@ namespace MedisatERP.Controllers
 
                 // Create a new Company Clients Instance and populate it with the provided data
                 var model = new CompanyClient();
+
+                
+
                 var companyClientsData = valuesDict.Where(kv => kv.Key != "Address")
                     .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+                
+
                 PopulateModel(model, companyClientsData); // Populate the company clients model.
 
                 // Initialize Address if not provided
@@ -109,6 +115,10 @@ namespace MedisatERP.Controllers
                     model.Address.PostalCode = addressData["PostalCode"]?.ToString();
                     model.Address.Country = addressData["Country"]?.ToString();
                 }
+
+                
+
+                // 
 
                 // Save the new company client record to the database 
                 _context.CompanyClients.Add(model);

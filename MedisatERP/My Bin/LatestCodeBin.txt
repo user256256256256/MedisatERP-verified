@@ -551,6 +551,559 @@ public async Task<ActionResult> LoginCheck(string email, string password)
 
 2. **User Interface**: You'll need to implement a UI where the user can input the 2FA code (sent via email or SMS) after login.
 
+Sure! Let me clarify what a **claim** is and how it works with your `AspNetUserClaim` model. I'll also provide some **user scenarios** 
+to help explain claims in a practical context.
+
+### What is a Claim?
+In ASP.NET Identity, a **claim** is essentially a piece of information about a user that is stored in a **key-value** pair. 
+Claims are used to represent data that can help identify, authorize, or provide additional context about a user. 
+They are typically stored and managed alongside the user's profile and are used for various security and business logic purposes.
+
+A **claim** does not necessarily mean an **action** or an **event** (e.g., if a user tries to access unauthorized content). 
+Instead, it is about storing data that can represent **attributes** of the user or their **permissions**. 
+Claims are part of the user's identity and can be used to **authorize** access to resources, check if a user has specific roles, or manage certain aspects of 
+the user’s behavior.
+
+### Example of Claims in Your `AspNetUserClaim` Model:
+Your model represents the claim with the following properties:
+
+- `Id`: The primary key of the claim.
+- `UserId`: A reference to the `AspNetUser` this claim belongs to (foreign key).
+- `ClaimType`: The type of the claim (e.g., `"role"`, `"email"`, `"permission"`, etc.).
+- `ClaimValue`: The value of the claim (e.g., `"admin"`, `"user@example.com"`, `"can_view_reports"`).
+
+### Practical Scenarios for Claims
+
+Let's go through some **user scenarios** to understand how claims are used in an application:
+
+### 1. **User Role Claim**
+- **Scenario:** 
+  - Let's say you have an application where users can have different roles, like `Admin`, `Manager`, and `User`.
+  - The role of a user determines what parts of the application they can access.
+
+- **How Claims Work in This Scenario:**
+  - When a user logs in, your system might create a claim for that user with the claim type `"role"` and the claim value `"Admin"` (or whatever role the user belongs to).
+  - Example: 
+    ```csharp
+    user.AspNetUserClaims.Add(new AspNetUserClaim { ClaimType = "role", ClaimValue = "Admin" });
+    ```
+  - Now, when the application checks the user's claims (for authorization), it can check if the user has a claim of type `"role"` with the value `"Admin"`. If so, the user is authorized to access admin-specific content.
+
+- **Example of Using the Claim in Code:**
+  When checking if the user is authorized to perform an action, you might do something like this:
+
+  ```csharp
+  var userRoleClaim = user.AspNetUserClaims.FirstOrDefault(c => c.ClaimType == "role" && c.ClaimValue == "Admin");
+  if (userRoleClaim != null)
+  {
+      // User is an Admin, allow access
+  }
+  else
+  {
+      // Deny access
+  }
+  ```
+
+### 2. **Email Verified Claim**
+- **Scenario:**
+  - A user registers on the platform, and the system requires them to verify their email before they can access certain features.
+  - The system can issue a claim indicating that the email has been verified.
+
+- **How Claims Work in This Scenario:**
+  - After the user verifies their email, the system adds a claim for the user with the claim type `"email_verified"` and a claim value of `"true"`.
+  - Example: 
+    ```csharp
+    user.AspNetUserClaims.Add(new AspNetUserClaim { ClaimType = "email_verified", ClaimValue = "true" });
+    ```
+  - Now, when the system checks whether the user can access email-dependent features, it can check for the `"email_verified"` claim.
+
+- **Example of Using the Claim in Code:**
+  ```csharp
+  var emailVerifiedClaim = user.AspNetUserClaims.FirstOrDefault(c => c.ClaimType == "email_verified" && c.ClaimValue == "true");
+  if (emailVerifiedClaim != null)
+  {
+      // User's email is verified, grant access to email-dependent features
+  }
+  else
+  {
+      // Prompt user to verify their email first
+  }
+  ```
+
+### 3. **Permissions or Custom Claims**
+- **Scenario:**
+  - A user might have custom permissions, like the ability to view reports or delete records.
+  - These permissions can be stored as claims to determine whether the user is authorized to perform certain actions.
+
+- **How Claims Work in This Scenario:**
+  - Each user might have claims such as `"can_view_reports"`, `"can_delete_records"`, etc.
+  - Example:
+    ```csharp
+    user.AspNetUserClaims.Add(new AspNetUserClaim { ClaimType = "can_view_reports", ClaimValue = "true" });
+    user.AspNetUserClaims.Add(new AspNetUserClaim { ClaimType = "can_delete_records", ClaimValue = "false" });
+    ```
+  - Now, when the user attempts to perform a certain action (e.g., view reports), the system checks for the corresponding claim.
+
+- **Example of Using the Claim in Code:**
+  ```csharp
+  var viewReportsClaim = user.AspNetUserClaims.FirstOrDefault(c => c.ClaimType == "can_view_reports" && c.ClaimValue == "true");
+  if (viewReportsClaim != null)
+  {
+      // User can view reports, allow access
+  }
+  else
+  {
+      // Deny access
+  }
+  ```
+
+### Summary of Claims:
+- **Claims represent** user-specific information, like roles, permissions, email verification status, or custom attributes.
+- **Claims are used for authorization**: When a user attempts to access certain functionality, the application checks their 
+claims to see if they have the necessary permissions or roles to do so.
+- **Claims are stored** in the database (e.g., in your `AspNetUserClaim` table), and can be used to enhance user security and application logic.
+  
+### Common Uses of Claims:
+1. **Authorization**: Checking if a user has the right permissions or role to access certain parts of the application.
+2. **Personalization**: Storing user preferences or information that can personalize their experience (e.g., preferred language).
+3. **Two-Factor Authentication (2FA)**: Storing a claim for whether a user has enabled 2FA.
+4. **Application Logic**: Custom attributes, like whether the user is a premium member or has access to a certain feature, 
+can be stored as claims and used for controlling access.
+
+### Example of Claims in Action:
+- A **Premium Member** user could have a claim like:
+  ```csharp
+  user.AspNetUserClaims.Add(new AspNetUserClaim { ClaimType = "is_premium", ClaimValue = "true" });
+  ```
+- This claim could be checked every time the user tries to access premium features in the app:
+  ```csharp
+  var isPremium = user.AspNetUserClaims.FirstOrDefault(c => c.ClaimType == "is_premium" && c.ClaimValue == "true");
+  if (isPremium != null)
+  {
+      // Allow access to premium features
+  }
+  else
+  {
+      // Deny access
+  }
+  ```
+
+### Conclusion:
+Claims are key-value pairs that store information about the user (such as their role, permissions, or custom attributes). 
+These claims are then used to **authorize** users to perform certain actions in your 
+system, making claims a crucial part of your application's **security** and **access control**.
+
+[HttpPost]
+        public async Task<IActionResult> Post([FromBody] AspNetUser userInput)
+        {
+            try
+            {
+                // Log the content of the incoming request for debugging
+                if (userInput == null)
+                {
+                    Console.WriteLine("Received user input: null");
+                    return BadRequest(new { message = "User input cannot be empty." });
+                }
+
+                var userInputJson = JsonConvert.SerializeObject(userInput, Formatting.Indented);
+                Console.WriteLine($"Received user input: {userInputJson}");
+
+                // List of restricted roles (e.g., "System Administrator")
+                var restrictedRoles = new List<string> { "System Administrator" };
+
+                // ******To do ********** //
+                // if account is just being created and role is restricted roles add account lockup enable
+
+                // Handle roles if provided in the user input
+                if (userInput.Roles != null && userInput.Roles.Any())
+                {
+                    Console.WriteLine("Processing roles...");
+                    foreach (var roleObject in userInput.Roles)
+                    {
+                        if (roleObject == null || roleObject.Id == null)
+                        {
+                            Console.WriteLine($"Invalid Role object: {roleObject}");
+                            return BadRequest(new { message = "Invalid Role object." });
+                        }
+
+                        var roleId = roleObject.Id;
+                        Console.WriteLine($"Checking role with ID '{roleId}'...");
+
+                        var roleFromDb = await _context.AspNetRoles
+                            .FirstOrDefaultAsync(r => r.Id == roleId);
+
+                        if (roleFromDb == null)
+                        {
+                            Console.WriteLine($"Role with ID '{roleId}' not found.");
+                            return NotFound(new { message = $"Role with ID '{roleId}' not found." });
+                        }
+
+                        if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleFromDb.Name))
+                        {
+                            Console.WriteLine($"User has a CompanyId and role '{roleFromDb.Name}' is restricted. Terminating.");
+                            return BadRequest(new { message = "Role NOT applicable for user!" });
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("No roles provided, skipping role logic.");
+                }
+
+                // Create an IdentityUser instance for UserManager only after role checks
+                Console.WriteLine("Attempting to find user by ID...");
+                var identityUser = await _userManager.FindByIdAsync(userInput.Id.ToString());
+                if (identityUser == null)
+                {
+                    Console.WriteLine("User not found.");
+                    return NotFound(new { message = "User not found." });
+                }
+
+                // Update the user properties
+                Console.WriteLine("Updating user properties...");
+                identityUser.UserName = userInput.UserName;
+                identityUser.Email = userInput.Email;
+                identityUser.PhoneNumber = userInput.PhoneNumber;
+
+                // Password hashing, update only if provided
+                if (!string.IsNullOrEmpty(userInput.PasswordHash))
+                {
+                    Console.WriteLine("Hashing password...");
+                    var passwordHasher = new PasswordHasher<IdentityUser>();
+                    identityUser.PasswordHash = passwordHasher.HashPassword(identityUser, userInput.PasswordHash);
+                }
+
+                // Update the user in the database
+                Console.WriteLine("Attempting to update user in the database...");
+                var updateResult = await _userManager.UpdateAsync(identityUser);
+                if (!updateResult.Succeeded)
+                {
+                    Console.WriteLine($"User update failed: {string.Join(", ", updateResult.Errors.Select(e => e.Description))}");
+                    return BadRequest(new { message = "Failed to update user.", errors = updateResult.Errors });
+                }
+                Console.WriteLine("User updated successfully.");
+
+                // Handle roles after user is updated (only if roles are provided)
+                if (userInput.Roles != null && userInput.Roles.Any())
+                {
+                    Console.WriteLine("Assigning roles...");
+                    foreach (var roleObject in userInput.Roles)
+                    {
+                        var roleId = roleObject.Id;
+
+                        var roleFromDb = await _context.AspNetRoles
+                            .FirstOrDefaultAsync(r => r.Id == roleId);
+
+                        if (roleFromDb != null)
+                        {
+                            var roleName = roleFromDb.Name;
+
+                            if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleName))
+                            {
+                                Console.WriteLine($"User has a CompanyId and role '{roleName}' is restricted. Skipping assignment.");
+                                continue;
+                            }
+
+                            var addRoleResult = await _userManager.AddToRoleAsync(identityUser, roleName);
+
+                            if (!addRoleResult.Succeeded)
+                            {
+                                Console.WriteLine($"Role assignment failed for '{roleName}': {string.Join(", ", addRoleResult.Errors.Select(e => e.Description))}");
+                                await _userManager.DeleteAsync(identityUser); // Optionally delete if role assignment fails
+                                Console.WriteLine("User deleted due to role assignment failure.");
+                                return BadRequest(new { message = "Failed to assign role." });
+                            }
+
+                            Console.WriteLine($"Role '{roleName}' assigned successfully.");
+                        }
+                    }
+                }
+
+                // Handle the company ID if provided
+                if (userInput.CompanyId.HasValue)
+                {
+                    Console.WriteLine("Assigning CompanyId...");
+                    var userFromDb = await _context.AspNetUsers
+                        .FirstOrDefaultAsync(u => u.UserName == identityUser.UserName);
+
+                    if (userFromDb != null)
+                    {
+                        userFromDb.CompanyId = userInput.CompanyId;
+                        await _context.SaveChangesAsync();
+                        Console.WriteLine($"Company Id '{userFromDb.CompanyId}' assigned successfully.");
+                    }
+                }
+
+
+
+                return Json(new { success = true, Id = identityUser.Id, message = "Profile updated successfully." });
+
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "An internal server error occurred.", error = ex.Message });
+            }
+        }
+
+
+
+        You're correct that there are several other events in DevExtreme's DataGrid, such as `onEditingPrepared`, `onEditingPreparing`, `onEditingCanceled`, and `onEditingCanceling`, which may be more appropriate depending on the specific behavior you want to achieve.
+
+### Let's clarify the difference between `onEditingStart` and these other events:
+
+1. **`onEditingStart`**:  
+   - This event is triggered when the user starts editing a row. This is an ideal place to set up initial data or perform some validation before editing starts. 
+   - However, it may not be the best place to modify data dynamically like `NormalizedUserName` or `NormalizedEmail`, since the user is already interacting with the grid.
+   
+2. **`onEditingPrepared`**:  
+   - This event is triggered after the editor for a particular cell is prepared. This might be a good place to adjust the value of `NormalizedUserName` or `NormalizedEmail` dynamically as the user interacts with the editor, but not yet after the user submits the edit.
+
+3. **`onEditingPreparing`**:  
+   - This event occurs before the row enters the edit mode, allowing you to modify or prevent the edit action. It can be used for validating or altering the initial values right before the editor opens, but it’s not typically used for dynamically adjusting data as in your scenario.
+
+4. **`onEditingCanceled` / `onEditingCanceling`**:
+   - These events are triggered when the editing operation is canceled, either because the user pressed cancel or the operation was programmatically canceled. They are not relevant for your use case, as they happen after the user exits editing.
+
+### So, what's the right choice here?
+
+**`onEditingPrepared`** might be the most appropriate event in this scenario to dynamically update the `NormalizedUserName` and `NormalizedEmail` values as the user begins editing. This event fires after the editor is prepared, but before the user starts editing, which means you can modify the values before the editing process is fully activated.
+
+### Updated Approach using `onEditingPrepared`:
+
+```html
+<script>
+    // Update NormalizedUserName and NormalizedEmail when editing starts
+    $("#gv_userList").dxDataGrid({
+        onEditingPrepared: function (e) {
+            // Ensure the NormalizedUserName is updated when UserName is changed
+            if (e.column.dataField === "UserName" && e.value) {
+                e.component.cellValue(e.rowIndex, "NormalizedUserName", e.value.toUpperCase());
+            }
+            // Ensure the NormalizedEmail is updated when Email is changed
+            if (e.column.dataField === "Email" && e.value) {
+                e.component.cellValue(e.rowIndex, "NormalizedEmail", e.value.toUpperCase());
+            }
+        }
+    });
+</script>
+```
+
+### Explanation of this approach:
+
+- **`onEditingPrepared`**:
+   - This event is fired right after the editor is initialized but before the user starts editing the cell. This is the perfect moment to manipulate or initialize any data before the user interacts with the grid.
+   - We check if the column being edited is `UserName` or `Email`, and then we use `e.component.cellValue` to set the value for the corresponding `NormalizedUserName` or `NormalizedEmail` columns (which are hidden from the user).
+
+### Why is this approach better?
+
+- **Non-intrusive**: You don't have to rely on user actions to update the `NormalizedUserName` and `NormalizedEmail` values after they start editing. Instead, the values are updated right when the editor is ready.
+- **Avoids unnecessary user interaction**: The user doesn't have to perform additional actions to ensure `NormalizedUserName` and `NormalizedEmail` are updated, which improves the user experience.
+
+This should be a cleaner, more appropriate approach for updating these fields without involving the user directly in the process.
+
+
+// Retrieve subscription logs associated with the user
+                var subscriptionLogs = await _dbContext.SubscriptionLogs.Where(s => s.UserId == decodedUserId).ToListAsync();
+
+                // Attach the logs to the user model
+                user.SubscriptionLogs = subscriptionLogs;
+
+
+.Lookup(lookup => lookup
+.DataSource(ds => ds.Mvc()
+.Controller("TreeListTasks")
+.LoadAction("TaskEmployees")
+.Key("ID")
+)
+.ValueExpr("ID")
+.DisplayExpr("Name")
+);
+
+
+
+
+The issue you're encountering—getting a **bad request** due to 2FA being required—means that the `PasswordSignInAsync` method is detecting that the user has 2FA enabled but you're not handling the 2FA verification properly in your code.
+
+When `PasswordSignInAsync` detects that the user has 2FA enabled, it returns a result indicating that the user needs to complete a 2FA check (typically `SignInResult.RequiresTwoFactor`). You need to catch this result and handle the 2FA process accordingly.
+
+Here's a breakdown of what needs to be done:
+
+1. **Detect the 2FA Requirement**: After attempting to sign in with `PasswordSignInAsync`, if 2FA is required, the result will indicate that, and you need to redirect the user to a 2FA verification page.
+
+2. **Handle 2FA Verification**: If 2FA is enabled, you need to prompt the user for a 2FA code (either via email or SMS), and then verify that the code matches the one sent to the user.
+
+3. **Return Response Based on 2FA**: If the 2FA verification is successful, proceed with the login process, otherwise return a failure message.
+
+### Updated Code with 2FA Handling
+
+Here's how you can modify your `LoginCheck` action to handle 2FA:
+
+```csharp
+[HttpGet]
+public async Task<ActionResult> LoginCheck(string email, string password)
+{
+    // Log the start of the login attempt
+    Console.WriteLine($"Login attempt started for email: {email}");
+
+    // Find user by email
+    var user = await _userManager.FindByEmailAsync(email);
+    if (user == null)
+    {
+        // Log when the user is not found
+        Console.WriteLine($"User not found for email: {email}");
+        return BadRequest(new { success = false, mresponse = "User not found" });
+    }
+
+    // Log when the user is found
+    Console.WriteLine($"User found for email: {email}");
+
+    // Attempt login
+    var result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: false);
+
+    if (result.Succeeded)
+    {
+        // Log successful login
+        Console.WriteLine("Login successful.");
+
+        // Check if the user needs 2FA verification
+        if (await _userManager.GetTwoFactorEnabledAsync(user))
+        {
+            // If 2FA is required, check the user's preferred method (SMS or Email)
+            var preferred2FAMethod = user.Preferred2FAMethod;
+
+            // Send 2FA code based on preferred method
+            if (preferred2FAMethod == "SMS")
+            {
+                var code = await _userManager.GenerateTwoFactorTokenAsync(user, "Phone");
+                await _smsService.SendSmsAsync(user.PhoneNumber, code); // Implement SMS service
+                Console.WriteLine("2FA code sent via SMS.");
+            }
+            else if (preferred2FAMethod == "Email")
+            {
+                var code = await _userManager.GenerateTwoFactorTokenAsync(user, "Email");
+                await _emailService.SendEmailAsync(user.Email, "Your 2FA Code", code); // Implement Email service
+                Console.WriteLine("2FA code sent via Email.");
+            }
+
+            // Return a response indicating the user should enter their 2FA code
+            return Ok(new { success = true, mresponse = "2FA code sent", requires2FA = true });
+        }
+
+        // If no 2FA required, continue processing roles and redirect
+        var roles = await _userManager.GetRolesAsync(user);
+
+        var aspNetUser = await _dbContext.Set<AspNetUser>().FirstOrDefaultAsync(u => u.Email == email);
+
+        if (roles.Contains("System Administrator"))
+        {
+            if (aspNetUser == null)
+            {
+                // Log when the user is not found in the custom table
+                Console.WriteLine($"Custom user not found for email: {email}");
+                return BadRequest(new { success = false, mresponse = "User not found." });
+            }
+
+            // Log the found AspNetUser
+            Console.WriteLine($"Custom user found with CompanyId: {aspNetUser.Id}");
+
+            var userId = aspNetUser.Id;
+
+            if (userId != null)
+            {
+                // Encode the User Id using HashingHelper
+                var encodedUserId = HashingHelper.EncodeString(userId);
+
+                // Log the encoded CompanyId
+                Console.WriteLine($"Encoded UserId: {encodedUserId}");
+
+                // Construct the redirect URL
+                var redirectUrl = $"/CoreSystem/SystemManager/Index/{encodedUserId}";
+
+                // Return the response with the redirect URL
+                return Ok(new { success = true, mresponse = "Login successful", redirectUrl });
+            }
+        }
+        else if (roles.Contains("Company Administrator"))
+        {
+            if (aspNetUser == null)
+            {
+                // Log when the user is not found in the custom table
+                Console.WriteLine($"Custom user not found for email: {email}");
+                return BadRequest(new { success = false, mresponse = "User not found." });
+            }
+
+            // Log the found AspNetUser
+            Console.WriteLine($"Custom user found with CompanyId: {aspNetUser.CompanyId}");
+
+            var companyId = aspNetUser.CompanyId;
+
+            if (companyId != null)
+            {
+                // Encode the CompanyId using HashingHelper
+                var encodedCompanyId = HashingHelper.EncodeGuidID(companyId.Value);
+
+                // Log the encoded CompanyId
+                Console.WriteLine($"Encoded CompanyId: {encodedCompanyId}");
+
+                // Construct the redirect URL
+                var redirectUrl = $"/NutritionCompany/NutritionSystem/Index/{encodedCompanyId}";
+
+                // Return the response with the redirect URL
+                return Ok(new { success = true, mresponse = "Login successful", redirectUrl });
+            }
+        }
+        else
+        {
+            // Log when the user is neither a System Administrator nor a Company Administrator
+            Console.WriteLine("User is neither a System Administrator nor a Company Administrator.");
+            return Ok(new { success = true, mresponse = "Login successful" });
+        }
+    }
+
+    // Log for failed login attempt
+    Console.WriteLine("Invalid login attempt for email: " + email);
+    return BadRequest(new { success = false, mresponse = "Invalid login attempt" });
+}
+```
+
+### Key Changes:
+1. **Checking if 2FA is enabled**: After a successful password sign-in, we check if the user has 2FA enabled using `await _userManager.GetTwoFactorEnabledAsync(user)`.
+2. **Sending the 2FA code**: Based on the user's preferred 2FA method (SMS or email), we send the code using the appropriate service (SMS or email).
+3. **Handling the 2FA Requirement**: If 2FA is enabled, we return a response indicating that the 2FA code has been sent and the user needs to provide it.
+4. **Redirecting after successful login**: If no 2FA is required, the code proceeds to process roles and redirect the user to the appropriate page.
+
+### Next Steps:
+1. **2FA Code Verification**: You'll need an additional endpoint that verifies the 2FA code once the user enters it.
+   
+   For example:
+
+   ```csharp
+   [HttpPost]
+   public async Task<IActionResult> Verify2FA(string email, string code)
+   {
+       var user = await _userManager.FindByEmailAsync(email);
+       if (user == null)
+       {
+           return BadRequest(new { success = false, mresponse = "User not found" });
+       }
+
+       // Check if the user has 2FA enabled and verify the code
+       var is2FACodeValid = await _userManager.VerifyTwoFactorTokenAsync(user, "Phone", code); // or "Email"
+       if (is2FACodeValid)
+       {
+           await _signInManager.SignInAsync(user, isPersistent: false);
+           return Ok(new { success = true, mresponse = "2FA successful, logged in." });
+       }
+
+       return BadRequest(new { success = false, mresponse = "Invalid 2FA code" });
+   }
+   ```
+
+2. **User Interface**: You'll need to implement a UI where the user can input the 2FA code (sent via email or SMS) after login.
+
 
 [ApiController]
 [Route("api/[controller]/[action]")]
@@ -675,3 +1228,70 @@ public class LoginAPIController : ControllerBase
     }
 
 }
+
+
+
+    //[HttpGet]
+    //public async Task<ActionResult> LoginCheck(string email, string password)
+    //{
+    //    // Validate the input parameters
+    //    if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+    //    {
+    //        Console.WriteLine("Login attempt failed: email or password is empty");
+    //        return BadRequest(new { success = false, mresponse = "Email and password are required" });
+    //    }
+
+    //    Console.WriteLine($"Login attempt started for email: {email}");
+
+    //    try
+    //    {
+    //        var user = await _userManager.FindByEmailAsync(email);
+    //        if (user == null)
+    //        {
+    //            Console.WriteLine($"User not found for email: {email}");
+    //            return BadRequest(new { success = false, mresponse = "Invalid login attempt" });
+    //        }
+
+    //        Console.WriteLine($"User found for email: {email}");
+
+    //        var result = await _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: false);
+
+    //        if (result.Succeeded)
+    //        {
+    //            Console.WriteLine($"Login successful for email: {email}");
+
+    //            // Check if the user has TwoFactorAuthentication enabled
+    //            if (user.TwoFactorEnabled)
+    //            {
+
+    //                // Log the redirection to 2FA
+    //                Console.WriteLine($"Two-factor authentication is enabled for email: {email}. Redirecting to 2FA.");
+
+    //                await _signInManager.SignOutAsync();
+    //                await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: false);
+
+    //                // Encode user ID for redirection
+    //                var encodedUserId = HashingHelper.EncodeString(user.Id);
+    //                var redirectUrl = $"/TwoFA/Index/{encodedUserId}";
+
+    //                return Ok(new { success = true, mresponse = "Login successful", redirectUrl });
+    //            }
+
+    //            // If 2FA is not enabled, proceed with login directly
+    //            return Ok(new { success = true, mresponse = "Login successful" });
+    //        }
+    //        else if (result.IsLockedOut)
+    //        {
+    //            return BadRequest(new { success = false, mresponse = "Account is locked out" });
+    //        }
+    //        else
+    //        {
+    //            return BadRequest(new { success = false, mresponse = "Invalid login attempt" });
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        Console.WriteLine($"Error: {ex.Message}");
+    //        return StatusCode(500, new { success = false, mresponse = "An error occurred" });
+    //    }
+    //}

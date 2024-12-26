@@ -142,7 +142,7 @@ public partial class MedisatErpDbContext : DbContext
 
             // Configure the new ProfileImagePath property
             entity.Property(e => e.ProfileImagePath)
-                .HasMaxLength(255) 
+                .HasMaxLength(255)
                 .IsRequired(false);
 
             // Configure the new BioData property

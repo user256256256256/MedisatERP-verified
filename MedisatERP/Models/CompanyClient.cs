@@ -2,11 +2,13 @@
 using MedisatERP.Areas.NutritionCompany.Models;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace MedisatERP.Models;
 
 public partial class CompanyClient
 {
+    [Key]
     public Guid ClientId { get; set; }
 
     public Guid CompanyId { get; set; }
