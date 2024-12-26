@@ -95,9 +95,6 @@ namespace MedisatERP.Controllers
 
                 var companyClientsData = valuesDict.Where(kv => kv.Key != "Address")
                     .ToDictionary(kv => kv.Key, kv => kv.Value);
-
-                
-
                 PopulateModel(model, companyClientsData); // Populate the company clients model.
 
                 // Initialize Address if not provided
