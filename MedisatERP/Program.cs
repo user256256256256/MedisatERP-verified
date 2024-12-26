@@ -39,8 +39,6 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.SignIn.RequireConfirmedEmail = true; 
     options.SignIn.RequireConfirmedPhoneNumber = false;
 
-
-
     // Configure token providers
     options.Tokens.EmailConfirmationTokenProvider = "Default";
     options.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultAuthenticatorProvider;

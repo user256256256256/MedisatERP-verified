@@ -50,7 +50,7 @@ public class LoginAPIController : Controller
             Console.WriteLine($"User found for email: {email}");
 
             // Attempt to sign in with the provided password
-            var result = await _signInManager.PasswordSignInAsync(user, password, false, lockoutOnFailure: false);
+            var result = await _signInManager.PasswordSignInAsync(user, password, false, lockoutOnFailure: true);
 
             // Log the result of the login attempt
             Console.WriteLine($"PasswordSignInAsync result: RequiresTwoFactor = {result.RequiresTwoFactor}, Succeeded = {result.Succeeded}, IsLockedOut = {result.IsLockedOut}");
@@ -69,7 +69,6 @@ public class LoginAPIController : Controller
                     // Use RoleRedirectService to handle role-based redirection
                     var roleRedirectResult = await _roleRedirectService.HandleRoleRedirectAsync(email);
                     return roleRedirectResult;  // Return the redirect result
-
                 }
 
                 // Redirect to 2FA if the cookie is not present
@@ -89,7 +88,19 @@ public class LoginAPIController : Controller
             // Handle locked-out accounts
             else if (result.IsLockedOut)
             {
-                return BadRequest(new { success = false, mresponse = "Account is locked out" });
+                // Log the lockout event for debugging
+                Console.WriteLine($"Account is locked out for email: {email} at {DateTime.Now}");
+
+                // Get the lockout end date if available
+                var lockoutEnd = await _userManager.GetLockoutEndDateAsync(user);
+                var lockoutMessage = lockoutEnd.HasValue
+                    ? $"Account is locked out until {lockoutEnd.Value.LocalDateTime}"
+                    : "Account is locked out";
+
+                // Log the lockout end date for debugging
+                Console.WriteLine(lockoutMessage);
+
+                return BadRequest(new { success = false, mresponse = lockoutMessage });
             }
             else
             {
@@ -102,6 +113,7 @@ public class LoginAPIController : Controller
             return StatusCode(500, new { success = false, mresponse = "An error occurred" });
         }
     }
+
 
 }
 
