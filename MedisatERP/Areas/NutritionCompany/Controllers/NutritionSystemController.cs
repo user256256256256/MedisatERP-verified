@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MedisatERP.Data;  // Assuming you have the proper DbContext to fetch company data
 using Microsoft.EntityFrameworkCore;
-using MedisatERP.Library;
+using MedisatERP.Services;
 
 namespace MedisatERP.Areas.NutritionCompany.Controllers
 {

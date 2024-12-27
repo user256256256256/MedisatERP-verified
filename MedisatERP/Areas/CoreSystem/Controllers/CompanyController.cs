@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MedisatERP.Data;  // Assuming you have the MedisatErpDbContext
-using MedisatERP.Library;  // Assuming you have the HashingHelper class
+using MedisatERP.Services;  // Assuming you have the HashingHelper class
 using Microsoft.EntityFrameworkCore;
 
 namespace MedisatERP.Areas.CoreSystem.Controllers

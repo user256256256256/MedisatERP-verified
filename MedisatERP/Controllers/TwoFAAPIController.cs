@@ -1,6 +1,6 @@
 ﻿using MedisatERP.Areas.CoreSystem.Models;
 using MedisatERP.Data;
-using MedisatERP.Library;
+using MedisatERP.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +16,6 @@ namespace MedisatERP.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IEmailSender _emailSender;
-        private readonly ILogger<TwoFAAPIController> _logger;
         private readonly MedisatErpDbContext _dbContext;
         private readonly RoleRedirectService _roleRedirectService;
 
@@ -29,7 +28,6 @@ namespace MedisatERP.Controllers
             _signInManager = signInManager;
             _emailSender = emailSender;
             _dbContext = dbContext;
-            _logger = logger;
             _roleRedirectService = roleRedirectService;
         }
 

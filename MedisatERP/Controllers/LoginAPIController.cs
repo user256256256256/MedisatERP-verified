@@ -1,7 +1,8 @@
 ﻿using MedisatERP.Areas.CoreSystem.Models;
 using MedisatERP.Data;
-using MedisatERP.Library;
+using MedisatERP.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,15 +15,17 @@ public class LoginAPIController : Controller
     private readonly SignInManager<IdentityUser> _signInManager;
     private readonly ApplicationDbContext _dbContext;
     private readonly RoleRedirectService _roleRedirectService;
+	private readonly IEmailSender _emailSender;
 
-    public LoginAPIController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ApplicationDbContext dbContext, RoleRedirectService roleRedirectService)
+	public LoginAPIController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ApplicationDbContext dbContext, RoleRedirectService roleRedirectService, IEmailSender emailSender)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _dbContext = dbContext;
         _roleRedirectService = roleRedirectService;
+		_emailSender = emailSender;
 
-    }
+	}
 
 
     [HttpGet]
@@ -45,6 +48,27 @@ public class LoginAPIController : Controller
             {
                 Console.WriteLine($"User not found for email: {email}");
                 return BadRequest(new { success = false, mresponse = "Invalid login attempt" });
+            }
+
+            // Check if the user's email is confirmed
+            if (!await _userManager.IsEmailConfirmedAsync(user))
+            {
+                Console.WriteLine($"Email not confirmed for user: {email}");
+
+                // Generate email confirmation token
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                // Generate confirmation link for EmailConfirmationController
+                var confirmationLink = Url.Action("ConfirmEmail", "EmailConfirmationAPI", new { token, email = user.Email }, Request.Scheme);
+
+
+                // Send confirmation email
+                await _emailSender.SendEmailAsync(user.Email, "Confirm your email", $"Please confirm your email by clicking on this link: {confirmationLink}");
+
+                Console.WriteLine($"Confirmation email sent to: {email}");
+                Console.WriteLine($"Confirmation link is: {confirmationLink}");
+
+                return BadRequest(new { success = false, mresponse = "Email exists but not confirmed: Confirmation token sent to your email" });
             }
 
             Console.WriteLine($"User found for email: {email}");
@@ -100,6 +124,8 @@ public class LoginAPIController : Controller
                 // Log the lockout end date for debugging
                 Console.WriteLine(lockoutMessage);
 
+                await _emailSender.SendEmailAsync(user.Email, "Account Locked Out", lockoutMessage);
+
                 return BadRequest(new { success = false, mresponse = lockoutMessage });
             }
             else
@@ -113,7 +139,6 @@ public class LoginAPIController : Controller
             return StatusCode(500, new { success = false, mresponse = "An error occurred" });
         }
     }
-
 
 }
 

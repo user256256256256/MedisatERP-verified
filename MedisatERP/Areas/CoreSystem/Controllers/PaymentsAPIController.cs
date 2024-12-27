@@ -166,23 +166,73 @@ namespace MedisatERP.Controllers
             return Json(new { result.Entity.Id });
         }
 
-        [HttpPut]
-        public async Task<IActionResult> Put(Guid key, string values) {
-            var model = await _context.Payments.FirstOrDefaultAsync(item => item.Id == key);
-            if(model == null)
-                return StatusCode(409, "Object not found");
+		[HttpPut]
+		public async Task<IActionResult> Put(Guid key, string values)
+		{
+			try
+			{
+				// Retrieve the payment by its unique identifier
+				var model = await _context.Payments.FirstOrDefaultAsync(item => item.Id == key);
+				if (model == null)
+				{
+					Console.WriteLine($"Payment entity not found with key: {key}");
+					return StatusCode(409, "Object not found");
+				}
 
-            var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
-            PopulateModel(model, valuesDict);
+				Console.WriteLine($"Payment entity found with key: {key}, proceeding with updates.");
 
-            if(!TryValidateModel(model))
-                return BadRequest(GetFullErrorMessage(ModelState));
+				// Deserialize the incoming updated values
+				var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
+				PopulateModel(model, valuesDict);
 
-            await _context.SaveChangesAsync();
-            return Ok();
-        }
+				// Validate the updated model before saving
+				if (!TryValidateModel(model))
+				{
+					Console.WriteLine("Model validation failed.");
+					return BadRequest(GetFullErrorMessage(ModelState));
+				}
 
-        [HttpDelete]
+				Console.WriteLine("Model validated successfully.");
+
+				try
+				{
+					// Save the changes to the database
+					await _context.SaveChangesAsync();
+					Console.WriteLine("Payment entity updated successfully in the database.");
+					return Ok();
+				}
+				catch (DbUpdateConcurrencyException ex)
+				{
+					// Handle the concurrency exception
+					Console.WriteLine("Concurrency exception occurred while updating payment entity.");
+					var entry = ex.Entries.Single();
+					var databaseValues = entry.GetDatabaseValues();
+					if (databaseValues == null)
+					{
+						Console.WriteLine("The record you attempted to edit was deleted by another user.");
+						return NotFound(new { success = false, message = "The record you attempted to edit was deleted by another user." });
+					}
+					else
+					{
+						var dbValues = (Payment)databaseValues.ToObject();
+						Console.WriteLine("The record you attempted to edit was modified by another user.");
+
+						// Optionally, reload the entity with current database values
+						await entry.ReloadAsync();
+						return Conflict(new { success = false, message = "The record you attempted to edit was modified by another user.", currentValues = dbValues });
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				// Return an internal server error if an exception occurs
+				Console.WriteLine($"Exception occurred: {ex.Message}");
+				return StatusCode(500, $"Internal Server error: {ex.Message}");
+			}
+		}
+
+
+		[HttpDelete]
         public async Task Delete(Guid key) {
             var model = await _context.Payments.FirstOrDefaultAsync(item => item.Id == key);
 

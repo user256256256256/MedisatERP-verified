@@ -145,73 +145,109 @@ namespace MedisatERP.Controllers
             }
         }
 
-        /// <summary>
-        /// Updates an existing company and its address data.
-        /// </summary>
-        /// <param name="key">The unique identifier of the company to update.</param>
-        /// <param name="values">The incoming updated values as a JSON string.</param>
-        /// <returns>Returns a success status if the company is updated.</returns>
-        [HttpPut]
-        public async Task<IActionResult> Put(Guid key, string values)
-        {
-            try
-            {
-                // Retrieve the company by its unique identifier
-                var model = await _context.Companies
-                                          .Include(c => c.Address)
-                                          .FirstOrDefaultAsync(item => item.CompanyId == key);
+		/// <summary>
+		/// Updates an existing company and its address data.
+		/// </summary>
+		/// <param name="key">The unique identifier of the company to update.</param>
+		/// <param name="values">The incoming updated values as a JSON string.</param>
+		/// <returns>Returns a success status if the company is updated.</returns>
+		[HttpPut]
+		public async Task<IActionResult> Put(Guid key, string values)
+		{
+			try
+			{
+				// Retrieve the company by its unique identifier
+				var model = await _context.Companies
+										  .Include(c => c.Address)
+										  .FirstOrDefaultAsync(item => item.CompanyId == key);
 
-                if (model == null)
-                    return StatusCode(404, "Company not found");
+				if (model == null)
+				{
+					Console.WriteLine($"Company not found with key: {key}");
+					return StatusCode(404, "Company not found");
+				}
 
-                // Deserialize the incoming updated values
-                var valuesDict = JsonConvert.DeserializeObject<IDictionary<string, object>>(values);
+				Console.WriteLine($"Company found with key: {key}, proceeding with updates.");
 
-                // Extract address data from the request, if provided
-                var addressData = valuesDict.ContainsKey("Address") ? valuesDict["Address"] as JObject : null;
+				// Deserialize the incoming updated values
+				var valuesDict = JsonConvert.DeserializeObject<IDictionary<string, object>>(values);
 
-                // If address data is provided, update the address
-                if (addressData != null)
-                {
-                    if (model.Address == null)
-                    {
-                        model.Address = new CompanyAddress();
-                    }
+				// Extract address data from the request, if provided
+				var addressData = valuesDict.ContainsKey("Address") ? valuesDict["Address"] as JObject : null;
 
-                    model.Address.Street = addressData["Street"]?.ToString();
-                    model.Address.City = addressData["City"]?.ToString();
-                    model.Address.State = addressData["State"]?.ToString();
-                    model.Address.PostalCode = addressData["PostalCode"]?.ToString();
-                    model.Address.Country = addressData["Country"]?.ToString();
-                }
+				// If address data is provided, update the address
+				if (addressData != null)
+				{
+					if (model.Address == null)
+					{
+						model.Address = new CompanyAddress();
+					}
 
-                // Extract company data and update the company fields
-                var companyData = valuesDict.Where(kv => kv.Key != "Address")
-                                            .ToDictionary(kv => kv.Key, kv => kv.Value);
-                PopulateModel(model, companyData); // Update company model
+					model.Address.Street = addressData["Street"]?.ToString();
+					model.Address.City = addressData["City"]?.ToString();
+					model.Address.State = addressData["State"]?.ToString();
+					model.Address.PostalCode = addressData["PostalCode"]?.ToString();
+					model.Address.Country = addressData["Country"]?.ToString();
+				}
 
-                // Validate the updated model before saving
-                if (!TryValidateModel(model))
-                    return BadRequest(GetFullErrorMessage(ModelState));
+				// Extract company data and update the company fields
+				var companyData = valuesDict.Where(kv => kv.Key != "Address")
+											.ToDictionary(kv => kv.Key, kv => kv.Value);
+				PopulateModel(model, companyData); // Update company model
 
-                // Save the changes to the database
-                await _context.SaveChangesAsync();
+				// Validate the updated model before saving
+				if (!TryValidateModel(model))
+				{
+					Console.WriteLine("Model validation failed.");
+					return BadRequest(GetFullErrorMessage(ModelState));
+				}
 
-                return Ok(); // Return a success response
-            }
-            catch (Exception ex)
-            {
-                // Return an internal server error if an exception occurs
-                return StatusCode(500, $"Internal Server error: {ex.Message}");
-            }
-        }
+				Console.WriteLine("Model validated successfully.");
 
-        /// <summary>
-        /// Deletes a company and its associated address data by its unique identifier.
-        /// </summary>
-        /// <param name="key">The unique identifier of the company to delete.</param>
-        /// <returns>Returns a status code indicating the result of the operation.</returns>
-        [HttpDelete]
+				try
+				{
+					// Save the changes to the database
+					await _context.SaveChangesAsync();
+					Console.WriteLine("Company updated successfully in the database.");
+					return Ok();
+				}
+				catch (DbUpdateConcurrencyException ex)
+				{
+					// Handle the concurrency exception
+					Console.WriteLine("Concurrency exception occurred while updating company.");
+					var entry = ex.Entries.Single();
+					var databaseValues = entry.GetDatabaseValues();
+					if (databaseValues == null)
+					{
+						Console.WriteLine("The record you attempted to edit was deleted by another user.");
+						return NotFound(new { success = false, message = "The record you attempted to edit was deleted by another user." });
+					}
+					else
+					{
+						var dbValues = (Company)databaseValues.ToObject();
+						Console.WriteLine("The record you attempted to edit was modified by another user.");
+
+						// Optionally, reload the entity with current database values
+						await entry.ReloadAsync();
+						return Conflict(new { success = false, message = "The record you attempted to edit was modified by another user.", currentValues = dbValues });
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				// Return an internal server error if an exception occurs
+				Console.WriteLine($"Exception occurred: {ex.Message}");
+				return StatusCode(500, $"Internal Server error: {ex.Message}");
+			}
+		}
+
+
+		/// <summary>
+		/// Deletes a company and its associated address data by its unique identifier.
+		/// </summary>
+		/// <param name="key">The unique identifier of the company to delete.</param>
+		/// <returns>Returns a status code indicating the result of the operation.</returns>
+		[HttpDelete]
         public async Task<IActionResult> Delete(Guid key)
         {
             try

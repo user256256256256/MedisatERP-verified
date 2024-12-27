@@ -8,5 +8,11 @@ namespace MedisatERP.Controllers
         {
             return View();
         }
+
+        public IActionResult Error(string message) 
+        {
+            ViewData["ErrorMessage"] = message; 
+            return View(); 
+        }
     }
 }

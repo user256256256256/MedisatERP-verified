@@ -1,6 +1,6 @@
 using MedisatERP.Areas.CoreSystem.Models;
 using MedisatERP.Data;
-using MedisatERP.Library;
+using MedisatERP.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -59,7 +59,7 @@ builder.Services.AddSession(options =>
 });
 
 // Register EmailSender and SmsSender services
-builder.Services.AddTransient<IEmailSender, CodeEmailSender>();
+builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 // Register RoleRedirectService
 builder.Services.AddTransient<RoleRedirectService>();

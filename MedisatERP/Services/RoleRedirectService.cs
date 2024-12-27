@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace MedisatERP.Library
+namespace MedisatERP.Services
 {
     // RoleRedirectService.cs
     public class RoleRedirectService

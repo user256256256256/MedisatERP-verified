@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
 
-public class CodeEmailSender : IEmailSender
+public class EmailSender : IEmailSender
 {
     public async Task SendEmailAsync(string email, string subject, string message)
     {

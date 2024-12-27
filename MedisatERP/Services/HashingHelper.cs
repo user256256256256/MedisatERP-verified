@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MedisatERP.Library
+namespace MedisatERP.Services
 {
     // A utility class for encoding and decoding GUIDs and strings
     public class HashingHelper

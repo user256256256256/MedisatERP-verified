@@ -387,80 +387,100 @@ namespace MedisatERP.Controllers
 		/// <param name="values">The incoming updated values as a JSON string.</param>
 		/// <returns>Returns a success status if update is successful.</returns>
 		[HttpPut]
-        public async Task<IActionResult> Put(string key, string values)
-        {
-            try
-            {
-                var rawData = await new StreamReader(Request.Body).ReadToEndAsync();
-                Console.WriteLine($"Raw Request Data: {rawData}");
+		public async Task<IActionResult> Put(string key, string values)
+		{
+			try
+			{
+				// Read the raw request data for logging purposes
+				var rawData = await new StreamReader(Request.Body).ReadToEndAsync();
+				Console.WriteLine($"Raw Request Data: {rawData}");
+				Console.WriteLine($"Attempting to update user with key: {key}");
 
-                Console.WriteLine($"Attempting to update user with key: {key}");
+				// Retrieve the user by unique identifier without including roles
+				var model = await _context.AspNetUsers.FirstOrDefaultAsync(u => u.Id == key);
+				if (model == null)
+				{
+					Console.WriteLine("User not found.");
+					return StatusCode(409, "User not found");
+				}
 
-                // Retrieve the user by unique identifier without including roles
-                var model = await _context.AspNetUsers
-                    .FirstOrDefaultAsync(u => u.Id == key);
+				Console.WriteLine("User found, proceeding with updates.");
 
-                if (model == null)
-                {
-                    Console.WriteLine("User not found.");
-                    return StatusCode(409, "User not found");
-                }
+				// Deserialize the incoming updated values
+				var valuesDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(values);
 
-                Console.WriteLine("User found, proceeding with updates.");
+				// Check if password is provided and hash it
+				if (valuesDict.ContainsKey("Password") && valuesDict["Password"] != null)
+				{
+					var password = valuesDict["Password"].ToString();
+					// Initialize PasswordHasher
+					var passwordHasher = new PasswordHasher<AspNetUser>();
+					// Hash the new password
+					var hashedPassword = passwordHasher.HashPassword(model, password);
+					// Update the password hash in the model
+					model.PasswordHash = hashedPassword;
+					Console.WriteLine($"Password has been hashed and updated: {hashedPassword}");
+				}
 
-                // Deserialize the incoming updated values
-                var valuesDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(values);
+				// Log the deserialized dictionary for easier inspection
+				Console.WriteLine("Deserialized values:");
+				Console.WriteLine(JsonConvert.SerializeObject(valuesDict, Formatting.Indented)); // Pretty-print the JSON
 
-                // Check if password is provided and hash it
-                if (valuesDict.ContainsKey("Password") && valuesDict["Password"] != null)
-                {
-                    var password = valuesDict["Password"].ToString();
+				// Update other user information based on the provided values
+				PopulateModel(model, valuesDict);
 
-                    // Initialize PasswordHasher
-                    var passwordHasher = new PasswordHasher<AspNetUser>(); 
+				// Validate the updated model
+				if (!TryValidateModel(model))
+				{
+					Console.WriteLine("Model validation failed.");
+					return BadRequest(GetFullErrorMessage(ModelState));
+				}
+				else
+				{
+					Console.WriteLine("Model validated successfully.");
+				}
 
-                    // Hash the new password
-                    var hashedPassword = passwordHasher.HashPassword(model, password);
+				try
+				{
+					// Save the changes to the database
+					await _context.SaveChangesAsync();
+					Console.WriteLine("User updated successfully in the database.");
+					return Ok();
+				}
+				catch (DbUpdateConcurrencyException ex)
+				{
+					// Handle the concurrency exception
+					Console.WriteLine("Concurrency exception occurred while updating user.");
+					var entry = ex.Entries.Single();
+					var databaseValues = entry.GetDatabaseValues();
+					if (databaseValues == null)
+					{
+						Console.WriteLine("The record you attempted to edit was deleted by another user.");
+						return NotFound(new { success = false, message = "The record you attempted to edit was deleted by another user." });
+					}
+					else
+					{
+						var dbValues = (AspNetUser)databaseValues.ToObject();
+						Console.WriteLine("The record you attempted to edit was modified by another user.");
+						Console.WriteLine($"Current values: UserName: {dbValues.UserName}, Email: {dbValues.Email}, PhoneNumber: {dbValues.PhoneNumber}");
 
-                    // Update the password hash in the model
-                    model.PasswordHash = hashedPassword;
-                    Console.WriteLine($"Password has been hashed and updated: {hashedPassword}");
-                }
-
-                // Log the deserialized dictionary for easier inspection
-                Console.WriteLine("Deserialized values:");
-                Console.WriteLine(JsonConvert.SerializeObject(valuesDict, Formatting.Indented)); // Pretty-print the JSON
-
-                // Update other user information based on the provided values
-                PopulateModel(model, valuesDict);
-
-                // Validate the updated model
-                if (!TryValidateModel(model))
-                {
-                    Console.WriteLine("Model validation failed.");
-                    return BadRequest(GetFullErrorMessage(ModelState));
-                }
-                else
-                {
-                    Console.WriteLine("Model validated successfully.");
-                }
-
-                // Save the changes to the database
-                await _context.SaveChangesAsync();
-                Console.WriteLine("User updated successfully in the database.");
-
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                // Return an internal server error if an exception occurs
-                Console.WriteLine($"Exception occurred: {ex.Message}");
-                return StatusCode(500, $"Internal Server error: {ex.Message}");
-            }
-        }
+						// Optionally, reload the entity with current database values
+						await entry.ReloadAsync();
+						return Conflict(new { success = false, message = "The record you attempted to edit was modified by another user.", currentValues = dbValues });
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				// Return an internal server error if an exception occurs
+				Console.WriteLine($"Exception occurred: {ex.Message}");
+				return StatusCode(500, $"Internal Server error: {ex.Message}");
+			}
+		}
 
 
-        [HttpDelete]
+
+		[HttpDelete]
         public async Task<IActionResult> Delete(string key)
         {
             try

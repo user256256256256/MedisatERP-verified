@@ -92,50 +92,84 @@ namespace MedisatERP.Controllers
 
         }
 
-        /// <summary>
-        /// Updates an existing company and its address data.
-        /// </summary>
-        /// <param name="key">The unique identifier of the company to update.</param>
-        /// <param name="values">The incoming updated values as a JSON string.</param>
-        /// <returns>Returns a success status if the company is updated.</returns>
-        [HttpPut]
-        public async Task<IActionResult> Put(Guid key, string values)
-        {
-            try
-            {
-                // Retrieve the feedback by its unique ientifier
-                var model = await _context.Feedbacks
-                    .FirstOrDefaultAsync(item => item.FeedbackId == key);
+		/// <summary>
+		/// Updates an existing company and its address data.
+		/// </summary>
+		/// <param name="key">The unique identifier of the company to update.</param>
+		/// <param name="values">The incoming updated values as a JSON string.</param>
+		/// <returns>Returns a success status if the company is updated.</returns>
+		[HttpPut]
+		public async Task<IActionResult> Put(Guid key, string values)
+		{
+			try
+			{
+				// Retrieve the feedback by its unique identifier
+				var model = await _context.Feedbacks.FirstOrDefaultAsync(item => item.FeedbackId == key);
+				if (model == null)
+				{
+					Console.WriteLine($"Feedback entity not found with key: {key}");
+					return StatusCode(404, "Feedback entity not found");
+				}
 
-                if (model == null)
-                    return StatusCode(404, "Feedback entity not found");
+				Console.WriteLine($"Feedback entity found with key: {key}, proceeding with updates.");
 
-                // Deserialize the incoming updated values
-                var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
-                PopulateModel(model, valuesDict);
+				// Deserialize the incoming updated values
+				var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
+				PopulateModel(model, valuesDict);
 
-                // Validate the updated model before saving
-                if (!TryValidateModel(model))
-                    return BadRequest(GetFullErrorMessage(ModelState));
+				// Validate the updated model before saving
+				if (!TryValidateModel(model))
+				{
+					Console.WriteLine("Model validation failed.");
+					return BadRequest(GetFullErrorMessage(ModelState));
+				}
 
-                // Save the changes to the database
-                await _context.SaveChangesAsync();
-                return Ok(); // Return a success response
+				Console.WriteLine("Model validated successfully.");
 
-            }
-            catch (Exception ex)
-            {
-                // Return an internal server error if an exception occurs
-                return StatusCode(500, $"Internal Server error: {ex.Message}");
-            }
-        }
+				try
+				{
+					// Save the changes to the database
+					await _context.SaveChangesAsync();
+					Console.WriteLine("Feedback entity updated successfully in the database.");
+					return Ok();
+				}
+				catch (DbUpdateConcurrencyException ex)
+				{
+					// Handle the concurrency exception
+					Console.WriteLine("Concurrency exception occurred while updating feedback entity.");
+					var entry = ex.Entries.Single();
+					var databaseValues = entry.GetDatabaseValues();
+					if (databaseValues == null)
+					{
+						Console.WriteLine("The record you attempted to edit was deleted by another user.");
+						return NotFound(new { success = false, message = "The record you attempted to edit was deleted by another user." });
+					}
+					else
+					{
+						var dbValues = (Feedback)databaseValues.ToObject();
+						Console.WriteLine("The record you attempted to edit was modified by another user.");
 
-        /// <summary>
-        /// Deletes a feedack  by its unique identifier.
-        /// </summary>
-        /// <param name="key">The unique identifier of the migration to delete.</param>
-        /// <returns>Returns a status code indicating the result of the operation.</returns>
-        [HttpDelete]
+						// Optionally, reload the entity with current database values
+						await entry.ReloadAsync();
+						return Conflict(new { success = false, message = "The record you attempted to edit was modified by another user.", currentValues = dbValues });
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				// Return an internal server error if an exception occurs
+				Console.WriteLine($"Exception occurred: {ex.Message}");
+				return StatusCode(500, $"Internal Server error: {ex.Message}");
+			}
+		}
+
+
+		/// <summary>
+		/// Deletes a feedack  by its unique identifier.
+		/// </summary>
+		/// <param name="key">The unique identifier of the migration to delete.</param>
+		/// <returns>Returns a status code indicating the result of the operation.</returns>
+		[HttpDelete]
         public async Task<IActionResult> Delete(Guid key)
         {
             try
