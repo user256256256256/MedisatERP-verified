@@ -2,6 +2,7 @@
 
 namespace MedisatERP.Controllers
 {
+    //See ways to handel view exceptions during error logging and testing
     public class HomeController : Controller
     {
         public IActionResult Index()

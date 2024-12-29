@@ -6,6 +6,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Remove="Areas\CoreSystem\Views\UserSettings\**" />
+      <Content Remove="Areas\CoreSystem\Views\UserSettings\**" />
+      <EmbeddedResource Remove="Areas\CoreSystem\Views\UserSettings\**" />
+      <None Remove="Areas\CoreSystem\Views\UserSettings\**" />
+    </ItemGroup>
+
+    <ItemGroup>
     <PackageReference Include="DevExtreme.AspNet.Data" Version="2.9.0" />
     <PackageReference Include="DevExtreme.AspNet.Core" Version="22.2.5" />
     <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />

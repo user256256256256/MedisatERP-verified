@@ -233,6 +233,10 @@
                                 <i class="align-middle me-1" data-feather="user"></i> Profile
                             </a>
                             <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="@Url.Action("Index", "UserSettingz", new { area = "CoreSystem", userId = encodedUserId })">
+                                <i class="align-middle me-1" data-feather="settings"></i> Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
                             <!-- Log out option with Javascript functionality -->
                             <a class="dropdown-item log-out" href="javascript:;" onclick="Logout()">
                                 <i class="align-middle me-1" data-feather="log-out"></i> Log out
@@ -300,7 +304,7 @@
                 <div class="row text-muted">
                     <div class="col-12 text-start">
                         <p class="mb-0" style="color: #565e64; ">
-                            <script>document.write(new Date().getFullYear() + ' MEDISAT | By Eurosat ' );</script>
+                            <script>document.write(new Date().getFullYear() + ' MEDISAT' );</script>
                         </p>
                     </div>
                 </div>

@@ -8,13 +8,32 @@
     var userId = Model.Id;
 }
 
-<div class="mb-4">
+<!-- Custom Button -->
+<div class="mb-4 d-flex align-items-center gap-2 " id="change-profile-img">
     <!-- User Image -->
+    <!-- Handel the sized parent appropriately while fixing errors -->
     <img src="@(string.IsNullOrEmpty(Model.ProfileImagePath) ? Url.Content("~/img/userProfileImages/avatar.jpg") : Url.Content("~/img/userProfileImages/" + Model.ProfileImagePath))" class=" rounded-circle user-profile-img" alt="User Image" />
+
+    <!-- Hidden File Uploader -->
+    <div class="file-uploader">
+        @(Html.DevExtreme().FileUploader()
+            .ID("uploadProfileImg")
+            .Name("Profile Picture")
+            .SelectButtonText("Change profile picture")
+            .LabelText("")
+            .Accept("image/*")
+            .UploadMode(FileUploadMode.UseButtons)
+            .AllowCanceling(true)
+            .UploadButtonText("Upload image")
+            .AllowedFileExtensions(new[] { ".jpg", ".jpeg", ".png" })
+            .InputAttr("aria-label", "Select image")
+            .OnUploaded("onUploadProfileImg"))
+    </div>
+
 </div>
 
 <div class="section my-3">
-    <h2 class="section-title">PROFILE</h2>
+    <h2 class="section-title">PROFILE INFORMATION</h2>
     <p class="section-lead">This page is just an example for you to create your own page.</p>
 </div>
 
@@ -239,6 +258,58 @@
         $("#btn_edit").removeClass("d-none").addClass("d-inline-block").text("Edit").removeClass("btn-danger").addClass("btn-primary");
         $("#btn_save").addClass("d-none").removeClass("d-inline-block");
     }
+
+    function onUploadProfileImg(e) {
+        var file = e.file;  // The uploaded file
+        console.log("File selected:", file);
+
+        var userId = "@userId";
+
+        var formData = new FormData();
+        formData.append('profilePicture', file);  // Add the file to FormData
+
+        // Show loading indicator before the request starts
+        Notiflix.Loading.Dots("Uploading your profile picture...");
+
+        // Make the PUT request to upload the file with userId in the URL
+        $.ajax({
+            url: `/api/AspNetUsersAPI/UploadProfilePicture?userId=${encodeURIComponent(userId)}`,  // Add userId as query parameter
+            type: 'PUT',
+            data: formData,
+            contentType: false,  // Important to not set contentType when sending FormData
+            processData: false,  // Prevent jQuery from processing the data
+        })
+            .done(function (json) {
+                // Remove loading indicator on success
+                Notiflix.Loading.Remove(500);
+
+                // Check if the upload was successful
+                if (json.filePath) {
+                    // Show success message with Notiflix
+                    Notiflix.Report.Success(
+                        "Upload Success",
+                        "Your profile picture has been successfully uploaded!",
+                        "OK",
+                        function () {
+                            // Optionally, refresh the page or update the profile picture on the page
+                            location.reload();  // This will reload the page to reflect the updated profile picture
+                        }
+                    );
+                } else {
+                    // Handle failure if the file path is not returned
+                    Notiflix.Report.Failure("Upload Failure", json.error || "Error uploading the profile picture", "OK");
+                }
+            })
+            .fail(function (jqxhr, textStatus, error) {
+                // Remove loading indicator on failure
+                Notiflix.Loading.Remove(500);
+
+                // Handle the error case
+                var err = textStatus + ", " + error;
+                Notiflix.Report.Failure("Upload Failed", "Failed to upload the profile picture: " + err, "OK");
+            });
+    }
+
 
 </script>
 

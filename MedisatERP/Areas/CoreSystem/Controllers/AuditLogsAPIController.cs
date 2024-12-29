@@ -61,7 +61,8 @@ namespace MedisatERP.Controllers
                     {
                         i.User.UserName,
                         i.User.Email,
-                        i.User.PhoneNumber
+                        i.User.PhoneNumber,
+                        i.User.SecurityStamp
                     }
                 }).Where(a => a.CompanyId == companyId).OrderBy(a => a.AuditLogId);
 

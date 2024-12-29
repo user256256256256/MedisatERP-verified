@@ -4,6 +4,7 @@ using MedisatERP.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -61,7 +62,6 @@ public class LoginAPIController : Controller
                 // Generate confirmation link for EmailConfirmationController
                 var confirmationLink = Url.Action("ConfirmEmail", "EmailConfirmationAPI", new { token, email = user.Email }, Request.Scheme);
 
-
                 // Send confirmation email
                 await _emailSender.SendEmailAsync(user.Email, "Confirm your email", $"Please confirm your email by clicking on this link: {confirmationLink}");
 
@@ -87,7 +87,7 @@ public class LoginAPIController : Controller
             {
                 Console.WriteLine("Two-factor authentication is required.");
 
-                // Check if the `TwoFactorRememberBrowser` cookie is present
+                // Check if the TwoFactorRememberBrowser cookie is present
                 if (await _signInManager.IsTwoFactorClientRememberedAsync(user))
                 {
                     // Use RoleRedirectService to handle role-based redirection
@@ -133,12 +133,27 @@ public class LoginAPIController : Controller
                 return BadRequest(new { success = false, mresponse = "Invalid login attempt" });
             }
         }
+        // During handling of errors and response messages include and catch all possible exceptions per script.
+        catch (SqlException ex)
+        {
+            // Log the SQL exception details for debugging
+            Console.WriteLine($"SQL Error: {ex.Message}");
+
+            // This is returned to the user inform of a text message no need to redirect to the error page
+            // Redirect to error page with a user-friendly message
+            return RedirectToAction("Error", "Home", new { message = "A database error occurred. Please try again later." });
+        }
         catch (Exception ex)
         {
+            // Log the general exception details for debugging
             Console.WriteLine($"Error: {ex.Message}");
-            return StatusCode(500, new { success = false, mresponse = "An error occurred" });
+
+            // This is returned to the user inform of a text message no need to redirect to the error page
+            // Redirect to error page with a user-friendly message
+            return RedirectToAction("Error", "Home", new { message = "An error occurred during login. Please try again later." });
         }
     }
+
 
 }
 

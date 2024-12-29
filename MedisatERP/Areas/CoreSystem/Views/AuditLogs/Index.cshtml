@@ -101,6 +101,7 @@
             // Add column for Users
             columns.AddFor(m => m.User.Email).Caption("User Email").Visible(true).AllowEditing(false);
             columns.AddFor(m => m.User.PhoneNumber).Caption("User PhoneNumber").Visible(true).AllowEditing(false);
+            columns.AddFor(m => m.User.SecurityStamp).Caption("Security Stamp").Visible(true).AllowEditing(false);
 
             // Manage Button Column (for Edit/Delete)
             columns.Add()

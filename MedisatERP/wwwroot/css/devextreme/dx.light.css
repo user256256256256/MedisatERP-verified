@@ -1634,7 +1634,7 @@
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
   color: #333;
-  font-weight: 400;
+  font-weight: 450;
   font-size: 14px;
   font-family: "Helvetica Neue","Segoe UI",helvetica,verdana,sans-serif;
   line-height: 1.35715;
@@ -4338,7 +4338,7 @@
   border-style: none none dashed;
 }
 .dx-texteditor.dx-state-hover {
-  border-color: rgba(51,122,183,.4);
+    border-color: #0d4495;
 }
 .dx-texteditor.dx-state-hover.dx-editor-filled {
   border-color: transparent;
@@ -7919,18 +7919,18 @@
   height: 70%;
 }
 .dx-loadindicator-icon .dx-loadindicator-segment {
-  position: absolute;
-  width: 19%;
-  height: 30%;
-  left: 44.5%;
-  top: 37%;
-  opacity: 0;
-  background: #606060;
-  border-radius: 10% 10% 50% 50%;
-  -webkit-box-shadow: 0 0 3px rgba(0,0,0,.2);
-  box-shadow: 0 0 3px rgba(0,0,0,.2);
-  -webkit-animation: 1s linear infinite dx-generic-loadindicator-opacity;
-  animation: 1s linear infinite dx-generic-loadindicator-opacity;
+    position: absolute;
+    width: 19%;
+    height: 30%;
+    left: 44.5%;
+    top: 37%;
+    opacity: 0;
+    background: #311465;
+    border-radius: 10% 10% 50% 50%;
+    -webkit-box-shadow: 0 0 3px rgba(0,0,0,.2);
+    box-shadow: 0 0 3px rgba(0,0,0,.2);
+    -webkit-animation: 1s linear infinite dx-generic-loadindicator-opacity;
+    animation: 1s linear infinite dx-generic-loadindicator-opacity;
 }
 @-webkit-keyframes dx-generic-loadindicator-opacity {
   from {
