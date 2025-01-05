@@ -38,7 +38,7 @@
         $('.close-btn').on('click', function () {
             $('.search-wrapper').fadeOut(200);
         });
-       
+
         // Check if any sidebar item has the 'active' class
         $(".sidebar-item").each(function () {
             if ($(this).hasClass("active")) {
@@ -67,7 +67,7 @@
             parentLi.addClass("active");
         });
 
-        
+
         // Toggle the dropdown menu on click
         $('#userDropdown, #settingsDropdown').on('click', function (event) {
             event.preventDefault();
@@ -82,7 +82,7 @@
                 $('.nav-item.dropdown a').attr('aria-expanded', 'false');
             }
         });
-        
+
 
     });
 

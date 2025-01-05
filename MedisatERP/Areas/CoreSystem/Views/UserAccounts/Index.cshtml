@@ -12,7 +12,6 @@
     <center><span><i data-feather="users"></i> USER ACCOUNTS </span></center>
 </div>
 
-
 <div class="row mt-5 mb-2">
     <div class="form-group col-md-4">
         <!-- Filter by Company-->
@@ -382,48 +381,54 @@
     Notiflix.Loading.Dots('Creating user...');
 
     // Make the API call using AJAX
-    $.ajax({
-        url: url,
-        type: 'POST',
-        data: JSON.stringify(data),
-        contentType: 'application/json',
-        success: function (response) {
-            // Remove loading indicator
-            Notiflix.Loading.Remove(500);
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            success: function (json) {
+                // Remove loading indicator
+                Notiflix.Loading.Remove(500);
 
-            // Handle the success response
-            if (response && response.Id) {
-                // Show success message
-                Notiflix.Report.Success("User Created", "User account created successfully!", "OK");
-                
-                // Close the popup
-                $("#userFormPopup").dxPopup("instance").hide();
-                
-                // Refresh the DataGrid
-                var dataGrid = $("#gv_userList").dxDataGrid("instance"); 
-                dataGrid.refresh();  // Refresh the DataGrid to reload the data
+                // Handle the success response
+                if (json.success) {
+                    // Show success message
+                    Notiflix.Report.Success("User Created", json.message , "OK");
 
-                // Clear the form fields
-                clearForm(); // Call a function to reset the form
+                    // Close the popup
+                    $("#userFormPopup").dxPopup("instance").hide();
+
+                    // Refresh the DataGrid
+                    var dataGrid = $("#gv_userList").dxDataGrid("instance");
+                    dataGrid.refresh();  // Refresh the DataGrid to reload the data
+
+                    // Clear the form fields
+                    clearForm(); // Call a function to reset the form
+                } else {
+                    // Report failure if was unsuccessful
+                    Notiflix.Report.Failure("Failure", json.message, "OK");
+                }
+            },
+            error: function (xhr, status, error) {
+                // Remove loading indicator on error
+                Notiflix.Loading.Remove(500);
+
+                // Handle the error case
+                var errorMessage = "Failed to create user: " + error; // Default message if responseJSON is unavailable
+
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message; // Use the message from the backend if available
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage = xhr.responseJSON.error; // Alternatively, check for error field
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    errorMessage = xhr.responseJSON.errors.map(function (err) { return err.description; }).join(", "); // Concatenate all error descriptions
+                }
+
+                // Show error message using Notiflix
+                Notiflix.Report.Failure("Error", errorMessage, "OK");
             }
-        },
-        error: function (xhr, status, error) {
-            // Remove loading indicator on error
-            Notiflix.Loading.Remove(500);
+        });
 
-            // Handle the error case
-            var errorMessage = "Failed to create user: " + error; // Default message if responseJSON is unavailable
-
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMessage = xhr.responseJSON.message; // Use the message from the backend if available
-            } else if (xhr.responseJSON && xhr.responseJSON.error) {
-                errorMessage = xhr.responseJSON.error; // Alternatively, check for error field
-            }
-
-            // Show error message using Notiflix
-            Notiflix.Report.Failure("Error", errorMessage, "OK");
-        }
-    });
 }
 
     // Function to clear form fields

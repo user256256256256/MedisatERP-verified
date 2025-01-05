@@ -1,5 +1,6 @@
 using MedisatERP.Areas.CoreSystem.Models;
 using MedisatERP.Data;
+using MedisatERP.Hubs;
 using MedisatERP.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -36,7 +37,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 
     // Sign-in settings
     options.SignIn.RequireConfirmedAccount = false;
-    options.SignIn.RequireConfirmedEmail = true; 
+    options.SignIn.RequireConfirmedEmail = true;
     options.SignIn.RequireConfirmedPhoneNumber = false;
 
     // Configure token providers
@@ -64,14 +65,23 @@ builder.Services.AddTransient<IEmailSender, EmailSender>();
 // Register RoleRedirectService
 builder.Services.AddTransient<RoleRedirectService>();
 
+// Register NotificationService
+builder.Services.AddTransient<NotificationService>();
+
 // Register HttpClient as a service
 builder.Services.AddHttpClient();
+
+// Register ErrorCodeService
+builder.Services.AddSingleton<IErrorCodeService, ErrorCodeService>();
+
+// Configure SignalR
+builder.Services.AddSignalR();
 
 // Add services to the container
 builder.Services.AddRazorPages().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 builder.Services.AddControllersWithViews();
 
-builder.Logging.ClearProviders(); 
+builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 // Create the app
@@ -104,16 +114,21 @@ app.MapControllerRoute(
 app.MapAreaControllerRoute(
     name: "NutritionCompany",
     areaName: "NutritionCompany",
-    pattern: "NutritionCompany/{controller=Home}/{action=Index}/{companyId:guid?}");
+    pattern: "NutritionCompany/{controller=Home}/{action=Index}/{userId}/{companyId:guid?}");
 
 // Specifically routes to the "NutritionSystem" controller within the "NutritionCompany" area
 app.MapAreaControllerRoute(
     name: "nutritionSystemRoute",
     areaName: "NutritionCompany",
-    pattern: "NutritionCompany/{controller=NutritionSystem}/{action=Index}/{companyId:guid}");
+    pattern: "NutritionCompany/{controller=NutritionSystem}/{action=Index}/{userId}/{companyId:guid}");
+
 
 // Map the default controller route (for non-area routes)
 app.MapDefaultControllerRoute();
+
+// Map SignalR hub
+/* The app.MapHub<NotificationHub>("/notificationHub") line is crucial for defining the route that clients will use to connect to your SignalR hub. This setup is what allows your application to support real-time notifications and communication. */
+app.MapHub<NotificationHub>("/notificationHub");
 
 // Map Razor Pages
 app.MapRazorPages();

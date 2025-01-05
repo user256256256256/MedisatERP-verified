@@ -1,35 +1,34 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using MedisatERP.Data;  // Assuming this namespace contains the DbContext
+﻿using MedisatERP.Data;
+using MedisatERP.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MedisatERP.Services; // Assuming this has any helper methods for decoding or processing IDs, if needed
 
-namespace MedisatERP.Areas.NutritionCompany.Controllers
+namespace MedisatERP.Areas.CoreSystem.Controllers
 {
-    [Area("NutritionCompany")]
-    [Route("NutritionCompany/[controller]/[action]/{userId?}/{companyId?}")]
-    public class PatientsController : Controller
+    [Area("CoreSystem")]
+    [Route("CoreSystem/[controller]/[action]/{userId?}")]
+    public class NotificationsController : Controller
     {
         private readonly MedisatErpDbContext _dbContext;
 
-        // Constructor to inject the DbContext
-        public PatientsController(MedisatErpDbContext dbContext)
+        // Constructor to inject DbContext
+        public NotificationsController(MedisatErpDbContext dbContext)
         {
             _dbContext = dbContext;
         }
 
-        public async Task<IActionResult> Index(string userId, string companyId)
+
+        public async Task<IActionResult> Index(string userId)
         {
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(companyId))
+            if (string.IsNullOrEmpty(userId))
             {
-                return BadRequest("User ID and valid Company ID are required.");
+                return BadRequest("User ID is required.");
             }
 
             try
             {
                 // Decode the userId from the URL
                 var decodedUserId = HashingHelper.DecodeString(userId);
-
-                var decodedCompanyId = HashingHelper.DecodeGuidID(companyId);
 
                 // Retrieve the user using the decodedUserId from the db
                 var user = await _dbContext.AspNetUsers
@@ -41,8 +40,6 @@ namespace MedisatERP.Areas.NutritionCompany.Controllers
                     return NotFound(); // Return a 404 if the user is not found
                 }
 
-                // Pass the user model and companyId to the view, which will be available in the layout
-                ViewData["CompanyId"] = decodedCompanyId;
                 // Pass the user model to the view, which will be available in the layout
                 return View(user);
             }

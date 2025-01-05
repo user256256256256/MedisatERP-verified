@@ -39,7 +39,5 @@ namespace MedisatERP.Controllers
 
             return RedirectToAction("Error", "Home", new { message = "Email confirmation failed." });
         }
-
-
     }
 }

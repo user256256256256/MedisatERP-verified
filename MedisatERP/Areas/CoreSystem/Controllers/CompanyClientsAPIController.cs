@@ -15,6 +15,7 @@ using Newtonsoft.Json.Linq;
 using MedisatERP.Areas.CoreSystem.Models;
 using MedisatERP.Data;
 using MedisatERP.Models;
+using Microsoft.Data.SqlClient;
 
 namespace MedisatERP.Controllers
 {
@@ -37,40 +38,65 @@ namespace MedisatERP.Controllers
         [HttpGet]
         public async Task<IActionResult> Get(DataSourceLoadOptions loadOptions, Guid companyId)
         {
-            var companyclients = _context.CompanyClients
-                .Include(c => c.Address) // Ensure Address data is eagerly loaded
-                .Select(i => new
-                {
-                    i.ClientId,
-                    i.CompanyId,
-                    i.ClientName,
-                    i.DateOfBirth,
-                    i.Gender,
-                    i.Email,
-                    i.PhoneNumber,
-                    i.AddressId,
-                    i.EmergencyContactName,
-                    i.EmergencyContactPhone,
-                    i.MaritalStatus,
-                    i.Nationality,
-                    i.CreatedAt,
-                    i.UpdatedAt,
-                    Address = new
+            try
+            {
+                var companyclients = _context.CompanyClients
+                    .Include(c => c.Address) // Ensure Address data is eagerly loaded
+                    .Select(i => new
                     {
-                        i.Address.AddressId,
-                        i.Address.Street,
-                        i.Address.City,
-                        i.Address.State,
-                        i.Address.PostalCode,
-                        i.Address.Country,
-                    }
-                }).Where(a => a.CompanyId == companyId).OrderBy(a => a.ClientId);
+                        i.ClientId,
+                        i.CompanyId,
+                        i.ClientName,
+                        i.DateOfBirth,
+                        i.Gender,
+                        i.Email,
+                        i.PhoneNumber,
+                        i.AddressId,
+                        i.EmergencyContactName,
+                        i.EmergencyContactPhone,
+                        i.MaritalStatus,
+                        i.Nationality,
+                        i.CreatedAt,
+                        i.UpdatedAt,
+                        Address = new
+                        {
+                            i.Address.AddressId,
+                            i.Address.Street,
+                            i.Address.City,
+                            i.Address.State,
+                            i.Address.PostalCode,
+                            i.Address.Country,
+                        }
+                    }).Where(a => a.CompanyId == companyId).OrderBy(a => a.ClientId);
 
-            // Apply filetering, sorting, anf paging using DataSourceLoader
-            var transformedData = await DataSourceLoader.LoadAsync(companyclients, loadOptions);
+                // Apply filtering, sorting, and paging using DataSourceLoader
+                var transformedData = await DataSourceLoader.LoadAsync(companyclients, loadOptions);
 
-            return Json(transformedData); // Return the processed data
+                return Json(transformedData); // Return the processed data
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception (consider using a logging framework)
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                // Return a standardized error response
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+            }
         }
+
 
         /// <summary>
         /// Adds a new company with its associated address data.
@@ -80,6 +106,11 @@ namespace MedisatERP.Controllers
         [HttpPost]
         public async Task<IActionResult> Post(string values)
         {
+            // Add a error check messsage to ensure that client Gender exists in the enum.
+            // So do phone number country code for contacts
+            // So do a country
+            // When you accomplish the task, leverage the knowledge with user accounts and also include Gender here you use select box
+
             try
             {
                 // Deserialize the incoming request values 
@@ -90,13 +121,8 @@ namespace MedisatERP.Controllers
 
                 // Create a new Company Clients Instance and populate it with the provided data
                 var model = new CompanyClient();
-
-                
-
                 var companyClientsData = valuesDict.Where(kv => kv.Key != "Address")
-                    .ToDictionary(kv => kv.Key, kv => kv.Value);
-
-                
+                                                   .ToDictionary(kv => kv.Key, kv => kv.Value);
 
                 PopulateModel(model, companyClientsData); // Populate the company clients model.
 
@@ -116,10 +142,6 @@ namespace MedisatERP.Controllers
                     model.Address.Country = addressData["Country"]?.ToString();
                 }
 
-                
-
-                // 
-
                 // Save the new company client record to the database 
                 _context.CompanyClients.Add(model);
                 await _context.SaveChangesAsync();
@@ -127,117 +149,162 @@ namespace MedisatERP.Controllers
                 // Return the status ok (200) of the newly created company client
                 return Ok();
             }
+            catch (JsonSerializationException ex)
+            {
+                // Log the exception
+                Console.WriteLine($"JSON serialization error: {ex.Message}");
+                return BadRequest(new { message = "Invalid input format. Please check your data and try again." });
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception (consider using a logging framework)
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
 
+                // Return a standardized error response
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+            }
         }
 
-		/// <summary>
-		/// Updates an existing company and its address data.
-		/// </summary>
-		/// <param name="key">The unique identifier of the company to update.</param>
-		/// <param name="values">The incoming updated values as a JSON string.</param>
-		/// <returns>Returns a success status if the company is updated.</returns>
-		[HttpPut]
-		public async Task<IActionResult> Put(Guid key, string values)
-		{
-			try
-			{
-				// Retrieve the company client by its unique identifier
-				var model = await _context.CompanyClients
-					.Include(c => c.Address)
-					.FirstOrDefaultAsync(item => item.ClientId == key);
 
-				if (model == null)
-				{
-					Console.WriteLine($"Company client not found with key: {key}");
-					return StatusCode(404, "Company client not found");
-				}
+        /// <summary>
+        /// Updates an existing company and its address data.
+        /// </summary>
+        /// <param name="key">The unique identifier of the company to update.</param>
+        /// <param name="values">The incoming updated values as a JSON string.</param>
+        /// <returns>Returns a success status if the company is updated.</returns>
+        [HttpPut]
+        public async Task<IActionResult> Put(Guid key, string values)
+        {
+            try
+            {
+                // Retrieve the company client by its unique identifier
+                var model = await _context.CompanyClients
+                    .Include(c => c.Address)
+                    .FirstOrDefaultAsync(item => item.ClientId == key);
 
-				Console.WriteLine($"Company client found with key: {key}, proceeding with updates.");
+                if (model == null)
+                {
+                    Console.WriteLine($"Company client not found with key: {key}");
+                    return StatusCode(404, "Company client not found");
+                }
 
-				// Deserialize the incoming updated values
-				var valuesDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(values);
+                Console.WriteLine($"Company client found with key: {key}, proceeding with updates.");
 
-				// Extract address data from the request, if provided
-				var addressData = valuesDict.ContainsKey("Address") ? valuesDict["Address"] as JObject : null;
+                // Deserialize the incoming updated values
+                var valuesDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(values);
 
-				// If address data is provided, update the address
-				if (addressData != null)
-				{
-					if (model.Address == null)
-					{
-						model.Address = new ClientAddress();
-					}
+                // Extract address data from the request, if provided
+                var addressData = valuesDict.ContainsKey("Address") ? valuesDict["Address"] as JObject : null;
 
-					model.Address.Street = addressData["Street"]?.ToString();
-					model.Address.City = addressData["City"]?.ToString();
-					model.Address.State = addressData["State"]?.ToString();
-					model.Address.PostalCode = addressData["PostalCode"]?.ToString();
-					model.Address.Country = addressData["Country"]?.ToString();
-				}
+                // If address data is provided, update the address
+                if (addressData != null)
+                {
+                    if (model.Address == null)
+                    {
+                        model.Address = new ClientAddress();
+                    }
 
-				// Extract company clients data and update the company clients fields
-				var companyClientsData = valuesDict.Where(kv => kv.Key != "Address")
-					.ToDictionary(kv => kv.Key, kv => kv.Value);
-				PopulateModel(model, companyClientsData);
+                    model.Address.Street = addressData["Street"]?.ToString();
+                    model.Address.City = addressData["City"]?.ToString();
+                    model.Address.State = addressData["State"]?.ToString();
+                    model.Address.PostalCode = addressData["PostalCode"]?.ToString();
+                    model.Address.Country = addressData["Country"]?.ToString();
+                }
 
-				// Validate the updated model before saving
-				if (!TryValidateModel(model))
-				{
-					Console.WriteLine("Model validation failed.");
-					return BadRequest(GetFullErrorMessage(ModelState));
-				}
+                // Extract company clients data and update the company clients fields
+                var companyClientsData = valuesDict.Where(kv => kv.Key != "Address")
+                                                   .ToDictionary(kv => kv.Key, kv => kv.Value);
+                PopulateModel(model, companyClientsData);
 
-				Console.WriteLine("Model validated successfully.");
+                // Validate the updated model before saving
+                if (!TryValidateModel(model))
+                {
+                    Console.WriteLine("Model validation failed.");
+                    return BadRequest(GetFullErrorMessage(ModelState));
+                }
 
-				try
-				{
-					// Save the changes to the database
-					await _context.SaveChangesAsync();
-					Console.WriteLine("Company client updated successfully in the database.");
-					return Ok();
-				}
-				catch (DbUpdateConcurrencyException ex)
-				{
-					// Handle the concurrency exception
-					Console.WriteLine("Concurrency exception occurred while updating company client.");
-					var entry = ex.Entries.Single();
-					var databaseValues = entry.GetDatabaseValues();
-					if (databaseValues == null)
-					{
-						Console.WriteLine("The record you attempted to edit was deleted by another user.");
-						return NotFound(new { success = false, message = "The record you attempted to edit was deleted by another user." });
-					}
-					else
-					{
-						var dbValues = (CompanyClient)databaseValues.ToObject();
-						Console.WriteLine("The record you attempted to edit was modified by another user.");
-						Console.WriteLine($"Current values: ClientName: {dbValues.ClientName}, Address: {dbValues.Address.Street}, City: {dbValues.Address.City}, State: {dbValues.Address.State}, PostalCode: {dbValues.Address.PostalCode}, Country: {dbValues.Address.Country}"); // Adjust properties as needed
+                Console.WriteLine("Model validated successfully.");
 
-						// Optionally, reload the entity with current database values
-						await entry.ReloadAsync();
-						return Conflict(new { success = false, message = "The record you attempted to edit was modified by another user.", currentValues = dbValues });
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				// Return an internal server error if an exception occurs
-				Console.WriteLine($"Exception occurred: {ex.Message}");
-				return StatusCode(500, $"Internal Server error: {ex.Message}");
-			}
-		}
+                try
+                {
+                    // Save the changes to the database
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine("Company client updated successfully in the database.");
+                    return Ok();
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    // Handle the concurrency exception
+                    Console.WriteLine("Concurrency exception occurred while updating company client.");
+                    var entry = ex.Entries.Single();
+                    var databaseValues = entry.GetDatabaseValues();
+                    if (databaseValues == null)
+                    {
+                        Console.WriteLine("The record you attempted to edit was deleted by another user.");
+                        return NotFound(new { success = false, message = "The record you attempted to edit was deleted by another user." });
+                    }
+                    else
+                    {
+                        var dbValues = (CompanyClient)databaseValues.ToObject();
+                        Console.WriteLine("The record you attempted to edit was modified by another user.");
+                        Console.WriteLine($"Current values: ClientName: {dbValues.ClientName}, Address: {dbValues.Address.Street}, City: {dbValues.Address.City}, State: {dbValues.Address.State}, PostalCode: {dbValues.Address.PostalCode}, Country: {dbValues.Address.Country}");
+
+                        // Optionally, reload the entity with current database values
+                        await entry.ReloadAsync();
+                        return Conflict(new { success = false, message = "The record you attempted to edit was modified by another user.", currentValues = dbValues });
+                    }
+                }
+            }
+            catch (JsonSerializationException ex)
+            {
+                // Log the exception
+                Console.WriteLine($"JSON serialization error: {ex.Message}");
+                return BadRequest(new { message = "Invalid input format. Please check your data and try again." });
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception (consider using a logging framework)
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                // Return a standardized error response
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+            }
+        }
 
 
-		/// <summary>
-		/// Deletes a company clients and its associated address data by its unique identifier.
-		/// </summary>
-		/// <param name="key">The unique identifier of the company to delete.</param>
-		/// <returns>Returns a status code indicating the result of the operation.</returns>
-		[HttpDelete]
+
+        /// <summary>
+        /// Deletes a company clients and its associated address data by its unique identifier.
+        /// </summary>
+        /// <param name="key">The unique identifier of the company to delete.</param>
+        /// <returns>Returns a status code indicating the result of the operation.</returns>
+        [HttpDelete]
         public async Task<IActionResult> Delete(Guid key)
         {
             try
@@ -282,30 +349,67 @@ namespace MedisatERP.Controllers
 
                 return NoContent(); // Return No Content status after successful deletion
             }
-            catch (Exception ex)
+            catch (SqlException ex)
+            {
+                // Log the exception (consider using a logging framework)
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
             {
                 // Log the exception
-                Console.WriteLine($"Error occurred while deleting CompanyClient with ID: {key}. Error: {ex.Message}");
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
 
-                // Return an internal server error if an exception occurs
-                return StatusCode(500, $"An internal server error occurred: {ex.Message}");
+                // Return a standardized error response
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
             }
         }
-
 
 
         [HttpGet]
         public async Task<IActionResult> CompaniesLookup(DataSourceLoadOptions loadOptions)
         {
-            var lookup = from i in _context.Companies
-                         orderby i.CompanyName
-                         select new
-                         {
-                             Value = i.CompanyId,
-                             Text = i.CompanyName
-                         };
-            return Json(await DataSourceLoader.LoadAsync(lookup, loadOptions));
+            try
+            {
+                var lookup = from i in _context.Companies
+                             orderby i.CompanyName
+                             select new
+                             {
+                                 Value = i.CompanyId,
+                                 Text = i.CompanyName
+                             };
+                return Json(await DataSourceLoader.LoadAsync(lookup, loadOptions));
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception (consider using a logging framework)
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                // Return a standardized error response
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+            }
         }
+
 
         /// <summary>
         /// Populates the  model with the given values.

@@ -3,19 +3,23 @@ using MedisatERP.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.Design;
 
 namespace MedisatERP.Services
 {
     // RoleRedirectService.cs
-    public class RoleRedirectService
+    public class RoleRedirectService : ControllerBase
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly MedisatErpDbContext _dbContext;
+        private readonly IErrorCodeService _errorCodeService;
 
-        public RoleRedirectService(UserManager<IdentityUser> userManager, MedisatErpDbContext dbContext)
+
+        public RoleRedirectService(UserManager<IdentityUser> userManager, MedisatErpDbContext dbContext, IErrorCodeService errorCodeService)
         {
             _userManager = userManager;
             _dbContext = dbContext;
+            _errorCodeService = errorCodeService;
         }
 
         public async Task<ActionResult> HandleRoleRedirectAsync(string email)
@@ -34,6 +38,7 @@ namespace MedisatERP.Services
             }
 
             var userId = aspNetUser.Id;
+            var companyId = aspNetUser.CompanyId;
             Console.WriteLine($"AspNetUser found, UserId: {userId}");
 
             string redirectUrl = null;
@@ -49,22 +54,21 @@ namespace MedisatERP.Services
                     redirectUrl = $"/CoreSystem/SystemManager/Index/{encodedUserId}";
                 }
             }
-            else if (roles.Contains("Company Administrator"))
+            else if (roles.Contains("Nutrition Company Administrator"))
             {
-                Console.WriteLine("User is a Company Administrator.");
-                var companyId = aspNetUser.CompanyId;
-                Console.WriteLine($"Custom user found with CompanyId: {companyId}");
+                Console.WriteLine("User is a Nutrition Company Administrator.");
 
-                if (companyId != null)
+                if (userId != null)
                 {
+                    var encodedUserId = HashingHelper.EncodeString(userId);
                     var encodedCompanyId = HashingHelper.EncodeGuidID(companyId.Value);
-                    Console.WriteLine($"Encoded CompanyId: {encodedCompanyId}");
-                    redirectUrl = $"/NutritionCompany/NutritionSystem/Index/{encodedCompanyId}";
+                    Console.WriteLine($"Encoded UserId: {encodedUserId}");
+                    redirectUrl = $"/NutritionCompany/NutritionSystem/Index/{encodedUserId}/{encodedCompanyId}";
                 }
             }
             else
             {
-                Console.WriteLine("User is neither a System Administrator nor a Company Administrator.");
+                Console.WriteLine("User is neither a System Administrator nor a Nutrition Company Administrator.");
                 return new OkObjectResult(new { success = true, mresponse = "Login successful" });
             }
 
@@ -77,6 +81,65 @@ namespace MedisatERP.Services
             // If no redirect URL was found, fallback to successful login
             return new OkObjectResult(new { success = true, mresponse = "Login successful" });
         }
-    }
 
+        public async Task<string> HandleSystemAdminToCompanyRedirection(string email, Guid companyId)
+        {
+            try
+            {
+                // Retrieve the user by email
+                var user = await _userManager.FindByEmailAsync(email);
+                if (user == null)
+                {
+                    Console.WriteLine($"User not found for email: {email}");
+                    return null;
+                }
+
+                // Retrieve user roles
+                var roles = await _userManager.GetRolesAsync(user);
+                Console.WriteLine($"Roles for user {email}: {string.Join(", ", roles)}");
+
+                // Retrieve the custom AspNetUser data
+                var aspNetUser = await _dbContext.Set<AspNetUser>().FirstOrDefaultAsync(u => u.Email == email);
+                if (aspNetUser == null)
+                {
+                    Console.WriteLine($"No custom AspNetUser found for email: {email}");
+                    return null;
+                }
+
+                var userId = aspNetUser.Id;
+                Console.WriteLine($"AspNetUser found, UserId: {userId}");
+
+                string redirectUrl = null;
+                if (roles.Contains("System Administrator") && roles.Contains("Nutrition Company Administrator"))
+                {
+                    Console.WriteLine("User is a System Administrator and a Nutrition Company Administrator.");
+                    if (!string.IsNullOrEmpty(userId))
+                    {
+                        var encodedUserId = HashingHelper.EncodeString(userId);
+                        var encodedCompanyId = HashingHelper.EncodeGuidID(companyId);
+                        Console.WriteLine($"Encoded UserId: {encodedUserId}");
+                        redirectUrl = $"/NutritionCompany/NutritionSystem/Index/{encodedUserId}/{encodedCompanyId}";
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(redirectUrl))
+                {
+                    Console.WriteLine($"Redirecting to URL: {redirectUrl}");
+                    return redirectUrl;
+                }
+
+                Console.WriteLine("No applicable role found for redirection.");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                // Handle and log the exception
+                Console.WriteLine($"Error occurred while redirecting: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return null;
+            }
+        }
+
+
+    }
 }

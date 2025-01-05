@@ -207,29 +207,45 @@
             url: `/api/AspNetUsersAPI/Put?key=${encodeURIComponent(userId)}&values=${encodeURIComponent(jsonString)}`,
             method: 'PUT',
             contentType: 'application/json',
-            success: function (response) {
+            success: function (json) {
                 // Remove the loading indicator
                 Notiflix.Loading.Remove(500);
 
-                // Show success message with a callback when the user clicks 'OK'
-                Notiflix.Report.Success(
-                    'Profile Updated',
-                    'Your profile has been successfully updated.',
-                    'OK',
-                    function () {
-                        // Reload the page only after the user clicks 'OK'
-                        window.location.reload();
-                    }
-                );
+                // Handle the success response
+                if (json.success) {
+                    // Show success message with a callback when the user clicks 'OK'
+                    Notiflix.Report.Success(
+                        'Profile Updated', json.message ,'OK',
+                        function () {
+                            // Reload the page only after the user clicks 'OK'
+                            window.location.reload();
+                        }
+                    );
+                } else {
+                    // Report failure if it was unsuccessful
+                    Notiflix.Report.Failure('Profile Update Failed', json.message , 'OK');
+                }
             },
             error: function (jqxhr, textStatus, error) {
                 // Remove the loading indicator on failure
                 Notiflix.Loading.Remove(500);
 
-                // Notify failure with Notiflix
-                Notiflix.Report.Failure('Profile Update Failed', 'An error occurred while saving your profile: ' + textStatus + ', ' + error, 'OK');
+                // Handle the error case
+                var errorMessage = 'Failed to update profile: ' + error; // Default message if responseJSON is unavailable
+
+                if (jqxhr.responseJSON && jqxhr.responseJSON.message) {
+                    errorMessage = jqxhr.responseJSON.message; // Use the message from the backend if available
+                } else if (jqxhr.responseJSON && jqxhr.responseJSON.error) {
+                    errorMessage = jqxhr.responseJSON.error; // Alternatively, check for error field
+                } else if (jqxhr.responseJSON && jqxhr.responseJSON.errors) {
+                    errorMessage = jqxhr.responseJSON.errors.map(function (err) { return err.description; }).join(', '); // Concatenate all error descriptions
+                }
+
+                // Show error message using Notiflix
+                Notiflix.Report.Failure('Profile Update Failed', errorMessage, 'OK');
             }
         });
+
 
     }
 
@@ -272,42 +288,53 @@
         Notiflix.Loading.Dots("Uploading your profile picture...");
 
         // Make the PUT request to upload the file with userId in the URL
-        $.ajax({
-            url: `/api/AspNetUsersAPI/UploadProfilePicture?userId=${encodeURIComponent(userId)}`,  // Add userId as query parameter
-            type: 'PUT',
-            data: formData,
-            contentType: false,  // Important to not set contentType when sending FormData
-            processData: false,  // Prevent jQuery from processing the data
+      $.ajax({
+        url: `/api/AspNetUsersAPI/UploadProfilePicture?userId=${encodeURIComponent(userId)}`,  // Add userId as query parameter
+        type: 'PUT',
+        data: formData,
+        contentType: false,  // Important to not set contentType when sending FormData
+        processData: false,  // Prevent jQuery from processing the data
         })
-            .done(function (json) {
-                // Remove loading indicator on success
-                Notiflix.Loading.Remove(500);
+        .done(function (json) {
+            // Remove loading indicator on success
+            Notiflix.Loading.Remove(500);
 
-                // Check if the upload was successful
-                if (json.filePath) {
-                    // Show success message with Notiflix
-                    Notiflix.Report.Success(
-                        "Upload Success",
-                        "Your profile picture has been successfully uploaded!",
-                        "OK",
-                        function () {
-                            // Optionally, refresh the page or update the profile picture on the page
-                            location.reload();  // This will reload the page to reflect the updated profile picture
-                        }
-                    );
-                } else {
-                    // Handle failure if the file path is not returned
-                    Notiflix.Report.Failure("Upload Failure", json.error || "Error uploading the profile picture", "OK");
-                }
-            })
-            .fail(function (jqxhr, textStatus, error) {
-                // Remove loading indicator on failure
-                Notiflix.Loading.Remove(500);
+            // Check if the upload was successful
+            if (json.success) {
+                // Show success message with Notiflix
+                Notiflix.Report.Success(
+                    "Upload Success",
+                    json.message ,
+                    "OK",
+                    function () {
+                        // Optionally, refresh the page or update the profile picture on the page
+                        location.reload();  // This will reload the page to reflect the updated profile picture
+                    }
+                );
+            } else {
+                // Handle failure if it was unsuccessful
+                Notiflix.Report.Failure("Upload Failure", json.message , "OK");
+            }
+    })
+    .fail(function (jqxhr, textStatus, error) {
+        // Remove loading indicator on failure
+        Notiflix.Loading.Remove(500);
 
-                // Handle the error case
-                var err = textStatus + ", " + error;
-                Notiflix.Report.Failure("Upload Failed", "Failed to upload the profile picture: " + err, "OK");
-            });
+        // Handle the error case
+        var errorMessage = "Failed to upload the profile picture: " + textStatus + ", " + error; // Default message if responseJSON is unavailable
+
+        if (jqxhr.responseJSON && jqxhr.responseJSON.message) {
+            errorMessage = jqxhr.responseJSON.message; // Use the message from the backend if available
+        } else if (jqxhr.responseJSON && jqxhr.responseJSON.error) {
+            errorMessage = jqxhr.responseJSON.error; // Alternatively, check for error field
+        } else if (jqxhr.responseJSON && jqxhr.responseJSON.errors) {
+            errorMessage = jqxhr.responseJSON.errors.map(function (err) { return err.description; }).join(", "); // Concatenate all error descriptions
+        }
+
+        // Show error message using Notiflix
+        Notiflix.Report.Failure("Upload Failed", errorMessage, "OK");
+    });
+
     }
 
 

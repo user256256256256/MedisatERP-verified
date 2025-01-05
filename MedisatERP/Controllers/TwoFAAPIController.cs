@@ -6,29 +6,32 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using Microsoft.Data.SqlClient;
 
 namespace MedisatERP.Controllers
 {
     [ApiController]
     [Route("api/[controller]/[action]")]
-    public class TwoFAAPIController : ControllerBase
+    public class TwoFAAPIController : Controller
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IEmailSender _emailSender;
         private readonly MedisatErpDbContext _dbContext;
         private readonly RoleRedirectService _roleRedirectService;
+        private readonly IErrorCodeService _errorCodeService;
 
         public TwoFAAPIController(UserManager<IdentityUser> userManager,
                         SignInManager<IdentityUser> signInManager,
                         IEmailSender emailSender,
-                        ILogger<TwoFAAPIController> logger, MedisatErpDbContext dbContext, RoleRedirectService roleRedirectService)
+                        ILogger<TwoFAAPIController> logger, MedisatErpDbContext dbContext, RoleRedirectService roleRedirectService, IErrorCodeService errorCodeService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
             _dbContext = dbContext;
             _roleRedirectService = roleRedirectService;
+            _errorCodeService = errorCodeService;
         }
 
         // Action to send 2FA code via GET request
@@ -41,22 +44,25 @@ namespace MedisatERP.Controllers
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                Console.WriteLine("User not found");
-                return BadRequest(new { success = false, mresponse = "User not found" });
+                var errorDetails = _errorCodeService.GetErrorDetails("USER_NOT_FOUND");
+                Console.WriteLine(errorDetails.ErrorMessage);
+                return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
             }
 
             var twoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
             if (!twoFactorEnabled)
             {
-                Console.WriteLine("Two-factor authentication is not enabled for this user.");
-                return BadRequest(new { success = false, mresponse = "Two-factor authentication is not enabled for this user." });
+                var errorDetails = _errorCodeService.GetErrorDetails("TWO_FACTOR_NOT_ENABLED");
+                Console.WriteLine(errorDetails.ErrorMessage);
+                return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
             }
 
             var providers = await _userManager.GetValidTwoFactorProvidersAsync(user);
             if (!providers.Contains("Email"))
             {
-                Console.WriteLine("No valid 2FA providers available");
-                return BadRequest(new { success = false, mresponse = "No valid 2FA providers available" });
+                var errorDetails = _errorCodeService.GetErrorDetails("NO_VALID_2FA_PROVIDERS");
+                Console.WriteLine(errorDetails.ErrorMessage);
+                return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
             }
 
             string code = await _userManager.GenerateTwoFactorTokenAsync(user, "Email");
@@ -64,16 +70,16 @@ namespace MedisatERP.Controllers
 
             if (string.IsNullOrEmpty(user.Email) || !IsValidEmail(user.Email))
             {
-                Console.WriteLine($"Invalid email address: {user.Email}");
-                return BadRequest(new { success = false, mresponse = "Invalid email address" });
+                var errorDetails = _errorCodeService.GetErrorDetails("INVALID_EMAIL_ADDRESS");
+                Console.WriteLine(errorDetails.ErrorMessage);
+                return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
             }
 
             await _emailSender.SendEmailAsync(user.Email, "Your Security Code", $"Your security code is: {code}");
             Console.WriteLine($"Email sent to: {user.Email}");
 
-            return Ok(new { success = true, mresponse = "Code sent successfully to your email. Expiring in 5 minutes." });
+            return Json(new { success = true, mresponse = "Code sent successfully to your email. Expiring in 5 minutes." });
         }
-
 
         // Helper method to validate email address format
         private bool IsValidEmail(string email)
@@ -101,8 +107,9 @@ namespace MedisatERP.Controllers
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                Console.WriteLine("User not found");
-                return BadRequest(new { success = false, mresponse = "User not found" });
+                var errorDetails = _errorCodeService.GetErrorDetails("USER_NOT_FOUND");
+                Console.WriteLine(errorDetails.ErrorMessage);
+                return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
             }
 
             var providers = await _userManager.GetValidTwoFactorProvidersAsync(user);
@@ -113,8 +120,9 @@ namespace MedisatERP.Controllers
 
             if (!providers.Contains(normalizedProvider))
             {
+                var errorDetails = _errorCodeService.GetErrorDetails("INVALID_2FA_PROVIDER");
                 Console.WriteLine($"Invalid 2FA provider. Valid providers: {string.Join(", ", providers)}");
-                return BadRequest(new { success = false, mresponse = "Invalid 2FA provider" });
+                return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
             }
 
             var result = await _signInManager.TwoFactorSignInAsync(normalizedProvider, code, rememberMe, rememberBrowser);
@@ -127,20 +135,25 @@ namespace MedisatERP.Controllers
             }
             else if (result.IsLockedOut)
             {
-                Console.WriteLine("User is locked out");
-                return BadRequest(new { success = false, mresponse = "User is locked out" });
+                var errorDetails = _errorCodeService.GetErrorDetails("USER_LOCKED_OUT");
+                Console.WriteLine(errorDetails.ErrorMessage);
+                return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
             }
             else if (result.IsNotAllowed)
             {
-                Console.WriteLine("Sign-in not allowed");
-                return BadRequest(new { success = false, mresponse = "Sign-in not allowed" });
+                var errorDetails = _errorCodeService.GetErrorDetails("SIGN_IN_NOT_ALLOWED");
+                Console.WriteLine(errorDetails.ErrorMessage);
+                return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
             }
             else
             {
-                Console.WriteLine("Authentication failed due to other reasons.");
-                return BadRequest(new { success = false, mresponse = "Authentication failed" });
+                var errorDetails = _errorCodeService.GetErrorDetails("AUTHENTICATION_FAILED");
+                Console.WriteLine(errorDetails.ErrorMessage);
+                return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
             }
         }
+
+
     }
 }
 

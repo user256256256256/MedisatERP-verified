@@ -12,6 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MedisatERP.Data;
 using MedisatERP.Areas.CoreSystem.Models;
+using Microsoft.Data.SqlClient;
 
 namespace MedisatERP.Controllers
 {
@@ -27,133 +28,289 @@ namespace MedisatERP.Controllers
         [HttpGet]
         public async Task<IActionResult> Get(DataSourceLoadOptions loadOptions)
         {
-            var subscriptionPlans = _context.SubscriptionPlans
-                .Include(c => c.PlanName)
-                .Select(i => new {
-                    i.Id,
-                    PlanName = i.PlanName.PlanName,  // Directly include PlanName
-                    i.PlanNameId,
-                    i.Description,
-                    i.Duration,
-                    i.BillingCycleId,
-                    Price = i.PlanName.Price // Include the Price if necessary
-                });
+            try
+            {
+                var subscriptionPlans = _context.SubscriptionPlans
+                    .Include(c => c.PlanName)
+                    .Select(i => new
+                    {
+                        i.Id,
+                        PlanName = i.PlanName.PlanName,  // Directly include PlanName
+                        i.PlanNameId,
+                        i.Description,
+                        i.Duration,
+                        i.BillingCycleId,
+                        Price = i.PlanName.Price // Include the Price if necessary
+                    });
 
-            return Json(await DataSourceLoader.LoadAsync(subscriptionPlans, loadOptions));
+                return Json(await DataSourceLoader.LoadAsync(subscriptionPlans, loadOptions));
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+            }
         }
 
 
         [HttpPost]
-        public async Task<IActionResult> Post(string values) {
-            var model = new SubscriptionPlan();
-            var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
-            PopulateModel(model, valuesDict);
+        public async Task<IActionResult> Post(string values)
+        {
+            try
+            {
+                var model = new SubscriptionPlan();
+                var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
+                PopulateModel(model, valuesDict);
 
-            if(!TryValidateModel(model))
-                return BadRequest(GetFullErrorMessage(ModelState));
+                if (!TryValidateModel(model))
+                    return BadRequest(GetFullErrorMessage(ModelState));
 
-            var result = _context.SubscriptionPlans.Add(model);
-            await _context.SaveChangesAsync();
+                var result = _context.SubscriptionPlans.Add(model);
+                await _context.SaveChangesAsync();
 
-            return Json(new { result.Entity.Id });
+                return Json(new { result.Entity.Id });
+            }
+            catch (JsonSerializationException ex)
+            {
+                // Log the exception
+                Console.WriteLine($"JSON serialization error: {ex.Message}");
+                return BadRequest(new { message = "Invalid input format. Please check your data and try again." });
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+            }
         }
 
-		[HttpPut]
-		public async Task<IActionResult> Put(Guid key, string values)
-		{
-			try
-			{
-				// Retrieve the subscription plan by its unique identifier
-				var model = await _context.SubscriptionPlans.FirstOrDefaultAsync(item => item.Id == key);
-				if (model == null)
-				{
-					Console.WriteLine($"Subscription plan not found with key: {key}");
-					return StatusCode(409, "Object not found");
-				}
 
-				Console.WriteLine($"Subscription plan found with key: {key}, proceeding with updates.");
+        [HttpPut]
+        public async Task<IActionResult> Put(Guid key, string values)
+        {
+            try
+            {
+                // Retrieve the subscription plan by its unique identifier
+                var model = await _context.SubscriptionPlans.FirstOrDefaultAsync(item => item.Id == key);
+                if (model == null)
+                {
+                    Console.WriteLine($"Subscription plan not found with key: {key}");
+                    return StatusCode(409, "Object not found");
+                }
 
-				// Deserialize the incoming updated values
-				var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
-				PopulateModel(model, valuesDict);
+                Console.WriteLine($"Subscription plan found with key: {key}, proceeding with updates.");
 
-				// Validate the updated model before saving
-				if (!TryValidateModel(model))
-				{
-					Console.WriteLine("Model validation failed.");
-					return BadRequest(GetFullErrorMessage(ModelState));
-				}
+                // Deserialize the incoming updated values
+                var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
+                PopulateModel(model, valuesDict);
 
-				Console.WriteLine("Model validated successfully.");
+                // Validate the updated model before saving
+                if (!TryValidateModel(model))
+                {
+                    Console.WriteLine("Model validation failed.");
+                    return BadRequest(GetFullErrorMessage(ModelState));
+                }
 
-				try
-				{
-					// Save the changes to the database
-					await _context.SaveChangesAsync();
-					Console.WriteLine("Subscription plan updated successfully in the database.");
-					return Ok();
-				}
-				catch (DbUpdateConcurrencyException ex)
-				{
-					// Handle the concurrency exception
-					Console.WriteLine("Concurrency exception occurred while updating subscription plan.");
-					var entry = ex.Entries.Single();
-					var databaseValues = entry.GetDatabaseValues();
-					if (databaseValues == null)
-					{
-						Console.WriteLine("The record you attempted to edit was deleted by another user.");
-						return NotFound(new { success = false, message = "The record you attempted to edit was deleted by another user." });
-					}
-					else
-					{
-						var dbValues = (SubscriptionPlan)databaseValues.ToObject();
-						Console.WriteLine("The record you attempted to edit was modified by another user.");
+                Console.WriteLine("Model validated successfully.");
 
-						// Optionally, reload the entity with current database values
-						await entry.ReloadAsync();
-						return Conflict(new { success = false, message = "The record you attempted to edit was modified by another user.", currentValues = dbValues });
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				// Return an internal server error if an exception occurs
-				Console.WriteLine($"Exception occurred: {ex.Message}");
-				return StatusCode(500, $"Internal Server error: {ex.Message}");
-			}
-		}
+                try
+                {
+                    // Save the changes to the database
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine("Subscription plan updated successfully in the database.");
+                    return Ok();
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    // Handle the concurrency exception
+                    Console.WriteLine("Concurrency exception occurred while updating subscription plan.");
+                    var entry = ex.Entries.Single();
+                    var databaseValues = entry.GetDatabaseValues();
+                    if (databaseValues == null)
+                    {
+                        Console.WriteLine("The record you attempted to edit was deleted by another user.");
+                        return NotFound(new { success = false, message = "The record you attempted to edit was deleted by another user." });
+                    }
+                    else
+                    {
+                        var dbValues = (SubscriptionPlan)databaseValues.ToObject();
+                        Console.WriteLine("The record you attempted to edit was modified by another user.");
+
+                        // Optionally, reload the entity with current database values
+                        await entry.ReloadAsync();
+                        return Conflict(new { success = false, message = "The record you attempted to edit was modified by another user.", currentValues = dbValues });
+                    }
+                }
+            }
+            catch (JsonSerializationException ex)
+            {
+                // Log the exception
+                Console.WriteLine($"JSON serialization error: {ex.Message}");
+                return BadRequest(new { message = "Invalid input format. Please check your data and try again." });
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                // Return a standardized error response
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+            }
+        }
 
 
-		[HttpDelete]
-        public async Task Delete(Guid key) {
-            var model = await _context.SubscriptionPlans.FirstOrDefaultAsync(item => item.Id == key);
 
-            _context.SubscriptionPlans.Remove(model);
-            await _context.SaveChangesAsync();
+        [HttpDelete]
+        public async Task<IActionResult> Delete(Guid key)
+        {
+            try
+            {
+                var model = await _context.SubscriptionPlans.FirstOrDefaultAsync(item => item.Id == key);
+
+                if (model == null)
+                {
+                    Console.WriteLine($"Subscription plan not found with key: {key}");
+                    return NotFound($"Subscription plan with ID {key} not found.");
+                }
+
+                _context.SubscriptionPlans.Remove(model);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"Successfully deleted Subscription plan with ID: {key}");
+                return NoContent();
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+            }
         }
 
 
         [HttpGet]
-        public async Task<IActionResult> BillingCycleLookupsLookup(DataSourceLoadOptions loadOptions) {
-            var lookup = from i in _context.BillingCycleLookups
-                         orderby i.CycleName
-                         select new {
-                             Value = i.Id,
-                             Text = i.CycleName
-                         };
-            return Json(await DataSourceLoader.LoadAsync(lookup, loadOptions));
+        public async Task<IActionResult> BillingCycleLookupsLookup(DataSourceLoadOptions loadOptions)
+        {
+            try
+            {
+                var lookup = from i in _context.BillingCycleLookups
+                             orderby i.CycleName
+                             select new
+                             {
+                                 Value = i.Id,
+                                 Text = i.CycleName
+                             };
+                return Json(await DataSourceLoader.LoadAsync(lookup, loadOptions));
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+            }
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> SubscriptionPlanNameLookupsLookup(DataSourceLoadOptions loadOptions) {
-        //    var lookup = from i in _context.SubscriptionPlanNameLookups
-        //                 orderby i.PlanName
-        //                 select new {
-        //                     Value = i.Id,
-        //                     Text = i.PlanName
-        //                 };
-        //    return Json(await DataSourceLoader.LoadAsync(lookup, loadOptions));
-        //}
+        [HttpGet]
+        public async Task<IActionResult> SubscriptionPlanNameLookupsLookup(DataSourceLoadOptions loadOptions)
+        {
+            try
+            {
+                var lookup = from i in _context.SubscriptionPlanNameLookups
+                             orderby i.PlanName
+                             select new
+                             {
+                                 Value = i.Id,
+                                 Text = i.PlanName
+                             };
+                return Json(await DataSourceLoader.LoadAsync(lookup, loadOptions));
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+            }
+        }
+
 
         private void PopulateModel(SubscriptionPlan model, IDictionary values) {
             string ID = nameof(SubscriptionPlan.Id);

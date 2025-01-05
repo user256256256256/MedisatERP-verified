@@ -13814,7 +13814,17 @@ textarea.form-control-lg {
 }
 
 .dropdown-menu-lg {
-    min-width: 20rem
+    /* Ensure it positions properly relative to its parent element */
+    position: absolute;
+    /* Position the dropdown menu 10% from the right edge */
+    right: 10%;
+    /* Optionally, add a max width to prevent the dropdown from stretching too wide */
+    max-width: 50%; /* Ensures it doesn't take up more than 90% of the viewport width */
+    /* Adjust the width of the dropdown to look neat, depending on your layout */
+    width: auto;
+    /* Prevent the dropdown from overflowing off the screen */
+    overflow-x: hidden;
+    overflow-y: auto; /* Allows vertical scrolling if the dropdown is too long */
 }
 
 .dropdown .list-group .list-group-item {

@@ -2,13 +2,21 @@
 @using MedisatERP.Areas.CoreSystem.Models
 @using MedisatERP.Areas.NutritionCompany.Models
 @using MedisatERP.Models
-@model Company
-
+@model AspNetUser
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Patients";
-    var companyId = Model.CompanyId;
+
+    Guid? companyId = Model?.CompanyId;
+
+    // If companyId is not available from the Model, use ViewData
+    if (companyId == null || companyId == Guid.Empty)
+    {
+        companyId = ViewData["CompanyId"] as Guid?;
+    }
+
 }
+
 
 <!-- Section Title Card -->
 <div class="card col-12 card-title-nutrition-system">

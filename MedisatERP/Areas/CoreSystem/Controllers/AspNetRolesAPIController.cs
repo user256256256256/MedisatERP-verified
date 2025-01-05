@@ -4,6 +4,7 @@ using MedisatERP.Areas.CoreSystem.Models;
 using MedisatERP.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System;
@@ -28,21 +29,40 @@ namespace MedisatERP.Controllers
         [HttpGet]
         public async Task<IActionResult> Get(DataSourceLoadOptions loadOptions)
         {
-            var aspnetroles = _context.AspNetRoles.Select(i => new {
-                i.Id,
-                i.Name,
-                i.NormalizedName,
-                i.ConcurrencyStamp
-            });
+            try
+            {
+                var aspnetroles = _context.AspNetRoles.Select(i => new
+                {
+                    i.Id,
+                    i.Name,
+                    i.NormalizedName,
+                    i.ConcurrencyStamp
+                });               
 
-            // If underlying data is a large SQL table, specify PrimaryKey and PaginateViaPrimaryKey.
-            // This can make SQL execution plans more efficient.
-            // For more detailed information, please refer to this discussion: https://github.com/DevExpress/DevExtreme.AspNet.Data/issues/336.
-            // loadOptions.PrimaryKey = new[] { "Id" };
-            // loadOptions.PaginateViaPrimaryKey = true;
+                var result = await DataSourceLoader.LoadAsync(aspnetroles, loadOptions);
 
-            return Json(await DataSourceLoader.LoadAsync(aspnetroles, loadOptions));
+                return Json(result);
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception (consider using a logging framework)
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later." });
+            }
         }
+
 
         //[HttpPost]
         //public async Task<IActionResult> Post(string values)

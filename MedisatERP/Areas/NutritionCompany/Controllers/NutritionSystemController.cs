@@ -6,7 +6,8 @@ using MedisatERP.Services;
 namespace MedisatERP.Areas.NutritionCompany.Controllers
 {
     [Area("NutritionCompany")]
-    [Route("NutritionCompany/[controller]/[action]/{companyId?}")]
+    [Route("NutritionCompany/[controller]/[action]/{userId?}/{companyId?}")]
+
     public class NutritionSystemController : Controller
     {
         private readonly MedisatErpDbContext _dbContext;
@@ -18,35 +19,39 @@ namespace MedisatERP.Areas.NutritionCompany.Controllers
         }
 
         // GET: /NutritionCompany/NutritionSystem/Index/{companyId}
-        public async Task<IActionResult> Index(string companyId)
+        public async Task<IActionResult> Index(string userId, string companyId)
         {
-            if (string.IsNullOrEmpty(companyId))
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(companyId))
             {
-                return BadRequest("Company ID is required.");
+                return BadRequest("User ID and valid Company ID are required.");
             }
 
             try
             {
-                // Decode the companyId from the URL
+                // Decode the userId from the URL
+                var decodedUserId = HashingHelper.DecodeString(userId);
+
                 var decodedCompanyId = HashingHelper.DecodeGuidID(companyId);
 
-                // Retrieve the company using decodedCompanyId from the database
-                var company = await _dbContext.Companies
-                    .Where(c => c.CompanyId == decodedCompanyId)
-                    .FirstOrDefaultAsync();
+                // Retrieve the user using the decodedUserId from the db
+                var user = await _dbContext.AspNetUsers
+                                           .Where(c => c.Id == decodedUserId)
+                                           .FirstOrDefaultAsync();
 
-                if (company == null)
+                if (user == null)
                 {
-                    return NotFound();  // Return a 404 if the company is not found
+                    return NotFound(); // Return a 404 if the user is not found
                 }
 
-                // Optionally, pass company data to the view
-                return View(company);  // Pass the company to the view
+                // Pass the user model and companyId to the view, which will be available in the layout
+                ViewData["CompanyId"] = decodedCompanyId;
+                // Pass the user model to the view, which will be available in the layout
+                return View(user);
             }
             catch (FormatException)
             {
                 // Handle invalid Base64 string
-                return BadRequest("Invalid company ID format.");
+                return BadRequest("Invalid User ID format.");
             }
         }
     }

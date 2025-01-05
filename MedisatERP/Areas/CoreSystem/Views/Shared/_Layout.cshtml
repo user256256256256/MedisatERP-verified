@@ -12,7 +12,7 @@
     <nav id="sidebar" class="sidebar js-sidebar">
         <div class="sidebar-content js-simplebar">
            
-            <!-- Custom template --See ~wwwroot/js/CustomElements.js Sidebar Brand (Logo) -->
+            <!-- Custom template --See ~wwwroot/js/medista.custom-elements.js Sidebar Brand (Logo) -->
             <sidebar-brand></sidebar-brand>
 
             <!-- Sidebar Navigation Menu -->
@@ -165,51 +165,15 @@
             <div class="navbar-collapse collapse">
                 <ul class="navbar-nav navbar-align">
 
-                    <!-- Notification Dropdown -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-icon dropdown-toggle" href="#" id="alertsDropdown" data-bs-toggle="dropdown">
+                    <!-- Notification  -->
+                    <li class="nav-item dropdown" id="alertsDropdown">
+                        <a class="nav-icon dropdown-toggle" href="@Url.Action("Index", "Notifications", new { area = "CoreSystem", userId = encodedUserId })" >
                             <div class="position-relative">
                                 <i class="align-middle" data-feather="bell"></i>
-                                <span class="indicator">4</span> <!-- Notification Count -->
+                                <span class="indicator">4</span>  <!-- Notification count -->
                             </div>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end py-0" aria-labelledby="alertsDropdown">
-                            <div class="dropdown-menu-header">
-                                4 New Notifications
-                            </div>
-                            <div class="list-group">
-                                <!-- Example Notification: Update Completed -->
-                                <a href="#" class="list-group-item">
-                                    <div class="row g-0 align-items-center">
-                                        <div class="col-2">
-                                            <i class="text-danger" data-feather="alert-circle"></i>
-                                        </div>
-                                        <div class="col-10">
-                                            <div class="text-dark">Update completed</div>
-                                            <div class="text-muted small mt-1">Restart server 12 to complete the update.</div>
-                                            <div class="text-muted small mt-1">30m ago</div>
-                                        </div>
-                                    </div>
-                                </a>
 
-                                <!-- Example Notification: Login from IP -->
-                                <a href="#" class="list-group-item">
-                                    <div class="row g-0 align-items-center">
-                                        <div class="col-2">
-                                            <i class="text-primary" data-feather="home"></i>
-                                        </div>
-                                        <div class="col-10">
-                                            <div class="text-dark">Login from 192.186.1.8</div>
-                                            <div class="text-muted small mt-1">5h ago</div>
-                                        </div>
-                                    </div>
-                                </a>
-
-                            </div>
-                            <div class="dropdown-menu-footer">
-                                <a href="#" class="text-muted">Show all notifications</a>
-                            </div>
-                        </div>
                     </li>
 
                     <!-- User Account Dropdown -->
@@ -223,7 +187,7 @@
                         <a class="nav-link dropdown-toggle" href="" id="userDropdown" aria-expanded="false">
                             <!-- User Avatar and Name -->
                             <img src="@(string.IsNullOrEmpty(Model.ProfileImagePath) ? Url.Content("~/img/userProfileImages/avatar.jpg") : Url.Content("~/img/userProfileImages/" + Model.ProfileImagePath))"
-                                 class="avatar img-fluid rounded me-1" alt="Profile-img" />
+                                 class="avatar img-fluid ] me-1" alt="Profile-img" />
                             <span>@Model.UserName</span> <!-- Display the logged-in user's name -->
                         </a>
 

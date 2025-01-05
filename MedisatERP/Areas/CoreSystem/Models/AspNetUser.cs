@@ -55,4 +55,6 @@ public partial class AspNetUser
     public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 
     public virtual ICollection<AspNetRole> Roles { get; set; } = new List<AspNetRole>();
+
+    public virtual ICollection<AspNetUserRoles> AspNetUserRoles { get; set; } = new List<AspNetUserRoles>(); // Ensure this line is included
 }

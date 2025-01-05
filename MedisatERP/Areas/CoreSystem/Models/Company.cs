@@ -16,23 +16,13 @@ namespace MedisatERP.Areas.CoreSystem.Models
 
         public string CompanyPhone { get; set; }
 
-        public DateTime? ExpDate { get; set; }
+        public int StatusId { get; set; }
 
-        public string ApiCode { get; set; }
-
-        public string CompanyStatus { get; set; }
-
-        public decimal? SubscriptionAmount { get; set; }
+        public string ApiCode { get; set; } 
 
         public string CompanyInitials { get; set; }
 
-        public string SmsAccount { get; set; }
-
-        public string PayAccount { get; set; }
-
-        public string PayBank { get; set; }
-
-        public string PayAccountName { get; set; }
+        public DateTime? CreatedAt { get; set; }
 
         public string Motto { get; set; }
 
@@ -40,11 +30,11 @@ namespace MedisatERP.Areas.CoreSystem.Models
 
         public Guid AddressId { get; set; }
 
-        public DateTime? CreatedAt { get; set; }
-
         public string CompanyLogoFilePath { get; set; }
 
         public virtual CompanyAddress Address { get; set; }
+
+        public virtual CompanyStatusLookup CompanyStatus { get; set; }
 
         public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
 

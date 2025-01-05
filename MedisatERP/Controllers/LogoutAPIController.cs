@@ -5,13 +5,15 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 [ApiController]
 [Route("api/[controller]/[action]")]
-public class LogoutAPIController : ControllerBase
+public class LogoutAPIController : Controller
 {
     private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly IErrorCodeService _errorCodeService;
 
-    public LogoutAPIController(SignInManager<IdentityUser> signInManager)
+    public LogoutAPIController(SignInManager<IdentityUser> signInManager, IErrorCodeService errorCodeService)
     {
         _signInManager = signInManager;
+        _errorCodeService = errorCodeService;
     }
 
     [HttpPost]
@@ -22,29 +24,32 @@ public class LogoutAPIController : ControllerBase
             // Check if userId is null or empty
             if (string.IsNullOrEmpty(userId))
             {
+                var errorDetails = _errorCodeService.GetErrorDetails("INVALID_USER_ID");
                 Console.WriteLine("userId is null or empty");
-                return BadRequest(new { success = false, message = "Invalid user ID." });
+                return Json(new { success = false, message = errorDetails.ErrorMessage });
             }
 
             // Optionally decode the userId if needed
             var decodedUserId = HashingHelper.DecodeString(userId);
             if (decodedUserId == null)
             {
+                var errorDetails = _errorCodeService.GetErrorDetails("INVALID_USER_ID_AFTER_DECODING");
                 Console.WriteLine("Decoded userId is null");
-                return BadRequest(new { success = false, message = "Invalid user ID after decoding." });
+                return Json(new { success = false, message = errorDetails.ErrorMessage });
             }
 
             Console.WriteLine("The decoded user id is :" + decodedUserId);
 
             // Log out successful
-            return Ok(new { success = true, message = "Logout successful.", redirectUrl = "/" });
+            return Json(new { success = true, message = "Logout successful.", redirectUrl = "/" });
         }
         catch (Exception ex)
         {
-            // Log the full exception for better debugging
+            var errorDetails = _errorCodeService.GetErrorDetails("LOGOUT_FAILED");
             Console.WriteLine($"Logout failed: {ex.ToString()}");
-            return BadRequest(new { success = false, message = "Logout failed. Please try again." });
+            return Json(new { success = false, message = errorDetails.ErrorMessage });
         }
     }
 }
+
 

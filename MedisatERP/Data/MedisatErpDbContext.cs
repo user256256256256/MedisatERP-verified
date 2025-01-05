@@ -20,6 +20,8 @@ public partial class MedisatErpDbContext : DbContext
 
     public virtual DbSet<AspNetRole> AspNetRoles { get; set; }
 
+    public virtual DbSet<AspNetUserRoles> AspNetUserRoles { get; set; }
+
     public virtual DbSet<AspNetRoleClaim> AspNetRoleClaims { get; set; }
 
     public virtual DbSet<AspNetUser> AspNetUsers { get; set; }
@@ -35,6 +37,8 @@ public partial class MedisatErpDbContext : DbContext
     public virtual DbSet<ClientAddress> ClientAddresses { get; set; }
 
     public virtual DbSet<Company> Companies { get; set; }
+
+    public virtual DbSet<CompanyStatusLookup> CompanyStatusLookup { get; set; }
 
     public virtual DbSet<CompanyAddress> CompanyAddresses { get; set; }
 
@@ -97,6 +101,19 @@ public partial class MedisatErpDbContext : DbContext
             entity.Property(e => e.NormalizedName).HasMaxLength(256);
         });
 
+        modelBuilder.Entity<AspNetUserRoles>(entity =>
+        {
+            entity.HasKey(ur => new { ur.UserId, ur.RoleId });
+
+            entity.HasOne(ur => ur.User)
+                .WithMany(u => u.AspNetUserRoles)
+                .HasForeignKey(ur => ur.UserId);
+
+            entity.HasOne(ur => ur.Role)
+                .WithMany(r => r.AspNetUserRoles)
+                .HasForeignKey(ur => ur.RoleId);
+        });
+
         modelBuilder.Entity<AspNetRoleClaim>(entity =>
         {
             entity.HasIndex(e => e.RoleId, "IX_AspNetRoleClaims_RoleId");
@@ -119,18 +136,6 @@ public partial class MedisatErpDbContext : DbContext
             entity.Property(e => e.NormalizedEmail).HasMaxLength(256);
             entity.Property(e => e.NormalizedUserName).HasMaxLength(256);
             entity.Property(e => e.UserName).HasMaxLength(256);
-
-            entity.HasMany(d => d.Roles).WithMany(p => p.Users)
-                .UsingEntity<Dictionary<string, object>>(
-                    "AspNetUserRole",
-                    r => r.HasOne<AspNetRole>().WithMany().HasForeignKey("RoleId"),
-                    l => l.HasOne<AspNetUser>().WithMany().HasForeignKey("UserId"),
-                    j =>
-                    {
-                        j.HasKey("UserId", "RoleId");
-                        j.ToTable("AspNetUserRoles");
-                        j.HasIndex(new[] { "RoleId" }, "IX_AspNetUserRoles_RoleId");
-                    });
 
             // Add the CompanyId property and configure the relationship
             entity.Property(e => e.CompanyId).IsRequired(false);
@@ -242,21 +247,32 @@ public partial class MedisatErpDbContext : DbContext
             entity.Property(e => e.CompanyLogoFilePath).HasMaxLength(512);
             entity.Property(e => e.CompanyName).HasMaxLength(256);
             entity.Property(e => e.CompanyPhone).HasMaxLength(15);
-            entity.Property(e => e.CompanyStatus).HasMaxLength(50);
             entity.Property(e => e.CompanyType).HasMaxLength(100);
             entity.Property(e => e.ContactPerson).HasMaxLength(256);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
-            entity.Property(e => e.ExpDate).HasColumnType("datetime");
             entity.Property(e => e.Motto).HasMaxLength(512);
-            entity.Property(e => e.PayAccount).HasMaxLength(256);
-            entity.Property(e => e.PayAccountName).HasMaxLength(256);
-            entity.Property(e => e.PayBank).HasMaxLength(256);
-            entity.Property(e => e.SmsAccount).HasMaxLength(256);
-            entity.Property(e => e.SubscriptionAmount).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.CompanyStatus)  
+            .WithMany(p => p.Companies)  
+            .HasForeignKey(d => d.StatusId)  
+            .HasConstraintName("FK_CompanyStatus"); 
 
             entity.HasOne(d => d.Address).WithMany(p => p.Companies)
                 .HasForeignKey(d => d.AddressId)
                 .HasConstraintName("FK_Companies_CompanyAddress");
+        });
+
+        modelBuilder.Entity<CompanyStatusLookup>(entity =>
+        {
+            entity.HasKey(e => e.StatusId)
+                .HasName("PK__CompanyS__C8EE20635B13B506");
+            entity.ToTable("CompanyStatusLookup", "dbo");
+            entity.Property(e => e.StatusName)
+                .IsRequired()  
+                .HasMaxLength(50);  
+            entity.HasMany(e => e.Companies)
+                .WithOne(c => c.CompanyStatus) 
+                .HasForeignKey(c => c.StatusId); 
         });
 
         modelBuilder.Entity<CompanyAddress>(entity =>
@@ -761,3 +777,8 @@ public partial class MedisatErpDbContext : DbContext
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
+
+
+
+
+

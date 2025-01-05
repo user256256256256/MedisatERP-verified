@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -80,16 +79,23 @@
 
     <script src="~/js/devextreme/aspnet/dx.aspnet.mvc.js"></script>
     <script src="~/js/devextreme/aspnet/dx.aspnet.data.js"></script>
+
+    @* Notiflix and SignalR Scripts *@
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notiflix/dist/notiflix-3.2.2.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/notiflix/dist/notiflix-3.2.2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.14/signalr.min.js"></script>
 </head>
 
 <body>
+
+    <div id="toastContainer"></div>
 
     <content>
         @RenderBody()
     </content>
 
     @* Script defines custom templates *@
-    <script src="~/js/CustomElements.js"></script>
+    <script src="~/js/medisat.custom-elements.js"></script>
 
     @* Notifilix framework managing user notifications *@
     <script src="~/js/notiflix-aio-2.5.0.min.js"></script>
@@ -98,8 +104,9 @@
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     <script>feather.replace();</script>
 
-    <script src="~/js/site.js"></script>
+    <script src="~/js/medisat-main.js"></script>
+
+    <script src="~/js/medisat.notifications.js"></script>
 
 </body>
-
 </html>

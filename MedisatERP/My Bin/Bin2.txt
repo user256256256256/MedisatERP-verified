@@ -2,3 +2,70 @@
 Add external login feature.
 Add roles, role claims, and user claims
 Implement chat system in communications module 
+Implement Dev xtream AI chatbot
+
+
+<!-- Notification Dropdown -->
+                    <li class="nav-item dropdown" id="alertsDropdown">
+                        <a class="nav-icon dropdown-toggle" href="#" id="alertsDropdownToggle" aria-expanded="false">
+                            <div class="position-relative">
+                                <i class="align-middle" data-feather="bell"></i>
+                                <span class="indicator">4</span>  <!-- Notification count -->
+                            </div>
+                        </a>
+
+                        <!-- Dropdown Menu -->
+                        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end py-0">
+                            <!-- Header for Notifications -->
+                            <div class="dropdown-menu-header">
+                                4 New Notifications
+                            </div>
+
+                            <!-- Notification Items -->
+                            <div class="list-group">
+                                <!-- Notification 1 -->
+                                <a href="#" class="list-group-item">
+                                    <div class="row g-0 align-items-center">
+                                        <div class="col-2">
+                                            <i class="text-danger" data-feather="alert-circle"></i>  <!-- Alert Icon -->
+                                        </div>
+                                        <div class="col-10">
+                                            <div class="text-dark">Update completed</div>
+                                            <div class="text-muted small mt-1">Restart server 12 to complete the update.</div>
+                                            <div class="text-muted small mt-1">30m ago</div>
+                                        </div>
+                                    </div>
+                                </a>
+                                <!-- Notification 2 -->
+                                <a href="#" class="list-group-item">
+                                    <div class="row g-0 align-items-center">
+                                        <div class="col-2">
+                                            <i class="text-primary" data-feather="home"></i>  <!-- Home Icon -->
+                                        </div>
+                                        <div class="col-10">
+                                            <div class="text-dark">Login from 192.186.1.8</div>
+                                            <div class="text-muted small mt-1">5h ago</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!-- Footer for Notifications -->
+                            <div class="dropdown-menu-footer">
+                                <a class="" href="@Url.Action("Index", "UserProfile", new { area = "CoreSystem", userId = encodedUserId })">
+                                    Show all notifications.
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+
+
+                    
+        $('#alertsDropdownToggle').on('click', function (event) {
+            event.preventDefault();
+            $(this).next('.dropdown-menu').toggle();  // Toggle the notification dropdown menu
+            $(this).attr('aria-expanded', $(this).next('.dropdown-menu').is(':visible'));  // Update aria-expanded
+        });
+
+
+       

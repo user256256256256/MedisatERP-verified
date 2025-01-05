@@ -1,11 +1,24 @@
 ﻿@using MedisatERP.Areas.CoreSystem.Models
 @using MedisatERP.Services
-@model Company
+@model AspNetUser
 
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    var encodedCompanyId = HashingHelper.EncodeGuidID(Model.CompanyId);
+    var encodedUserId = HashingHelper.EncodeString(Model.Id);
+
+    // Attempt to retrieve the company ID from the Model
+    Guid? companyId = Model?.CompanyId;
+
+    // If companyId is not available from the Model, use ViewData
+    if (companyId == null || companyId == Guid.Empty)
+    {
+        companyId = ViewData["CompanyId"] as Guid?;
+    }
+
+    // Encode the company ID if it's available
+    var encodedCompanyId = companyId.HasValue ? HashingHelper.EncodeGuidID(companyId.Value) : string.Empty;
 }
+
 
 <div class="wrapper">
     <!-- Sidebar Section -->
@@ -28,15 +41,16 @@
 
                         <!-- Sidebar Item: Dashboard -->
                         <li class="sidebar-item @((Context.Request.Path.Value.Contains("NutritionSystem")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "NutritionSystem", new { area = "NutritionCompany", companyId = encodedCompanyId })">
+                            <a class="sidebar-link" href="@Url.Action("Index", "NutritionSystem", new { area = "NutritionCompany", userId = encodedUserId, companyId = encodedCompanyId })">
                                 <i class="align-middle" data-feather="sliders"></i>
                                 <span class="align-middle">Dashboard</span>
                             </a>
                         </li>
 
+
                         <!-- Sidebar Item: Patients -->
                         <li class="sidebar-item @((Context.Request.Path.Value.Contains("Patients")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "Patients", new { area = "NutritionCompany", companyId = encodedCompanyId })">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Patients", new { area = "NutritionCompany", userId = encodedUserId, companyId = encodedCompanyId })">
                                 <i class="align-middle" data-feather="users"></i>
                                 <span class="align-middle">Patients</span>
                             </a>

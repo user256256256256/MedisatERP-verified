@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace MedisatERP.Areas.CoreSystem.Controllers
 {
     [Area("CoreSystem")]
-    [Route("CoreSystem/[controller]/[action]")]
+    [Route("CoreSystem/[controller]/[action]/{userId?}")]
     public class TrialNotificationsController : Controller
     {
         private readonly MedisatErpDbContext _dbContext;

@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.ComponentModel.Design;
 using MedisatERP.Areas.CoreSystem.Models;
 using MedisatERP.Data;
+using Microsoft.Data.SqlClient;
 
 namespace MedisatERP.Controllers
 {
@@ -35,30 +36,54 @@ namespace MedisatERP.Controllers
         [HttpGet]
         public async Task<IActionResult> Get(DataSourceLoadOptions loadOptions, Guid companyId)
         {
-            var feedbacks = _context.Feedbacks
-               .Include(c => c.User) // Ensure ASP User is eagerly loaded
-               .Select(i => new
-               {
-                   i.FeedbackId,
-                   i.UserId,
-                   i.FeedbackText,
-                   i.Rating,
-                   i.Category,
-                   i.SubmittedAt,
-                   i.Resolved,
-                   i.CompanyId,
-                   User = new
+            try
+            {
+                var feedbacks = _context.Feedbacks
+                   .Include(c => c.User) // Ensure ASP User is eagerly loaded
+                   .Select(i => new
                    {
-                       i.User.UserName,
-                       i.User.Email,
-                       i.User.PhoneNumber
-                   }
-               }).Where(a => a.CompanyId == companyId).OrderBy(a => a.FeedbackId);
+                       i.FeedbackId,
+                       i.UserId,
+                       i.FeedbackText,
+                       i.Rating,
+                       i.Category,
+                       i.SubmittedAt,
+                       i.Resolved,
+                       i.CompanyId,
+                       User = new
+                       {
+                           i.User.UserName,
+                           i.User.Email,
+                           i.User.PhoneNumber
+                       }
+                   }).Where(a => a.CompanyId == companyId).OrderBy(a => a.FeedbackId);
 
-            // Apply filetering, sorting, anf paging using DataSourceLoader
-            var transformedData = await DataSourceLoader.LoadAsync(feedbacks, loadOptions);
+                // Apply filtering, sorting, and paging using DataSourceLoader
+                var transformedData = await DataSourceLoader.LoadAsync(feedbacks, loadOptions);
 
-            return Json(transformedData);
+                return Json(transformedData); // Return the processed data
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception (consider using a logging framework)
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                // Return a standardized error response
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+            }
         }
 
 
@@ -72,7 +97,7 @@ namespace MedisatERP.Controllers
         {
             try
             {
-                // Incomplete ---Complete whilst working on Users 4 Companies
+                // Deserialize the incoming request values
                 var model = new Feedback();
                 var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
                 PopulateModel(model, valuesDict);
@@ -85,91 +110,136 @@ namespace MedisatERP.Controllers
 
                 return Ok();
             }
+            catch (JsonSerializationException ex)
+            {
+                // Log the exception
+                Console.WriteLine($"JSON serialization error: {ex.Message}");
+                return BadRequest(new { message = "Invalid input format. Please check your data and try again." });
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception (consider using a logging framework)
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
 
+                // Return a standardized error response
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+            }
         }
 
-		/// <summary>
-		/// Updates an existing company and its address data.
-		/// </summary>
-		/// <param name="key">The unique identifier of the company to update.</param>
-		/// <param name="values">The incoming updated values as a JSON string.</param>
-		/// <returns>Returns a success status if the company is updated.</returns>
-		[HttpPut]
-		public async Task<IActionResult> Put(Guid key, string values)
-		{
-			try
-			{
-				// Retrieve the feedback by its unique identifier
-				var model = await _context.Feedbacks.FirstOrDefaultAsync(item => item.FeedbackId == key);
-				if (model == null)
-				{
-					Console.WriteLine($"Feedback entity not found with key: {key}");
-					return StatusCode(404, "Feedback entity not found");
-				}
 
-				Console.WriteLine($"Feedback entity found with key: {key}, proceeding with updates.");
+        /// <summary>
+        /// Updates an existing company and its address data.
+        /// </summary>
+        /// <param name="key">The unique identifier of the company to update.</param>
+        /// <param name="values">The incoming updated values as a JSON string.</param>
+        /// <returns>Returns a success status if the company is updated.</returns>
+        [HttpPut]
+        public async Task<IActionResult> Put(Guid key, string values)
+        {
+            try
+            {
+                // Retrieve the feedback by its unique identifier
+                var model = await _context.Feedbacks.FirstOrDefaultAsync(item => item.FeedbackId == key);
+                if (model == null)
+                {
+                    Console.WriteLine($"Feedback entity not found with key: {key}");
+                    return StatusCode(404, "Feedback entity not found");
+                }
 
-				// Deserialize the incoming updated values
-				var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
-				PopulateModel(model, valuesDict);
+                Console.WriteLine($"Feedback entity found with key: {key}, proceeding with updates.");
 
-				// Validate the updated model before saving
-				if (!TryValidateModel(model))
-				{
-					Console.WriteLine("Model validation failed.");
-					return BadRequest(GetFullErrorMessage(ModelState));
-				}
+                // Deserialize the incoming updated values
+                var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
+                PopulateModel(model, valuesDict);
 
-				Console.WriteLine("Model validated successfully.");
+                // Validate the updated model before saving
+                if (!TryValidateModel(model))
+                {
+                    Console.WriteLine("Model validation failed.");
+                    return BadRequest(GetFullErrorMessage(ModelState));
+                }
 
-				try
-				{
-					// Save the changes to the database
-					await _context.SaveChangesAsync();
-					Console.WriteLine("Feedback entity updated successfully in the database.");
-					return Ok();
-				}
-				catch (DbUpdateConcurrencyException ex)
-				{
-					// Handle the concurrency exception
-					Console.WriteLine("Concurrency exception occurred while updating feedback entity.");
-					var entry = ex.Entries.Single();
-					var databaseValues = entry.GetDatabaseValues();
-					if (databaseValues == null)
-					{
-						Console.WriteLine("The record you attempted to edit was deleted by another user.");
-						return NotFound(new { success = false, message = "The record you attempted to edit was deleted by another user." });
-					}
-					else
-					{
-						var dbValues = (Feedback)databaseValues.ToObject();
-						Console.WriteLine("The record you attempted to edit was modified by another user.");
+                Console.WriteLine("Model validated successfully.");
 
-						// Optionally, reload the entity with current database values
-						await entry.ReloadAsync();
-						return Conflict(new { success = false, message = "The record you attempted to edit was modified by another user.", currentValues = dbValues });
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				// Return an internal server error if an exception occurs
-				Console.WriteLine($"Exception occurred: {ex.Message}");
-				return StatusCode(500, $"Internal Server error: {ex.Message}");
-			}
-		}
+                try
+                {
+                    // Save the changes to the database
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine("Feedback entity updated successfully in the database.");
+                    return Ok();
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    // Handle the concurrency exception
+                    Console.WriteLine("Concurrency exception occurred while updating feedback entity.");
+                    var entry = ex.Entries.Single();
+                    var databaseValues = entry.GetDatabaseValues();
+                    if (databaseValues == null)
+                    {
+                        Console.WriteLine("The record you attempted to edit was deleted by another user.");
+                        return NotFound(new { success = false, message = "The record you attempted to edit was deleted by another user." });
+                    }
+                    else
+                    {
+                        var dbValues = (Feedback)databaseValues.ToObject();
+                        Console.WriteLine("The record you attempted to edit was modified by another user.");
+
+                        // Optionally, reload the entity with current database values
+                        await entry.ReloadAsync();
+                        return Conflict(new { success = false, message = "The record you attempted to edit was modified by another user.", currentValues = dbValues });
+                    }
+                }
+            }
+            catch (JsonSerializationException ex)
+            {
+                // Log the exception
+                Console.WriteLine($"JSON serialization error: {ex.Message}");
+                return BadRequest(new { message = "Invalid input format. Please check your data and try again." });
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception (consider using a logging framework)
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                // Return a standardized error response
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+            }
+        }
 
 
-		/// <summary>
-		/// Deletes a feedack  by its unique identifier.
-		/// </summary>
-		/// <param name="key">The unique identifier of the migration to delete.</param>
-		/// <returns>Returns a status code indicating the result of the operation.</returns>
-		[HttpDelete]
+
+        /// <summary>
+        /// Deletes a feedack  by its unique identifier.
+        /// </summary>
+        /// <param name="key">The unique identifier of the migration to delete.</param>
+        /// <returns>Returns a status code indicating the result of the operation.</returns>
+        [HttpDelete]
         public async Task<IActionResult> Delete(Guid key)
         {
             try
@@ -206,30 +276,30 @@ namespace MedisatERP.Controllers
 
                 return NoContent(); // Return No Content status after successful deletion
             }
-            catch (Exception ex)
+            catch (SqlException ex)
+            {
+                // Log the exception (consider using a logging framework)
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
             {
                 // Log the exception
-                Console.WriteLine($"Error occurred while deleting Feedback with ID: {key}. Error: {ex.Message}");
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
 
-                // Return an internal server error if an exception occurs
-                return StatusCode(500, $"An internal server error occurred: {ex.Message}");
+                // Return a standardized error response
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
             }
         }
 
 
-
-        [HttpGet]
-        public async Task<IActionResult> AspNetUsersLookup(DataSourceLoadOptions loadOptions)
-        {
-            var lookup = from i in _context.AspNetUsers
-                         orderby i.UserName
-                         select new
-                         {
-                             Value = i.Id,
-                             Text = i.UserName
-                         };
-            return Json(await DataSourceLoader.LoadAsync(lookup, loadOptions));
-        }
 
         /// <summary>
         /// Populates the model with the given values.

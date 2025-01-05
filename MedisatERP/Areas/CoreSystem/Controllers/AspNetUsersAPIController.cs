@@ -16,19 +16,24 @@ using MedisatERP.Areas.CoreSystem.Models;
 using MedisatERP.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using MedisatERP.Services;
+using Microsoft.Data.SqlClient;
 
 namespace MedisatERP.Controllers
 {
     [Route("api/[controller]/[action]")]
     public class AspNetUsersAPIController : Controller
     {
-        private MedisatErpDbContext _context;
+        private readonly  MedisatErpDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
-
-        public AspNetUsersAPIController(MedisatErpDbContext context, UserManager<IdentityUser> userManager)
+        private readonly NotificationService _notificationService;
+        private readonly IErrorCodeService _errorCodeService;
+        public AspNetUsersAPIController(MedisatErpDbContext context, UserManager<IdentityUser> userManager, NotificationService notificationService, IErrorCodeService errorCodeService)
         {
             _context = context;
             _userManager = userManager;
+            _notificationService = notificationService;
+            _errorCodeService = errorCodeService;
         }
 
         /// <summary>
@@ -40,21 +45,50 @@ namespace MedisatERP.Controllers
         [HttpGet]
         public async Task<IActionResult> Get(DataSourceLoadOptions loadOptions, Guid? companyId)
         {
-            var usersQuery = _context.AspNetUsers.AsQueryable();
-
-            // Filter by CompanyId if provided, otherwise fetch users with a NULL CompanyId
-            if (companyId.HasValue)
+            try
             {
-                usersQuery = usersQuery.Where(u => u.CompanyId == companyId.Value);
-            }
-            else
-            {
-                usersQuery = usersQuery.Where(u => u.CompanyId == null);
-            }
+                var usersQuery = _context.AspNetUsers.AsQueryable();
 
-            // Select the necessary user fields, including roles
-            var users = usersQuery
-                .Select(u => new
+                // Filter by CompanyId if provided, otherwise fetch users with a NULL CompanyId
+                if (companyId.HasValue)
+                {
+                    usersQuery = usersQuery.Where(u => u.CompanyId == companyId.Value);
+                }
+                else
+                {
+                    usersQuery = usersQuery.Where(u => u.CompanyId == null);
+                }
+
+                // Fetch user data without roles
+                var users = await usersQuery
+                    .Select(u => new
+                    {
+                        u.Id,
+                        u.UserName,
+                        u.Email,
+                        u.PhoneNumber,
+                        u.EmailConfirmed,
+                        u.PhoneNumberConfirmed,
+                        u.LockoutEnabled,
+                        u.LockoutEnd,
+                        u.AccessFailedCount,
+                        u.BioData,
+                        u.ProfileImagePath,
+                        u.NormalizedUserName,
+                        u.NormalizedEmail,
+                        u.TwoFactorEnabled
+                    })
+                    .OrderBy(u => u.Id)
+                    .ToListAsync();
+
+                // Fetch roles separately and join them in-memory
+                var userIds = users.Select(u => u.Id).ToList();
+                var userRoles = await _context.AspNetUserRoles
+                    .Where(ur => userIds.Contains(ur.UserId))
+                    .Join(_context.AspNetRoles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, r.Name })
+                    .ToListAsync();
+
+                var usersWithRoles = users.Select(u => new
                 {
                     u.Id,
                     u.UserName,
@@ -67,276 +101,321 @@ namespace MedisatERP.Controllers
                     u.AccessFailedCount,
                     u.BioData,
                     u.ProfileImagePath,
-                    // Generate a comma-separated list of roles
-                    CurrentRoles = string.Join(", ", u.Roles.Select(r => r.Name)), // Join roles as a comma-separated string
-                })
-                .OrderBy(u => u.Id); // Sorting users by Id, adjust if necessary
+                    u.NormalizedUserName,
+                    u.NormalizedEmail,
+                    u.TwoFactorEnabled,
+                    CurrentRoles = string.Join(", ", userRoles.Where(ur => ur.UserId == u.Id).Select(ur => ur.Name)) // Join roles as a comma-separated string
+                });
 
-            // Apply filtering, sorting, and paging using DataSourceLoader
-            var transformedData = await DataSourceLoader.LoadAsync(users, loadOptions);
+                // Apply filtering, sorting, and paging using DataSourceLoader
+                var transformedData = DataSourceLoader.Load(usersWithRoles, loadOptions);
 
-            return Json(transformedData); // Return the processed data
+                return Json(transformedData); // Return the processed data
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception (consider using a logging framework)
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later." });
+            }
         }
 
-		[HttpPost]
-		public async Task<IActionResult> Post([FromBody] AspNetUser userInput)
-		{
-			try
-			{
-				// Log the content of the incoming request for debugging
-				if (userInput == null)
-				{
-					Console.WriteLine("Received user input: null");
-					return BadRequest(new { message = "User input cannot be empty." });
-				}
 
-				var userInputJson = JsonConvert.SerializeObject(userInput, Formatting.Indented);
-				Console.WriteLine($"Received user input: {userInputJson}");
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] AspNetUser userInput)
+        {
+            try
+            {
+                // Log the content of the incoming request for debugging
+                if (userInput == null)
+                {
+                    var errorDetails = _errorCodeService.GetErrorDetails("MISSING_CREDENTIALS");
+                    Console.WriteLine("Received user input: null");
+                    return Json(new { success = false, message = errorDetails.ErrorMessage });
+                }
 
-				// List of restricted roles (e.g., "System Administrator")
-				var restrictedRoles = new List<string> { "System Administrator" };
+                var userInputJson = JsonConvert.SerializeObject(userInput, Formatting.Indented);
+                Console.WriteLine($"Received user input: {userInputJson}");
 
-				// List of roles that require enabling TwoFactorAuthentication (e.g., "System Administrator", "Company Administrator")
-				var rolesAssigned2FA = new List<string> { "System Administrator", "Company Administrator" };
+                // List of restricted roles (e.g., "System Administrator")
+                var restrictedRoles = new List<string> { "System Administrator" };
 
-				// Handle roles if provided in the user input
-				if (userInput.Roles != null && userInput.Roles.Any())
-				{
-					foreach (var roleObject in userInput.Roles)
-					{
-						// Assuming each role is an object with an Id property (of type Guid)
-						if (roleObject == null || roleObject.Id == null)
-						{
-							Console.WriteLine($"Invalid Role object: {roleObject}");
-							return BadRequest(new { message = "Invalid Role object." });
-						}
+                // List of roles that require enabling TwoFactorAuthentication (e.g., "System Administrator", "Company Administrator")
+                var rolesAssigned2FA = new List<string> { "System Administrator", "Company Administrator" };
 
-						var roleId = roleObject.Id;
+                // Handle roles if provided in the user input
+                if (userInput.Roles != null && userInput.Roles.Any())
+                {
+                    foreach (var roleObject in userInput.Roles)
+                    {
+                        // Assuming each role is an object with an Id property (of type Guid)
+                        if (roleObject == null || roleObject.Id == null)
+                        {
+                            var errorDetails = _errorCodeService.GetErrorDetails("INVALID_ROLE_OBJECT");
+                            Console.WriteLine($"Invalid Role object: {roleObject}");
+                            return Json(new { success = false, message = errorDetails.ErrorMessage });
+                        }
 
-						// Find the role in the database by role ID (Guid)
-						var roleFromDb = await _context.AspNetRoles
-							.FirstOrDefaultAsync(r => r.Id == roleId);
+                        var roleId = roleObject.Id;
 
-						if (roleFromDb == null)
-						{
-							// If the role doesn't exist, return an error
-							Console.WriteLine($"Role with ID '{roleId}' not found.");
-							return NotFound(new { message = $"Role with ID '{roleId}' not found." });
-						}
+                        // Find the role in the database by role ID (Guid)
+                        var roleFromDb = await _context.AspNetRoles
+                            .FirstOrDefaultAsync(r => r.Id == roleId);
 
-						// Check if the role is restricted and if the user has a CompanyId
-						if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleFromDb.Name))
-						{
-							// If the role is restricted and user has a CompanyId, terminate and return an error
-							Console.WriteLine($"User has a CompanyId and role '{roleFromDb.Name}' is restricted. Terminating.");
-							return BadRequest(new { message = "Role NOT applicable for user!" });
-						}
+                        if (roleFromDb == null)
+                        {
+                            var errorDetails = _errorCodeService.GetErrorDetails("ROLE_NOT_FOUND");
+                            // If the role doesn't exist, return an error
+                            Console.WriteLine($"Role with ID '{roleId}' not found.");
+                            return Json(new { success = false, message = errorDetails.ErrorMessage });
+                        }
 
-						// If the role is in rolesAssigned2FA, set TwoFactorEnabled to true
-						if (rolesAssigned2FA.Contains(roleFromDb.Name))
-						{
-							Console.WriteLine($"Role '{roleFromDb.Name}' requires 2FA, enabling TwoFactorEnabled.");
-							userInput.TwoFactorEnabled = true;
-						}
-					}
-				}
+                        // Check if the role is restricted and if the user has a CompanyId
+                        if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleFromDb.Name))
+                        {
+                            var errorDetails = _errorCodeService.GetErrorDetails("ROLE_NOT_APPLICABLE");
+                            // If the role is restricted and user has a CompanyId, terminate and return an error
+                            Console.WriteLine($"User has a CompanyId and role '{roleFromDb.Name}' is restricted. Terminating.");
+                            return Json(new { success = false, message = errorDetails.ErrorMessage });
+                        }
 
-				// Create an IdentityUser instance for UserManager only after role checks
-				var identityUser = new IdentityUser
-				{
-					UserName = userInput.UserName,
-					Email = userInput.Email,
-					PhoneNumber = userInput.PhoneNumber,
-					NormalizedUserName = userInput.NormalizedUserName,
-					NormalizedEmail = userInput.NormalizedEmail
-				};
+                        // If the role is in rolesAssigned2FA, set TwoFactorEnabled to true
+                        if (rolesAssigned2FA.Contains(roleFromDb.Name))
+                        {
+                            Console.WriteLine($"Role '{roleFromDb.Name}' requires 2FA, enabling TwoFactorEnabled.");
+                            userInput.TwoFactorEnabled = true;
+                        }
+                    }
+                }
 
-				// Password hashing
-				var passwordHasher = new PasswordHasher<IdentityUser>();
-				identityUser.PasswordHash = passwordHasher.HashPassword(identityUser, userInput.PasswordHash);
+                // Create an IdentityUser instance for UserManager only after role checks
+                var identityUser = new IdentityUser
+                {
+                    UserName = userInput.UserName,
+                    Email = userInput.Email,
+                    PhoneNumber = userInput.PhoneNumber,
+                    NormalizedUserName = userInput.NormalizedUserName,
+                    NormalizedEmail = userInput.NormalizedEmail
+                };
 
-				// Create the user using _userManager
-				var createResult = await _userManager.CreateAsync(identityUser);
-				if (!createResult.Succeeded)
-				{
-					return BadRequest(new { message = "Failed to create user.", errors = createResult.Errors });
-				}
+                // Password hashing
+                var passwordHasher = new PasswordHasher<IdentityUser>();
+                identityUser.PasswordHash = passwordHasher.HashPassword(identityUser, userInput.PasswordHash);
 
-				// If the role requires 2FA, ensure it's enabled for the user
-				if (userInput.TwoFactorEnabled)
-				{
-					await _userManager.SetTwoFactorEnabledAsync(identityUser, true);
-					Console.WriteLine("2FA enabled for the user.");
-				}
+                // Create the user using _userManager
+                var createResult = await _userManager.CreateAsync(identityUser);
+                if (!createResult.Succeeded)
+                {
+                    var errorDetails = _errorCodeService.GetErrorDetails("USER_CREATION_FAILED");
+                    return Json(new { success = false, message = errorDetails.ErrorMessage, errors = createResult.Errors });
+                }
 
-				// Handle roles after user is created
-				if (userInput.Roles != null && userInput.Roles.Any())
-				{
-					foreach (var roleObject in userInput.Roles)
-					{
-						var roleId = roleObject.Id;
+                // If the role requires 2FA, ensure it's enabled for the user
+                if (userInput.TwoFactorEnabled)
+                {
+                    await _userManager.SetTwoFactorEnabledAsync(identityUser, true);
+                    Console.WriteLine("2FA enabled for the user.");
+                }
 
-						// Find the role in the database by role ID (Guid)
-						var roleFromDb = await _context.AspNetRoles
-							.FirstOrDefaultAsync(r => r.Id == roleId);
+                // Handle roles after user is created
+                if (userInput.Roles != null && userInput.Roles.Any())
+                {
+                    foreach (var roleObject in userInput.Roles)
+                    {
+                        var roleId = roleObject.Id;
 
-						if (roleFromDb != null)
-						{
-							var roleName = roleFromDb.Name;
+                        // Find the role in the database by role ID (Guid)
+                        var roleFromDb = await _context.AspNetRoles
+                            .FirstOrDefaultAsync(r => r.Id == roleId);
 
-							// Check if the role is restricted and if the user has a CompanyId
-							if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleName))
-							{
-								// Skip assigning restricted roles
-								Console.WriteLine($"User has a CompanyId and role '{roleName}' is restricted. Skipping assignment.");
-								continue;
-							}
+                        if (roleFromDb != null)
+                        {
+                            var roleName = roleFromDb.Name;
 
-							var addRoleResult = await _userManager.AddToRoleAsync(identityUser, roleName);
+                            // Check if the role is restricted and if the user has a CompanyId
+                            if (userInput.CompanyId.HasValue && restrictedRoles.Contains(roleName))
+                            {
+                                // Skip assigning restricted roles
+                                Console.WriteLine($"User has a CompanyId and role '{roleName}' is restricted. Skipping assignment.");
+                                continue;
+                            }
 
-							if (!addRoleResult.Succeeded)
-							{
-								// If role assignment fails, delete the created user and return an error
-								await _userManager.DeleteAsync(identityUser);
-								Console.WriteLine("Role assignment failed. User deleted.");
-								return BadRequest(new { message = "Failed to assign role." });
-							}
+                            var addRoleResult = await _userManager.AddToRoleAsync(identityUser, roleName);
 
-							Console.WriteLine($"Role '{roleName}' assigned successfully.");
-						}
-					}
-				}
+                            if (!addRoleResult.Succeeded)
+                            {
+                                // If role assignment fails, delete the created user and return an error
+                                await _userManager.DeleteAsync(identityUser);
+                                var errorDetails = _errorCodeService.GetErrorDetails("ROLE_ASSIGNMENT_FAILED");
+                                Console.WriteLine("Role assignment failed. User deleted.");
+                                return Json(new { success = false, message = errorDetails.ErrorMessage });
+                            }
 
-				// Handle the company ID if provided
-				if (userInput.CompanyId.HasValue)
-				{
-					// Update the CompanyId in the user record if it's provided
-					var userFromDb = await _context.AspNetUsers
-						.FirstOrDefaultAsync(u => u.UserName == identityUser.UserName);
+                            try
+                            {
+                                // Trigger notification for new account creation
+                                Console.WriteLine($"Attempting to notify new account creation for {identityUser.Email}");
+                                await _notificationService.NotifySystemAdministratorCreation(identityUser.Email);
+                                Console.WriteLine("Notification for new account creation sent successfully.");
+                            }
+                            catch (Exception ex)
+                            {
+                                var errorDetails = _errorCodeService.GetErrorDetails("EMAIL_SEND_ERROR");
+                                Console.WriteLine($"An error occurred while sending the notification: {ex.Message}");
+                                return Json(new { success = false, message = errorDetails.ErrorMessage });
+                            }
 
-					if (userFromDb != null)
-					{
-						userFromDb.CompanyId = userInput.CompanyId; // Assign the CompanyId from userInput
-						await _context.SaveChangesAsync(); // Save changes to the database
-						Console.WriteLine($"Company Id '{userFromDb.CompanyId}' assigned successfully.");
-					}
-				}
+                            Console.WriteLine($"Role '{roleName}' assigned successfully.");
+                        }
+                    }
+                }
 
-				return Json(new { Id = identityUser.Id });
-			}
-			catch (Exception ex)
-			{
-				// Log the exception message and stack trace for debugging purposes
-				Console.WriteLine($"An error occurred: {ex.Message}");
-				Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                // Handle the company ID if provided
+                if (userInput.CompanyId.HasValue)
+                {
+                    // Update the CompanyId in the user record if it's provided
+                    var userFromDb = await _context.AspNetUsers
+                        .FirstOrDefaultAsync(u => u.UserName == identityUser.UserName);
 
-				// Return a standardized error response
-				return StatusCode(500, new { message = "An internal server error occurred.", error = ex.Message });
-			}
-		}
+                    if (userFromDb != null)
+                    {
+                        userFromDb.CompanyId = userInput.CompanyId; // Assign the CompanyId from userInput
+                        await _context.SaveChangesAsync(); // Save changes to the database
+                        Console.WriteLine($"Company Id '{userFromDb.CompanyId}' assigned successfully.");
+                    }
+                }
+
+                return Json(new { success = true, message = $"User account for ${userInput.UserName} created successfully!" });
+            }
+            catch (Exception ex)
+            {
+                var errorDetails = _errorCodeService.GetErrorDetails("INTERNAL_SERVER_ERROR");
+                // Log the exception message and stack trace for debugging purposes
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                // Return a standardized error response
+                return Json(new { success = false, message = errorDetails.ErrorMessage, error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Updates an existing User and its Roles Data.
+        /// </summary>
+        /// <param name="key">The unique identifier of the user to update.</param>
+        /// <param name="values">The incoming updated values as a JSON string.</param>
+        /// <returns>Returns a success status if update is successful.</returns>
+        [HttpPut]
+        public async Task<IActionResult> Put(string key, string values)
+        {
+            try
+            {
+                // Read the raw request data for logging purposes
+                var rawData = await new StreamReader(Request.Body).ReadToEndAsync();
+                Console.WriteLine($"Raw Request Data: {rawData}");
+                Console.WriteLine($"Attempting to update user with key: {key}");
+
+                // Retrieve the user by unique identifier without including roles
+                var model = await _context.AspNetUsers.FirstOrDefaultAsync(u => u.Id == key);
+                if (model == null)
+                {
+                    var errorDetails = _errorCodeService.GetErrorDetails("USER_NOT_FOUND");
+                    Console.WriteLine("User not found.");
+                    return Json(new { success = false, message = errorDetails.ErrorMessage });
+                }
+
+                Console.WriteLine("User found, proceeding with updates.");
+
+                // Deserialize the incoming updated values
+                var valuesDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(values);
+
+                // Check if password is provided and hash it
+                if (valuesDict.ContainsKey("Password") && valuesDict["Password"] != null)
+                {
+                    var password = valuesDict["Password"].ToString();
+                    // Initialize PasswordHasher
+                    var passwordHasher = new PasswordHasher<AspNetUser>();
+                    // Hash the new password
+                    var hashedPassword = passwordHasher.HashPassword(model, password);
+                    // Update the password hash in the model
+                    model.PasswordHash = hashedPassword;
+                    Console.WriteLine($"Password has been hashed and updated: {hashedPassword}");
+                }
+
+                // Log the deserialized dictionary for easier inspection
+                Console.WriteLine("Deserialized values:");
+                Console.WriteLine(JsonConvert.SerializeObject(valuesDict, Formatting.Indented)); // Pretty-print the JSON
+
+                // Update other user information based on the provided values
+                PopulateModel(model, valuesDict);
+
+                // Validate the updated model
+                if (!TryValidateModel(model))
+                {
+                    var errorDetails = _errorCodeService.GetErrorDetails("INVALID_INPUT");
+                    Console.WriteLine("Model validation failed.");
+                    return Json(new { success = false, message = errorDetails.ErrorMessage });
+                }
+                else
+                {
+                    Console.WriteLine("Model validated successfully.");
+                }
+
+                try
+                {
+                    // Save the changes to the database
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine("User updated successfully in the database.");
+                    return Json(new { success = true, message = "User updated successfully." });
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    // Handle the concurrency exception
+                    Console.WriteLine("Concurrency exception occurred while updating user.");
+                    var entry = ex.Entries.Single();
+                    var databaseValues = entry.GetDatabaseValues();
+                    if (databaseValues == null)
+                    {
+                        var errorDetails = _errorCodeService.GetErrorDetails("RECORD_NOT_FOUND");
+                        Console.WriteLine("The record you attempted to edit was deleted by another user.");
+                        return Json(new { success = false, message = errorDetails.ErrorMessage });
+                    }
+                    else
+                    {
+                        var dbValues = (AspNetUser)databaseValues.ToObject();
+                        var errorDetails = _errorCodeService.GetErrorDetails("CONCURRENCY_CONFLICT");
+                        Console.WriteLine("The record you attempted to edit was modified by another user.");
+                        Console.WriteLine($"Current values: UserName: {dbValues.UserName}, Email: {dbValues.Email}, PhoneNumber: {dbValues.PhoneNumber}");
+
+                        // Optionally, reload the entity with current database values
+                        await entry.ReloadAsync();
+                        return Json(new { success = false, message = errorDetails.ErrorMessage, currentValues = dbValues });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Return an internal server error if an exception occurs
+                var errorDetails = _errorCodeService.GetErrorDetails("INTERNAL_SERVER_ERROR");
+                Console.WriteLine($"Exception occurred: {ex.Message}");
+                return Json(new { success = false, message = errorDetails.ErrorMessage, error = ex.Message });
+            }
+        }
 
 
-		/// <summary>
-		/// Updates an existing User and its Roles Data.
-		/// </summary>
-		/// <param name="key">The unique identifier of the user to update.</param>
-		/// <param name="values">The incoming updated values as a JSON string.</param>
-		/// <returns>Returns a success status if update is successful.</returns>
-		[HttpPut]
-		public async Task<IActionResult> Put(string key, string values)
-		{
-			try
-			{
-				// Read the raw request data for logging purposes
-				var rawData = await new StreamReader(Request.Body).ReadToEndAsync();
-				Console.WriteLine($"Raw Request Data: {rawData}");
-				Console.WriteLine($"Attempting to update user with key: {key}");
-
-				// Retrieve the user by unique identifier without including roles
-				var model = await _context.AspNetUsers.FirstOrDefaultAsync(u => u.Id == key);
-				if (model == null)
-				{
-					Console.WriteLine("User not found.");
-					return StatusCode(409, "User not found");
-				}
-
-				Console.WriteLine("User found, proceeding with updates.");
-
-				// Deserialize the incoming updated values
-				var valuesDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(values);
-
-				// Check if password is provided and hash it
-				if (valuesDict.ContainsKey("Password") && valuesDict["Password"] != null)
-				{
-					var password = valuesDict["Password"].ToString();
-					// Initialize PasswordHasher
-					var passwordHasher = new PasswordHasher<AspNetUser>();
-					// Hash the new password
-					var hashedPassword = passwordHasher.HashPassword(model, password);
-					// Update the password hash in the model
-					model.PasswordHash = hashedPassword;
-					Console.WriteLine($"Password has been hashed and updated: {hashedPassword}");
-				}
-
-				// Log the deserialized dictionary for easier inspection
-				Console.WriteLine("Deserialized values:");
-				Console.WriteLine(JsonConvert.SerializeObject(valuesDict, Formatting.Indented)); // Pretty-print the JSON
-
-				// Update other user information based on the provided values
-				PopulateModel(model, valuesDict);
-
-				// Validate the updated model
-				if (!TryValidateModel(model))
-				{
-					Console.WriteLine("Model validation failed.");
-					return BadRequest(GetFullErrorMessage(ModelState));
-				}
-				else
-				{
-					Console.WriteLine("Model validated successfully.");
-				}
-
-				try
-				{
-					// Save the changes to the database
-					await _context.SaveChangesAsync();
-					Console.WriteLine("User updated successfully in the database.");
-					return Ok();
-				}
-				catch (DbUpdateConcurrencyException ex)
-				{
-					// Handle the concurrency exception
-					Console.WriteLine("Concurrency exception occurred while updating user.");
-					var entry = ex.Entries.Single();
-					var databaseValues = entry.GetDatabaseValues();
-					if (databaseValues == null)
-					{
-						Console.WriteLine("The record you attempted to edit was deleted by another user.");
-						return NotFound(new { success = false, message = "The record you attempted to edit was deleted by another user." });
-					}
-					else
-					{
-						var dbValues = (AspNetUser)databaseValues.ToObject();
-						Console.WriteLine("The record you attempted to edit was modified by another user.");
-						Console.WriteLine($"Current values: UserName: {dbValues.UserName}, Email: {dbValues.Email}, PhoneNumber: {dbValues.PhoneNumber}");
-
-						// Optionally, reload the entity with current database values
-						await entry.ReloadAsync();
-						return Conflict(new { success = false, message = "The record you attempted to edit was modified by another user.", currentValues = dbValues });
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				// Return an internal server error if an exception occurs
-				Console.WriteLine($"Exception occurred: {ex.Message}");
-				return StatusCode(500, $"Internal Server error: {ex.Message}");
-			}
-		}
-
-
-
-		[HttpDelete]
+        [HttpDelete]
         public async Task<IActionResult> Delete(string key)
         {
             try
@@ -356,6 +435,35 @@ namespace MedisatERP.Controllers
                     return NotFound($"User with ID {key} not found.");
                 }
 
+                // Step 1: Retrieve the current logo file path from the database
+                string currentProfilePath = model.ProfileImagePath;  // Fetch the current logo file name from DB (e.g., "oldLogo.jpg")
+
+                // Step 2: Check if the logo exists and delete it if necessary
+                if (!string.IsNullOrEmpty(currentProfilePath))
+                {
+                    // Ensure the folder path where logos are stored
+                    string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "userProfileImages");
+
+                    // Step 3: Construct the full path for the current logo file
+                    string currentProfileFullPath = Path.Combine(folderPath, currentProfilePath);
+
+                    // Step 4: Delete the existing logo file if it exists
+                    if (System.IO.File.Exists(currentProfileFullPath))
+                    {
+                        try
+                        {
+                            Console.WriteLine($"Deleting old profile file: {currentProfileFullPath}");
+                            System.IO.File.Delete(currentProfileFullPath);  // Delete the old logo file
+                            Console.WriteLine("Old logo file deleted successfully.");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error while deleting the old logo file: {ex.Message}");
+                            // Optionally, log the error and continue with the company deletion
+                        }
+                    }
+                }
+
                 // Log that the user was found and is about to be deleted
                 Console.WriteLine($"Found user with ID: {key}. Preparing to delete.");
 
@@ -368,21 +476,38 @@ namespace MedisatERP.Controllers
                 // Save the changes to the database
                 await _context.SaveChangesAsync();
 
+                // This is performed if user roles contains "System Administrator"
+                await _notificationService.NotifySystemAdministratorDeletion(model.Email);
+
                 // Log successful deletion
                 Console.WriteLine($"Successfully deleted user with ID: {key}");
 
                 // Return No Content status after successful deletion
                 return NoContent();
             }
+            catch (SqlException ex)
+            {
+                // Log the exception (consider using a logging framework)
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Log the exception
+                Console.WriteLine(ex);  // Replace with your logging mechanism
+                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+            }
             catch (Exception ex)
             {
                 // Log the exception
                 Console.WriteLine($"Error occurred while deleting user with ID: {key}. Error: {ex.Message}");
+                var errorDetails = _errorCodeService.GetErrorDetails("INTERNAL_SERVER_ERROR");
 
-                // Return an internal server error if an exception occurs
-                return StatusCode(500, $"An internal server error occurred: {ex.Message}");
+                // Return a standardized error response
+                return Json(new { success = false, message = errorDetails.ErrorMessage, error = ex.Message });
             }
         }
+
 
         [HttpPut]
         public async Task<ActionResult> UploadProfilePicture(string userId, IFormFile profilePicture)
@@ -419,8 +544,9 @@ namespace MedisatERP.Controllers
                         }
                         catch (Exception ex)
                         {
+                            var errorDetails = _errorCodeService.GetErrorDetails("FILE_DELETE_FAILED");
                             Console.WriteLine("Error while deleting old file: " + ex.Message);
-                            return StatusCode(500, new { error = "Error while deleting the old file: " + ex.Message });
+                            return Json(new { success = false, message = errorDetails.ErrorMessage });
                         }
                     }
                     else
@@ -453,16 +579,18 @@ namespace MedisatERP.Controllers
                 }
                 catch (Exception ex)
                 {
+                    var errorDetails = _errorCodeService.GetErrorDetails("FILE_SAVE_FAILED");
                     Console.WriteLine("Error while saving the new file: " + ex.Message);
-                    return StatusCode(500, new { error = "Error while saving the new file: " + ex.Message });
+                    return Json(new { success = false, message = errorDetails.ErrorMessage });
                 }
 
                 // Step 8: Update the user's profile picture file path in the database with the new file name
                 bool updateSuccess = UpdateUserProfilePicFilePath(userId, newFileName);
                 if (!updateSuccess)
                 {
+                    var errorDetails = _errorCodeService.GetErrorDetails("DB_UPDATE_FAILED");
                     Console.WriteLine("Error while updating the user profile picture path in the database.");
-                    return StatusCode(500, new { error = "Error while updating the user profile picture path in the database." });
+                    return Json(new { success = false, message = errorDetails.ErrorMessage });
                 }
                 Console.WriteLine("Successfully updated the user profile picture path in the database.");
 
@@ -471,16 +599,15 @@ namespace MedisatERP.Controllers
                 Console.WriteLine("New profile picture file saved successfully. Returning relative path: " + relativeFilePath);
 
                 // Return success response with the relative file path
-                return Json(new { filePath = relativeFilePath });
+                return Json(new { success = true, message = "Your profile has been successfully updated." });
             }
             else
             {
+                var errorDetails = _errorCodeService.GetErrorDetails("NO_FILE_UPLOADED");
                 Console.WriteLine("No file uploaded or file is empty.");
+                return Json(new { success = false, message = errorDetails.ErrorMessage });
             }
-
-            return Json(new { error = "No file uploaded" });
         }
-
 
         // Method to retrieve the current profile picture file path from the database 
         private string GetCurrentProfilePicFilePath(string userId)
@@ -542,8 +669,6 @@ namespace MedisatERP.Controllers
                 return false;
             }
         }
-
-
 
         private void PopulateModel(AspNetUser model, IDictionary values)
         {

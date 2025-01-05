@@ -17,14 +17,16 @@ public class LoginAPIController : Controller
     private readonly ApplicationDbContext _dbContext;
     private readonly RoleRedirectService _roleRedirectService;
 	private readonly IEmailSender _emailSender;
+    private readonly IErrorCodeService _errorCodeService;
 
-	public LoginAPIController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ApplicationDbContext dbContext, RoleRedirectService roleRedirectService, IEmailSender emailSender)
+	public LoginAPIController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ApplicationDbContext dbContext, RoleRedirectService roleRedirectService, IEmailSender emailSender, IErrorCodeService errorCodeService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _dbContext = dbContext;
         _roleRedirectService = roleRedirectService;
 		_emailSender = emailSender;
+        _errorCodeService = errorCodeService;
 
 	}
 
@@ -35,8 +37,9 @@ public class LoginAPIController : Controller
         // Validate the input parameters
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
         {
-            Console.WriteLine("Login attempt failed: email or password is empty");
-            return BadRequest(new { success = false, mresponse = "Email and password are required" });
+            var errorDetails = _errorCodeService.GetErrorDetails("MISSING_CREDENTIALS");
+            Console.WriteLine($"Login attempt failed: {errorDetails.ErrorMessage}");
+            return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
         }
 
         Console.WriteLine($"Login attempt started for email: {email}");
@@ -47,8 +50,9 @@ public class LoginAPIController : Controller
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
             {
+                var errorDetails = _errorCodeService.GetErrorDetails("USER_NOT_FOUND");
                 Console.WriteLine($"User not found for email: {email}");
-                return BadRequest(new { success = false, mresponse = "Invalid login attempt" });
+                return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
             }
 
             // Check if the user's email is confirmed
@@ -68,7 +72,8 @@ public class LoginAPIController : Controller
                 Console.WriteLine($"Confirmation email sent to: {email}");
                 Console.WriteLine($"Confirmation link is: {confirmationLink}");
 
-                return BadRequest(new { success = false, mresponse = "Email exists but not confirmed: Confirmation token sent to your email" });
+                var errorDetails = _errorCodeService.GetErrorDetails("EMAIL_NOT_CONFIRMED");
+                return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
             }
 
             Console.WriteLine($"User found for email: {email}");
@@ -79,8 +84,8 @@ public class LoginAPIController : Controller
             // Log the result of the login attempt
             Console.WriteLine($"PasswordSignInAsync result: RequiresTwoFactor = {result.RequiresTwoFactor}, Succeeded = {result.Succeeded}, IsLockedOut = {result.IsLockedOut}");
 
-            string encodedUserId = null;  // Initialize encodedUserId as string
-            string redirectUrl = null;    // Initialize redirectUrl as string
+            string encodedUserId = null;
+            string redirectUrl = null;
 
             // Handle users who require two-factor authentication
             if (result.RequiresTwoFactor)
@@ -92,68 +97,57 @@ public class LoginAPIController : Controller
                 {
                     // Use RoleRedirectService to handle role-based redirection
                     var roleRedirectResult = await _roleRedirectService.HandleRoleRedirectAsync(email);
-                    return roleRedirectResult;  // Return the redirect result
+                    return roleRedirectResult;
                 }
 
                 // Redirect to 2FA if the cookie is not present
                 encodedUserId = HashingHelper.EncodeString(user.Id);
                 redirectUrl = $"/TwoFA/Index/{encodedUserId}";
-                return Ok(new { success = true, mresponse = "Login successful", redirectUrl });
+                return Json(new { success = true, mresponse = "Login successful", redirectUrl });
             }
-
-            // Handle users who don't require 2FA (persistent cookie exists)
             else if (result.Succeeded)
             {
                 // Use RoleRedirectService to handle role-based redirection
                 var roleRedirectResult = await _roleRedirectService.HandleRoleRedirectAsync(email);
-                return roleRedirectResult;  // Return the redirect result
+                return roleRedirectResult;
             }
-
-            // Handle locked-out accounts
             else if (result.IsLockedOut)
             {
-                // Log the lockout event for debugging
                 Console.WriteLine($"Account is locked out for email: {email} at {DateTime.Now}");
 
-                // Get the lockout end date if available
                 var lockoutEnd = await _userManager.GetLockoutEndDateAsync(user);
                 var lockoutMessage = lockoutEnd.HasValue
                     ? $"Account is locked out until {lockoutEnd.Value.LocalDateTime}"
                     : "Account is locked out";
 
-                // Log the lockout end date for debugging
                 Console.WriteLine(lockoutMessage);
 
                 await _emailSender.SendEmailAsync(user.Email, "Account Locked Out", lockoutMessage);
 
-                return BadRequest(new { success = false, mresponse = lockoutMessage });
+                var errorDetails = _errorCodeService.GetErrorDetails("ACCOUNT_LOCKED");
+                return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
             }
             else
             {
-                return BadRequest(new { success = false, mresponse = "Invalid login attempt" });
+                var errorDetails = _errorCodeService.GetErrorDetails("INVALID_LOGIN_ATTEMPT");
+                return Json(new { success = false, mresponse = errorDetails.ErrorMessage });
             }
         }
-        // During handling of errors and response messages include and catch all possible exceptions per script.
         catch (SqlException ex)
         {
-            // Log the SQL exception details for debugging
             Console.WriteLine($"SQL Error: {ex.Message}");
 
-            // This is returned to the user inform of a text message no need to redirect to the error page
-            // Redirect to error page with a user-friendly message
-            return RedirectToAction("Error", "Home", new { message = "A database error occurred. Please try again later." });
+            var errorDetails = _errorCodeService.GetErrorDetails("DB_CONNECTION_FAILED");
+            return RedirectToAction("Error", "Home", new { message = errorDetails.ErrorMessage });
         }
         catch (Exception ex)
         {
-            // Log the general exception details for debugging
             Console.WriteLine($"Error: {ex.Message}");
 
-            // This is returned to the user inform of a text message no need to redirect to the error page
-            // Redirect to error page with a user-friendly message
-            return RedirectToAction("Error", "Home", new { message = "An error occurred during login. Please try again later." });
+            var errorDetails = _errorCodeService.GetErrorDetails("UNKNOWN_ERROR");
+            return RedirectToAction("Error", "Home", new { message = errorDetails.ErrorMessage });
         }
     }
-
 
 }
 
