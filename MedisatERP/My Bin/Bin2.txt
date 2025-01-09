@@ -4,68 +4,194 @@ Add roles, role claims, and user claims
 Implement chat system in communications module 
 Implement Dev xtream AI chatbot
 
+****************Create database schema 
 
-<!-- Notification Dropdown -->
-                    <li class="nav-item dropdown" id="alertsDropdown">
-                        <a class="nav-icon dropdown-toggle" href="#" id="alertsDropdownToggle" aria-expanded="false">
-                            <div class="position-relative">
-                                <i class="align-middle" data-feather="bell"></i>
-                                <span class="indicator">4</span>  <!-- Notification count -->
-                            </div>
-                        </a>
+USE [medisatErpDB]
+GO
 
-                        <!-- Dropdown Menu -->
-                        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end py-0">
-                            <!-- Header for Notifications -->
-                            <div class="dropdown-menu-header">
-                                4 New Notifications
-                            </div>
+CREATE TABLE [dbo].[WorkplaceLookup](
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Workplace] [nvarchar](100) NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+    [Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW PAGE LOCKS = ON, OPTIMIZE FOR SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 
-                            <!-- Notification Items -->
-                            <div class="list-group">
-                                <!-- Notification 1 -->
-                                <a href="#" class="list-group-item">
-                                    <div class="row g-0 align-items-center">
-                                        <div class="col-2">
-                                            <i class="text-danger" data-feather="alert-circle"></i>  <!-- Alert Icon -->
-                                        </div>
-                                        <div class="col-10">
-                                            <div class="text-dark">Update completed</div>
-                                            <div class="text-muted small mt-1">Restart server 12 to complete the update.</div>
-                                            <div class="text-muted small mt-1">30m ago</div>
-                                        </div>
-                                    </div>
-                                </a>
-                                <!-- Notification 2 -->
-                                <a href="#" class="list-group-item">
-                                    <div class="row g-0 align-items-center">
-                                        <div class="col-2">
-                                            <i class="text-primary" data-feather="home"></i>  <!-- Home Icon -->
-                                        </div>
-                                        <div class="col-10">
-                                            <div class="text-dark">Login from 192.186.1.8</div>
-                                            <div class="text-muted small mt-1">5h ago</div>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-
-                            <!-- Footer for Notifications -->
-                            <div class="dropdown-menu-footer">
-                                <a class="" href="@Url.Action("Index", "UserProfile", new { area = "CoreSystem", userId = encodedUserId })">
-                                    Show all notifications.
-                                </a>
-                            </div>
-                        </div>
-                    </li>
+-- Insert initial values
+INSERT INTO [dbo].[WorkplaceLookup] ([Workplace])
+VALUES ('Online'), ('Physical (at office)');
+GO
 
 
-                    
-        $('#alertsDropdownToggle').on('click', function (event) {
-            event.preventDefault();
-            $(this).next('.dropdown-menu').toggle();  // Toggle the notification dropdown menu
-            $(this).attr('aria-expanded', $(this).next('.dropdown-menu').is(':visible'));  // Update aria-expanded
-        });
+USE [medisatErpDB]
+GO
 
+CREATE TABLE [dbo].[Appointments] (
+    [AppointmentId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [NutritionistId] [nvarchar](450) NOT NULL, -- Reference to nutritionist's ID in AspNetUsers table
+    [ScheduledDate] [datetime] NOT NULL,
+    [WorkplaceId] [int] NOT NULL, -- Reference to WorkplaceLookup table
+    [Status] [nvarchar](20) NOT NULL CHECK (Status IN ('Confirmed', 'Not Confirmed', 'Canceled', 'Appointment Request')),
+    [Priority] [nvarchar](10) NULL CHECK (Priority IN ('Low', 'Medium', 'High')), -- Priority of the appointment
+    [ReminderSent] [bit] NOT NULL DEFAULT 0, -- Indicates if a reminder has been sent
+    [ReminderSentAt] [datetime] NULL, -- Timestamp of when the reminder was sent
+    [Notes] [nvarchar](500) NULL, -- Any special instructions or notes
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    CONSTRAINT [FK_Appointments_Client] FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId]),
+    CONSTRAINT [FK_Appointments_Nutritionist] FOREIGN KEY([NutritionistId]) REFERENCES [adminMedisatERP].[AspNetUsers]([Id]),
+    CONSTRAINT [FK_Appointments_Workplace] FOREIGN KEY([WorkplaceId]) REFERENCES [dbo].[WorkplaceLookup]([Id])
+);
+GO
 
-       
+CREATE TABLE [dbo].[FollowUps] (
+    [FollowUpId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [PractitionerId] [uniqueidentifier] NOT NULL, -- Reference to the practitioner
+    [FollowUpDate] [datetime] NOT NULL,
+    [FollowUpType] [nvarchar](20) NOT NULL CHECK (FollowUpType IN ('Call', 'Email', 'Message', 'In-person')), -- Type of follow-up
+    [CurrentStatus] [nvarchar](20) NOT NULL CHECK (CurrentStatus IN ('Complying', 'Struggling', 'No Information')), -- Current status of the client
+    [Complying] [bit] NULL, -- Indicates if the client is complying with the meal plan
+    [Struggling] [bit] NULL, -- Indicates if the client is struggling with the meal plan
+    [Notes] [nvarchar](500) NULL, -- Additional notes or observations
+    [ReminderSent] [bit] NOT NULL DEFAULT 0, -- Indicates if a reminder has been sent
+    [ReminderSentAt] [datetime] NULL, -- Timestamp of when the reminder was sent
+    [FollowUpOutcome] [nvarchar](100) NULL, -- Outcome of the follow-up (e.g., Successful, Unsuccessful)
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    CONSTRAINT [FK_FollowUps_Client] FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId]),
+    CONSTRAINT [FK_FollowUps_Practitioner] FOREIGN KEY([PractitionerId]) REFERENCES [dbo].[CompanyClients]([ClientId])
+);
+
+CREATE TABLE [dbo].[Communications] (
+    [CommunicationId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [PractitionerId] [uniqueidentifier] NOT NULL, -- The practitioner involved in the communication
+    [AppointmentId] [uniqueidentifier] NOT NULL, -- References the appointment linked to the communication
+    [Subject] [nvarchar](255) NULL, -- Subject of the communication
+    [Type] [nvarchar](max) NOT NULL, -- The means used for communications
+    [Sender] [nvarchar](255) NULL, -- Address of the sender
+    [Recipient] [nvarchar](255) NULL, -- Address of the recipient
+    [SentAt] [datetime] NOT NULL, -- Timestamp of the message
+    CONSTRAINT [FK_Communications_Client] FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId]),
+    CONSTRAINT [FK_Communications_Practitioner] FOREIGN KEY([PractitionerId]) REFERENCES [dbo].[CompanyClients]([ClientId]),
+    CONSTRAINT [FK_Communications_Appointment] FOREIGN KEY([AppointmentId]) REFERENCES [dbo].[Appointments]([AppointmentId])
+);
+
+Nutrition system updates
+
+Your existing nutrition tables are quite comprehensive and cover a wide range of essential aspects of a Nutrition system. However, there might be some enhancements to consider to ensure the tables are robust and future-proof. Here are a few suggestions:
+
+### Enhancements:
+
+1. **Appointments**:
+    - Add a `Duration` field to specify how long each appointment will last.
+
+```sql
+ALTER TABLE [dbo].[Appointments]
+ADD [Duration] [int] NULL; -- Duration in minutes
+```
+
+2. **DietPlan**:
+    - Include fields for `DietType` (e.g., Vegetarian, Vegan, Keto) and `Goal` (e.g., Weight Loss, Muscle Gain).
+
+```sql
+ALTER TABLE [dbo].[DietPlan]
+ADD [DietType] [varchar](50) NULL,
+    [Goal] [varchar](50) NULL;
+```
+
+3. **MealPlans**:
+    - Add a `ServingSize` field to specify the serving size for each meal.
+
+```sql
+ALTER TABLE [dbo].[MealPlans]
+ADD [ServingSize] [varchar](50) NULL;
+```
+
+4. **MealLogging**:
+    - Include fields for `MealTime` to specify the time of day (e.g., Breakfast, Lunch, Dinner).
+
+```sql
+ALTER TABLE [dbo].[MealLogging]
+ADD [MealTime] [varchar](50) NULL;
+```
+
+5. **MedicalConditions**:
+    - Add a `Severity` field to specify the severity of the condition.
+
+```sql
+ALTER TABLE [dbo].[MedicalConditions]
+ADD [Severity] [varchar](50) NULL;
+```
+
+6. **NutritionalProfile**:
+    - Include fields for `ActivityLevel` (e.g., Sedentary, Active) and `DailyWaterIntake`.
+
+```sql
+ALTER TABLE [dbo].[NutritionalProfile]
+ADD [ActivityLevel] [varchar](50) NULL,
+    [DailyWaterIntake] [int] NULL; -- In milliliters
+```
+
+7. **Communications**:
+    - Add fields for `CommunicationMethod` to specify the medium (e.g., Email, Phone Call).
+
+```sql
+ALTER TABLE [dbo].[Communications]
+ADD [CommunicationMethod] [varchar](50) NULL;
+```
+
+### Summary of Enhancements:
+- **Appointments**: Added `Duration`.
+- **DietPlan**: Added `DietType` and `Goal`.
+- **MealPlans**: Added `ServingSize`.
+- **MealLogging**: Added `MealTime`.
+- **MedicalConditions**: Added `Severity`.
+- **NutritionalProfile**: Added `ActivityLevel` and `DailyWaterIntake`.
+- **Communications**: Added `CommunicationMethod`.
+
+Additional tables 
+CREATE TABLE [dbo].[ProgressTracking](
+    [ProgressId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [DateRecorded] [date] NOT NULL,
+    [Weight] [decimal](5, 2) NULL,
+    [BMI] [decimal](5, 2) NULL,
+    [BodyFatPercentage] [decimal](5, 2) NULL,
+    [Notes] [nvarchar](500) NULL,
+    FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId])
+);
+
+CREATE TABLE [dbo].[ExercisePlans](
+    [ExercisePlanId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [ExerciseName] [varchar](100) NOT NULL,
+    [Duration] [int] NOT NULL, -- Duration in minutes
+    [Frequency] [varchar](50) NOT NULL, -- e.g., Daily, Weekly
+    [CreatedDate] [date] NOT NULL,
+    FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId])
+);
+
+CREATE TABLE [dbo].[Supplements](
+    [SupplementId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [SupplementName] [varchar](100) NOT NULL,
+    [Dosage] [varchar](50) NOT NULL,
+    [Frequency] [varchar](50) NOT NULL, -- e.g., Daily, Weekly
+    [StartDate] [date] NOT NULL,
+    [EndDate] [date] NULL,
+    FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId])
+);
+
+CREATE TABLE [dbo].[Goals](
+    [GoalId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [GoalDescription] [nvarchar](500) NOT NULL,
+    [TargetDate] [date] NOT NULL,
+    [IsAchieved] [bit] NOT NULL DEFAULT 0,
+    FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId])
+);
