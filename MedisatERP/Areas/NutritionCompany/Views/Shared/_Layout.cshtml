@@ -497,7 +497,7 @@
 
 
 
-    <!-- Main Content Section -->
+        <!-- Main Content Section -->
     <div class="main">
 
         <!-- Navbar Section -->
@@ -510,79 +510,89 @@
             <div class="navbar-collapse collapse">
                 <ul class="navbar-nav navbar-align">
 
-                    <!-- Notification Dropdown -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-icon dropdown-toggle" href="#" id="alertsDropdown" data-bs-toggle="dropdown">
+                    <!-- Notification  -->
+                    <li class="nav-item dropdown" id="alertsDropdown">
+                        <a class="nav-icon dropdown-toggle" href="@Url.Action("Index", "Notifications", new { area = "NutritionCompany", userId = encodedUserId, companyId = encodedCompanyId  })">
                             <div class="position-relative">
                                 <i class="align-middle" data-feather="bell"></i>
-                                <span class="indicator">4</span> <!-- Notification Count -->
+                                <span class="indicator">4</span>  <!-- Notification count -->
                             </div>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end py-0" aria-labelledby="alertsDropdown">
-                            <div class="dropdown-menu-header">
-                                4 New Notifications
-                            </div>
-                            <div class="list-group">
-                                <!-- Example Notification: Update Completed -->
-                                <a href="#" class="list-group-item">
-                                    <div class="row g-0 align-items-center">
-                                        <div class="col-2">
-                                            <i class="text-danger" data-feather="alert-circle"></i>
-                                        </div>
-                                        <div class="col-10">
-                                            <div class="text-dark">Update completed</div>
-                                            <div class="text-muted small mt-1">Restart server 12 to complete the update.</div>
-                                            <div class="text-muted small mt-1">30m ago</div>
-                                        </div>
-                                    </div>
-                                </a>
 
-                                <!-- Example Notification: Login from IP -->
-                                <a href="#" class="list-group-item">
-                                    <div class="row g-0 align-items-center">
-                                        <div class="col-2">
-                                            <i class="text-primary" data-feather="home"></i>
-                                        </div>
-                                        <div class="col-10">
-                                            <div class="text-dark">Login from 192.186.1.8</div>
-                                            <div class="text-muted small mt-1">5h ago</div>
-                                        </div>
-                                    </div>
-                                </a>
-
-                            </div>
-                            <div class="dropdown-menu-footer">
-                                <a href="#" class="text-muted">Show all notifications</a>
-                            </div>
-                        </div>
                     </li>
 
                     <!-- User Account Dropdown -->
                     <li class="nav-item dropdown">
-                        <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
+                        <!-- Settings icon for smaller screens -->
+                        <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" id="settingsDropdown" aria-expanded="false">
                             <i class="align-middle" data-feather="settings"></i>
                         </a>
 
-                        <a class="nav-link dropdown-toggle" href="UserProfile" data-bs-toggle="dropdown">
+                        <!-- User Profile Avatar and Name for larger screens -->
+                        <a class="nav-link dropdown-toggle" href="" id="userDropdown" aria-expanded="false">
                             <!-- User Avatar and Name -->
-                            <img src="~/img/userProfileImages/team-1.jpg" class="avatar img-fluid rounded me-1" alt="Profile-img" />
-                            <span>Nadia Malker</span> <!-- Full name of the logged-in user -->
+                            <img src="@(string.IsNullOrEmpty(Model.ProfileImagePath) ? Url.Content("~/img/userProfileImages/avatar.jpg") : Url.Content("~/img/userProfileImages/" + Model.ProfileImagePath))"
+                                 class="avatar img-fluid ] me-1" alt="Profile-img" />
+                            <span>@Model.UserName</span> <!-- Display the logged-in user's name -->
                         </a>
 
-
-                        <div class="dropdown-menu dropdown-menu-end">
-                            <a class="dropdown-item" href="Profile"><i class="align-middle me-1" data-feather="user"></i> Profile</a>
+                        <!-- Dropdown Menu -->
+                        <div class="dropdown-menu dropdown-menu-end dropdownProfile" aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="@Url.Action("Index", "UserProfile", new { area = "NutritionCompany", userId = encodedUserId, companyId = encodedCompanyId  })">
+                                <i class="align-middle me-1" data-feather="user"></i> Profile
+                            </a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#"><i class="align-middle me-1" data-feather="help-circle"></i> Help Center</a>
+                            <a class="dropdown-item" href="@Url.Action("Index", "UserSettingz", new { area = "NutritionCompany", userId = encodedUserId, companyId = encodedCompanyId  })">
+                                <i class="align-middle me-1" data-feather="settings"></i> Settings
+                            </a>
                             <div class="dropdown-divider"></div>
-                            <!-- Log out option -->
-                            <a class="dropdown-item" href="javascript:;" onclick="Logout()"><i class="align-middle me-1" data-feather="log-in"></i> Log out</a>
+                            <!-- Log out option with Javascript functionality -->
+                            <a class="dropdown-item log-out" href="javascript:;" onclick="Logout()">
+                                <i class="align-middle me-1" data-feather="log-out"></i> Log out
+                            </a>
                         </div>
                     </li>
+
                 </ul>
             </div>
 
         </nav>
+
+        <!-- Logout function -->
+        <script>
+            function Logout() {
+                var encodedUserId = '@encodedUserId';  // Assuming this is populated with the user ID from Razor.
+
+                // Show loading indicator with Notiflix
+                Notiflix.Loading.Dots('Logging out...');
+
+                $.ajax({
+                    url: '/api/LogoutAPI/LogoutCheck',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(encodedUserId),  // Send the userId as a plain string in the request body
+                    success: function (json) {
+                        // Remove loading indicator
+                        Notiflix.Loading.Remove(500);
+
+                        if (json.success) {
+                            // Redirect to the root URL or provided redirect URL
+                            window.location.href = json.redirectUrl || '/';
+                        } else {
+                            // Notify failure with Notiflix
+                            Notiflix.Report.Failure('Logout Failed', json.message, 'OK');
+                        }
+                    },
+                    error: function (jqxhr, textStatus, error) {
+                        // Remove loading indicator on failure
+                        Notiflix.Loading.Remove(500);
+
+                        // Notify failure with Notiflix
+                        Notiflix.Report.Failure('Logout Failed', 'An error occurred while logging out: ' + textStatus + ', ' + error, 'OK');
+                    }
+                });
+            }
+        </script>
 
         <!-- Main Content Area -->
         <main class="content">
@@ -592,18 +602,9 @@
             </div>
         </main>
 
-        <!-- Footer Section -->
-        <footer class="footer">
-            <div class="container-fluid">
-                <div class="row text-muted">
-                    <div class="col-12 text-start">
-                        <p class="mb-0" style="color: #565e64; ">
-                            <script>document.write(new Date().getFullYear() + ' MEDISAT | By Eurosat ' );</script>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </footer>
+        <!-- Custom template --See ~wwwroot/js/medisat.custom-elelments.js End-Bar Section -->
+        <end-bar></end-bar>
+
     </div>
 
 </div>

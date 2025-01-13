@@ -38,5 +38,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     customElements.define('welcome-footer', WelcomeFooter);
 
+    class EndBarSection extends HTMLElement {
+        connectedCallback() {
+            this.innerHTML = `
+                <!-- Footer Section -->
+                <footer class="footer">
+                    <div class="container-fluid">
+                        <div class="row text-muted">
+                            <div class="col-12 text-start">
+                                <p class="mb-0" style="color: #565e64; ">
+                                    MEDISAT
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            `;
+        }
+    }
+    customElements.define('end-bar', EndBarSection);
+
 });
 

@@ -195,3 +195,575 @@ CREATE TABLE [dbo].[Goals](
     [IsAchieved] [bit] NOT NULL DEFAULT 0,
     FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId])
 );
+
+CREATE TABLE [dbo].[HealthMetrics](
+    [MetricId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [MeasurementDate] [date] NOT NULL,
+    [BloodPressure] [varchar](20) NULL,
+    [HeartRate] [int] NULL,
+    [Cholesterol] [int] NULL,
+    [BloodSugar] [int] NULL,
+    [Notes] [nvarchar](500) NULL,
+    FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId])
+);
+
+
+CREATE TABLE [dbo].[Recipes](
+    [RecipeId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [RecipeName] [varchar](100) NOT NULL,
+    [Ingredients] [nvarchar](max) NOT NULL,
+    [Instructions] [nvarchar](max) NOT NULL,
+    [Calories] [int] NULL,
+    [Protein] [int] NULL,
+    [Fats] [int] NULL,
+    [Carbs] [int] NULL
+);
+
+CREATE TABLE [dbo].[MealPreferences](
+    [PreferenceId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [Preference] [nvarchar](100) NOT NULL,
+    [Restriction] [nvarchar](100) NULL,
+    [Notes] [nvarchar](500) NULL,
+    FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId])
+);
+
+
+*********************Reports tabels --> We are having one reports table "Reports Conducted"
+
+Absolutely, we can enhance the existing tables to add more relevant details and make them more comprehensive. Here are some enhancements for each table:
+
+### Enhancements:
+
+1. **Hospitals**:
+   - Add columns for additional information, such as hospital type, specialties, and accreditation status.
+
+```sql
+CREATE TABLE [dbo].[Hospitals](
+    [HospitalId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [Name] [nvarchar](100) NOT NULL,
+    [Address] [nvarchar](255) NOT NULL,
+    [City] [nvarchar](100) NOT NULL,
+    [State] [nvarchar](100) NULL,
+    [PostalCode] [nvarchar](20) NULL,
+    [Country] [nvarchar](100) NOT NULL,
+    [PhoneNumber] [nvarchar](15) NOT NULL,
+    [Email] [nvarchar](255) NULL,
+    [Website] [nvarchar](255) NULL,
+    [ContactName] [nvarchar](100) NOT NULL,
+    [ContactPosition] [nvarchar](100) NULL,
+    [ContactPhoneNumber] [nvarchar](15) NOT NULL,
+    [ContactEmail] [nvarchar](255) NULL,
+    [ContactNotes] [nvarchar](500) NULL,
+    [HospitalType] [nvarchar](100) NULL, -- Type of hospital (e.g., General, Specialty)
+    [Specialties] [nvarchar](255) NULL, -- Specialties offered by the hospital
+    [AccreditationStatus] [nvarchar](50) NULL, -- Accreditation status of the hospital
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL
+);
+```
+
+2. **HospitalSchedules**:
+   - Add columns for recurring schedules and notes.
+
+```sql
+CREATE TABLE [dbo].[HospitalSchedules](
+    [ScheduleId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [HospitalId] [uniqueidentifier] NOT NULL,
+    [NutritionistId] [uniqueidentifier] NOT NULL, -- Reference to nutritionist's ID in AspNetUsers table
+    [DayOfWeek] [nvarchar](20) NOT NULL, -- e.g., Monday, Tuesday
+    [StartTime] [time] NOT NULL,
+    [EndTime] [time] NOT NULL,
+    [IsRecurring] [bit] NOT NULL DEFAULT 0, -- Indicates if the schedule is recurring
+    [Notes] [nvarchar](500) NULL, -- Any additional notes about the schedule
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([HospitalId]) REFERENCES [dbo].[Hospitals]([HospitalId]),
+    FOREIGN KEY([NutritionistId]) REFERENCES [adminMedisatERP].[AspNetUsers]([Id])
+);
+```
+
+3. **PartnershipAgreements**:
+   - Add columns for agreement status, renewal dates, and terms.
+
+```sql
+CREATE TABLE [dbo].[PartnershipAgreements](
+    [AgreementId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [HospitalId] [uniqueidentifier] NOT NULL,
+    [NutritionistId] [uniqueidentifier] NOT NULL, -- Reference to nutritionist's ID in AspNetUsers table
+    [StartDate] [date] NOT NULL,
+    [EndDate] [date] NULL,
+    [RenewalDate] [date] NULL, -- Date when the agreement is up for renewal
+    [AgreementStatus] [nvarchar](50) NULL, -- Status of the agreement (e.g., Active, Inactive)
+    [Terms] [nvarchar](max) NULL, -- Terms of the agreement
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([HospitalId]) REFERENCES [dbo].[Hospitals]([HospitalId]),
+    FOREIGN KEY([NutritionistId]) REFERENCES [adminMedisatERP].[AspNetUsers]([Id])
+);
+```
+
+4. **HospitalReferrals**:
+   - Add columns for referral status, follow-up dates, and outcome.
+
+```sql
+CREATE TABLE [dbo].[HospitalReferrals](
+    [ReferralId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [HospitalId] [uniqueidentifier] NOT NULL,
+    [NutritionistId] [uniqueidentifier] NOT NULL, -- Reference to nutritionist's ID in AspNetUsers table
+    [ClientId] [uniqueidentifier] NOT NULL, -- Reference to the client in CompanyClients table
+    [ReferralDate] [datetime] NOT NULL,
+    [Reason] [nvarchar](255) NOT NULL,
+    [ReferralStatus] [nvarchar](50) NULL, -- Status of the referral (e.g., Pending, Completed)
+    [FollowUpDate] [datetime] NULL, -- Date for follow-up
+    [Outcome] [nvarchar](255) NULL, -- Outcome of the referral
+    [Notes] [nvarchar](500) NULL, -- Additional notes
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([HospitalId]) REFERENCES [dbo].[Hospitals]([HospitalId]),
+    FOREIGN KEY([NutritionistId]) REFERENCES [adminMedisatERP].[AspNetUsers]([Id]),
+    FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId])
+);
+```
+
+Understood! If you feel that adding community posts, comments, and likes won't be effective for your membership center, we can focus on other aspects that will better serve your goals. Here are some alternative tables and enhancements to create a robust system for managing products and tracking subscriptions:
+
+### Alternative and Enhanced Tables:
+
+1. **Products**:
+   - Manage the products available for your members, such as nutrition plans, supplements, or other related services.
+
+```sql
+CREATE TABLE [dbo].[Products](
+    [ProductId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ProductName] [nvarchar](100) NOT NULL,
+    [Description] [nvarchar](500) NULL,
+    [Price] [decimal](18, 2) NOT NULL,
+    [Category] [nvarchar](50) NULL, -- Category of the product (e.g., Plan, Supplement)
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL
+);
+```
+
+2. **Subscriptions**:
+   - Track member subscriptions to different products or services.
+
+```sql
+CREATE TABLE [dbo].[Subscriptions](
+    [SubscriptionId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [ProductId] [uniqueidentifier] NOT NULL,
+    [SubscriptionStartDate] [datetime] NOT NULL,
+    [SubscriptionEndDate] [datetime] NULL,
+    [IsActive] [bit] NOT NULL DEFAULT 1,
+    [RenewalDate] [datetime] NULL,
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId]),
+    FOREIGN KEY([ProductId]) REFERENCES [dbo].[Products]([ProductId])
+);
+```
+
+3. **MembershipLevels**:
+   - Define different membership levels with specific benefits.
+
+```sql
+CREATE TABLE [dbo].[MembershipLevels](
+    [MembershipLevelId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [LevelName] [nvarchar](100) NOT NULL,
+    [Description] [nvarchar](500) NULL,
+    [Benefits] [nvarchar](max) NULL,
+    [Price] [decimal](18, 2) NOT NULL,
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL
+);
+```
+
+4. **ClientMemberships**:
+   - Track the membership levels of each client.
+
+```sql
+CREATE TABLE [dbo].[ClientMemberships](
+    [ClientMembershipId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [MembershipLevelId] [uniqueidentifier] NOT NULL,
+    [StartDate] [datetime] NOT NULL,
+    [EndDate] [datetime] NULL,
+    [IsActive] [bit] NOT NULL DEFAULT 1,
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId]),
+    FOREIGN KEY([MembershipLevelId]) REFERENCES [dbo].[MembershipLevels]([MembershipLevelId])
+);
+```
+
+5. **PaymentTransactions**:
+   - Track payments for subscriptions and products.
+
+```sql
+CREATE TABLE [dbo].[PaymentTransactions](
+    [TransactionId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [ProductId] [uniqueidentifier] NULL,
+    [SubscriptionId] [uniqueidentifier] NULL,
+    [Amount] [decimal](18, 2) NOT NULL,
+    [TransactionDate] [datetime] NOT NULL,
+    [PaymentMethod] [nvarchar](50) NULL, -- e.g., Credit Card, PayPal
+    [Status] [nvarchar](50) NULL, -- e.g., Completed, Pending, Failed
+    [Notes] [nvarchar](500) NULL,
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId]),
+    FOREIGN KEY([ProductId]) REFERENCES [dbo].[Products]([ProductId]),
+    FOREIGN KEY([SubscriptionId]) REFERENCES [dbo].[Subscriptions]([SubscriptionId])
+);
+```
+
+
+
+### Summary of Enhanced Tables and Their Columns:
+
+1. **Products**:
+   - `ProductId`, `ProductName`, `Description`, `Price`, `Category`, `CreatedAt`, `UpdatedAt`
+
+2. **Subscriptions**:
+   - `SubscriptionId`, `ClientId`, `ProductId`, `SubscriptionStartDate`, `SubscriptionEndDate`, `IsActive`, `RenewalDate`, `CreatedAt`, `UpdatedAt`
+
+3. **MembershipLevels**:
+   - `MembershipLevelId`, `LevelName`, `Description`, `Benefits`, `Price`, `CreatedAt`, `UpdatedAt`
+
+4. **ClientMemberships**:
+   - `ClientMembershipId`, `ClientId`, `MembershipLevelId`, `StartDate`, `EndDate`, `IsActive`, `CreatedAt`, `UpdatedAt`
+
+5. **PaymentTransactions**:
+   - `TransactionId`, `ClientId`, `ProductId`, `SubscriptionId`, `Amount`, `TransactionDate`, `PaymentMethod`, `Status`, `Notes`, `CreatedAt`, `UpdatedAt`
+
+6. **SupportTickets**:
+   - `TicketId`, `ClientId`, `Subject`, `Description`, `Status`, `CreatedAt`, `UpdatedAt`
+
+These tables will help you efficiently manage products, track subscriptions, handle payments, and provide support to your clients, creating a robust Understood! If you feel that adding community posts, comments, and likes won't be effective for your membership center, we can focus on other aspects that will better serve your goals. Here are some alternative tables and enhancements to create a robust system for managing products and tracking subscriptions:
+
+### Alternative and Enhanced Tables:
+
+1. **Products**:
+   - Manage the products available for your members, such as nutrition plans, supplements, or other related services.
+
+```sql
+CREATE TABLE [dbo].[Products](
+    [ProductId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ProductName] [nvarchar](100) NOT NULL,
+    [Description] [nvarchar](500) NULL,
+    [Price] [decimal](18, 2) NOT NULL,
+    [Category] [nvarchar](50) NULL, -- Category of the product (e.g., Plan, Supplement)
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL
+);
+```
+
+2. **Subscriptions**:
+   - Track member subscriptions to different products or services.
+
+```sql
+CREATE TABLE [dbo].[NutritionCompanySubscriptions](
+    [SubscriptionId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [ProductId] [uniqueidentifier] NOT NULL,
+    [SubscriptionStartDate] [datetime] NOT NULL,
+    [SubscriptionEndDate] [datetime] NULL,
+    [IsActive] [bit] NOT NULL DEFAULT 1,
+    [RenewalDate] [datetime] NULL,
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId]),
+    FOREIGN KEY([ProductId]) REFERENCES [dbo].[Products]([ProductId])
+);
+```
+
+
+```
+
+Let's enhance the existing finance tables and add any other applicable tables to ensure a comprehensive Finance Center.
+
+### Enhanced and Additional Finance Tables:
+
+1. **CoreAccounting**:
+   - Track overall financial transactions and accounting records.
+
+```sql
+```
+
+2. **PatientFeeStructure**:
+   - Define the fee structure for different services offered to patients.
+
+```sql
+CREATE TABLE [dbo].[PatientFeeStructure](
+    [FeeId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ServiceName] [nvarchar](100) NOT NULL,
+    [Description] [nvarchar](500) NULL,
+    [FeeAmount] [decimal](18, 2) NOT NULL,
+    [EffectiveDate] [datetime] NOT NULL, -- When the fee becomes effective
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL
+);
+```
+
+3. **PatientBillings**:
+   - Manage billing information for patients.
+
+```sql
+CREATE TABLE [dbo].[PatientBillings](
+    [BillingId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [PatientId] [uniqueidentifier] NOT NULL,
+    [FeeId] [uniqueidentifier] NOT NULL,
+    [BillingDate] [datetime] NOT NULL,
+    [AmountBilled] [decimal](18, 2) NOT NULL,
+    [PaymentStatus] [nvarchar](50) NULL, -- e.g., Paid, Unpaid, Partially Paid
+    [DueDate] [datetime] NULL,
+    [DiscountId] [uniqueidentifier] NULL, -- Reference to any discount applied
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([PatientId]) REFERENCES [dbo].[CompanyClients]([ClientId]),
+    FOREIGN KEY([FeeId]) REFERENCES [dbo].[PatientFeeStructure]([FeeId]),
+    FOREIGN KEY([DiscountId]) REFERENCES [dbo].[PatientDiscounts]([DiscountId])
+);
+```
+
+4. **PatientDiscounts**:
+   - Track any discounts offered to patients.
+
+```sql
+CREATE TABLE [dbo].[PatientDiscounts](
+    [DiscountId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [PatientId] [uniqueidentifier] NOT NULL,
+    [FeeId] [uniqueidentifier] NOT NULL,
+    [DiscountAmount] [decimal](18, 2) NOT NULL,
+    [Reason] [nvarchar](255) NULL, -- Reason for discount
+    [StartDate] [datetime] NOT NULL,
+    [EndDate] [datetime] NULL,
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([PatientId]) REFERENCES [dbo].[CompanyClients]([ClientId]),
+    FOREIGN KEY([FeeId]) REFERENCES [dbo].[PatientFeeStructure]([FeeId])
+);
+```
+
+5. **PaymentTransactions** (Enhanced):
+   - Record all transactions, both manual and electronic.
+
+```sql
+CREATE TABLE [dbo].[PatientsPaymentTransactions](
+    [TransactionId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ClientId] [uniqueidentifier] NOT NULL,
+    [ProductId] [uniqueidentifier] NULL,
+    [SubscriptionId] [uniqueidentifier] NULL,
+    [Amount] [decimal](18, 2) NOT NULL,
+    [TransactionDate] [datetime] NOT NULL,
+    [PaymentMethod] [nvarchar](50) NULL, -- e.g., Credit Card, PayPal, ManualReceipt
+    [PaymentStatus] [nvarchar](50) NULL, -- e.g., Completed, Pending, Failed
+    [IssuedBy] [nvarchar](100) NULL, -- Only for ManualReceipts
+    [Description] [nvarchar](500) NULL,
+    [TransactionReference] [nvarchar](255) NULL, -- Transaction ID from payment gateway or receipt number
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([ClientId]) REFERENCES [dbo].[CompanyClients]([ClientId]),
+    FOREIGN KEY([ProductId]) REFERENCES [dbo].[Products]([ProductId]),
+    FOREIGN KEY([SubscriptionId]) REFERENCES [dbo].[Subscriptions]([SubscriptionId])
+);
+```
+
+6. **Invoices**:
+   - Generate invoices for patient billings.
+
+```sql
+CREATE TABLE [dbo].[Invoices](
+    [InvoiceId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [BillingId] [uniqueidentifier] NOT NULL,
+    [InvoiceDate] [datetime] NOT NULL,
+    [DueDate] [datetime] NOT NULL,
+    [TotalAmount] [decimal](18, 2) NOT NULL,
+    [PaidAmount] [decimal](18, 2) NULL,
+    [Status] [nvarchar](50) NULL, -- e.g., Paid, Unpaid
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([BillingId]) REFERENCES [dbo].[PatientBillings]([BillingId])
+);
+```
+
+7. **ExpenseTracking**:
+   - Track expenses incurred by the nutrition company.
+
+```sql
+CREATE TABLE [dbo].[ExpenseTracking](
+    [ExpenseId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ExpenseDate] [datetime] NOT NULL,
+    [Amount] [decimal](18, 2) NOT NULL,
+    [Category] [nvarchar](50) NOT NULL, -- e.g., Office Supplies, Equipment
+    [Description] [nvarchar](500) NULL,
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL
+);
+```
+
+
+Great! Let's develop a comprehensive set of tables for your HR Center. These tables will help you manage everything from staff information and performance tracking to contract and leave management.
+
+### Essential Tables for HR Center:
+
+1. **StaffInfo**:
+   - Manage detailed information about each staff member.
+
+```sql
+CREATE TABLE [dbo].[StaffInfo](
+    [StaffId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [User Id] [uniqueidentifier] Foreign Key
+    [HireDate] [date] NOT NULL,
+    [Department] [nvarchar](100) NULL,
+    [Position] [nvarchar](100) NULL,
+    [Salary] [decimal](18, 2) NULL,
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL
+);
+```
+
+2. **PerformanceTracking**:
+   - Track performance metrics for staff members.
+
+```sql
+CREATE TABLE [dbo].[PerformanceTracking](
+    [PerformanceId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [StaffId] [uniqueidentifier] NOT NULL,
+    [ReviewDate] [datetime] NOT NULL,
+    [PerformanceScore] [int] NOT NULL, -- Performance score, e.g., 1-5 scale
+    [Comments] [nvarchar](500) NULL,
+    [ReviewedBy] [nvarchar](100) NOT NULL,
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([StaffId]) REFERENCES [dbo].[StaffInfo]([StaffId])
+);
+```
+
+3. **ContractManagement**:
+   - Manage contracts for staff members.
+
+```sql
+CREATE TABLE [dbo].[ContractManagement](
+    [ContractId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [StaffId] [uniqueidentifier] NOT NULL,
+    [ContractType] [nvarchar](100) NOT NULL, -- e.g., Full-Time, Part-Time, Contract
+    [StartDate] [date] NOT NULL,
+    [EndDate] [date] NULL,
+    [Salary] [decimal](18, 2) NOT NULL,
+    [Benefits] [nvarchar](500) NULL,
+    [RenewalDate] [date] NULL,
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([StaffId]) REFERENCES [dbo].[StaffInfo]([StaffId])
+);
+```
+
+4. **LeaveManagement**:
+   - Manage leave requests and records for staff members.
+
+```sql
+CREATE TABLE [dbo].[LeaveManagement](
+    [LeaveId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [StaffId] [uniqueidentifier] NOT NULL,
+    [LeaveType] [nvarchar](100) NOT NULL, -- e.g., Sick Leave, Annual Leave, Maternity Leave
+    [StartDate] [date] NOT NULL,
+    [EndDate] [date] NOT NULL,
+    [Status] [nvarchar](50) NOT NULL, -- e.g., Approved, Pending, Rejected
+    [Comments] [nvarchar](500) NULL,
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([StaffId]) REFERENCES [dbo].[StaffInfo]([StaffId])
+);
+```
+
+
+
+1. **Blogs**:
+   - Manage blog posts for the website.
+
+```sql
+CREATE TABLE [dbo].[Blogs](
+    [BlogId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [Title] [nvarchar](255) NOT NULL,
+    [Content] [nvarchar](max) NOT NULL,
+    [AuthorId] [uniqueidentifier] NOT NULL, -- Reference to the author's ID
+    [PublishedDate] [datetime] NOT NULL,
+    [Status] [nvarchar](50) NOT NULL, -- e.g., Draft, Published, Archived
+    [Tags] [nvarchar](255) NULL, -- Tags for categorizing the blog post
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([AuthorId]) REFERENCES [dbo].[StaffInfo]([StaffId])
+);
+```
+
+2. **Images**:
+   - Manage images for the website.
+
+```sql
+CREATE TABLE [dbo].[Images](
+    [ImageId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ImageUrl] [nvarchar](255) NOT NULL,
+    [AltText] [nvarchar](255) NULL, -- Alternative text for the image
+    [Title] [nvarchar](100) NULL, -- Title for the image
+    [Description] [nvarchar](500) NULL, -- Description of the image
+    [UploadedBy] [uniqueidentifier] NOT NULL, -- Reference to the uploader's ID
+    [UploadDate] [datetime] NOT NULL,
+    [Tags] [nvarchar](255) NULL, -- Tags for categorizing the image
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([UploadedBy]) REFERENCES [dbo].[StaffInfo]([StaffId])
+);
+```
+
+3. **ContentManagement**:
+   - Manage various types of content on the website, including static and dynamic content.
+
+```sql
+CREATE TABLE [dbo].[ContentManagement](
+    [ContentId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ContentType] [nvarchar](50) NOT NULL, -- e.g., Text, Video, Audio
+    [ContentTitle] [nvarchar](255) NOT NULL,
+    [ContentBody] [nvarchar](max) NULL, -- Main content
+    [Url] [nvarchar](255) NULL, -- URL if the content is hosted externally
+    [AuthorId] [uniqueidentifier] NOT NULL, -- Reference to the author's ID
+    [PublishedDate] [datetime] NOT NULL,
+    [Status] [nvarchar](50) NOT NULL, -- e.g., Draft, Published, Archived
+    [Tags] [nvarchar](255) NULL, -- Tags for categorizing the content
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL,
+    FOREIGN KEY([AuthorId]) REFERENCES [dbo].[StaffInfo]([StaffId])
+);
+```
+
+
+```sql
+CREATE TABLE [dbo].[Categories](
+    [CategoryId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [CategoryName] [nvarchar](100) NOT NULL,
+    [Description] [nvarchar](500) NULL,
+    [CreatedAt] [datetime] NOT NULL DEFAULT GETDATE(),
+    [UpdatedAt] [datetime] NULL
+);
+
+-- Link categories to blogs and content
+CREATE TABLE [dbo].[ContentCategories](
+    [ContentCategoryId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [ContentId] [uniqueidentifier] NOT NULL,
+    [CategoryId] [uniqueidentifier] NOT NULL,
+    FOREIGN KEY([ContentId]) REFERENCES [dbo].[ContentManagement]([ContentId]),
+    FOREIGN KEY([CategoryId]) REFERENCES [dbo].[Categories]([CategoryId])
+);
+
+CREATE TABLE [dbo].[BlogCategories](
+    [BlogCategoryId] [uniqueidentifier] NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    [BlogId] [uniqueidentifier] NOT NULL,
+    [CategoryId] [uniqueidentifier] NOT NULL,
+    FOREIGN KEY([BlogId]) REFERENCES [dbo].[Blogs]([BlogId]),
+    FOREIGN KEY([CategoryId]) REFERENCES [dbo].[Categories]([CategoryId])
+);
+```
+
