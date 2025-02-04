@@ -1,0 +1,269 @@
+﻿@using MedisatERP.Areas.AdministratorSystem.Models
+@using MedisatERP.Services
+@model AspNetUser
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var encodedUserId = HashingHelper.EncodeString(Model.Id);
+}
+
+<div class="wrapper">
+    <!-- Sidebar Section -->
+    <nav id="sidebar" class="sidebar js-sidebar">
+        <div class="sidebar-content js-simplebar">
+           
+            <!-- Custom template --See ~wwwroot/js/medista.custom-elements.js Sidebar Brand (Logo) -->
+            <sidebar-brand></sidebar-brand>
+
+            <!-- Sidebar Navigation Menu -->
+            <ul class="sidebar-nav">
+
+                <!-- Section Header: MEDISAT CENTER -->
+                <li class="nav-item dropdown">
+                    <a href="#" class="sidebar-header nav-link has-dropdown" id="medisatDropdown" data-bs-toggle="collapse" data-bs-target="#medisatDropdownMenu" aria-expanded="false" aria-controls="medisatDropdownMenu">
+                        <span>SYSTEM MANAGEMENT</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="medisatDropdownMenu">
+
+                        <!-- Sidebar Item: Dashboard -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("SystemManager")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "SystemManager", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="sliders"></i>
+                                <span class="align-middle">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Company Info -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Company")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Company", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="briefcase"></i>
+                                <span class="align-middle">Company Info</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Clients -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Clients")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Clients", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="users"></i>
+                                <span class="align-middle">Clients</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Feedback -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Feedback")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Feedback", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="edit-2"></i>
+                                <span class="align-middle">Feedback</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Data Migration -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("DataMigrations")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "DataMigrations", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="arrow-right-circle"></i>
+                                <span class="align-middle">Data Migration</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+                <!-- Section Header: FINANCE CENTRE -->
+                <li class="nav-item dropdown">
+                    <a href="#" class="sidebar-header nav-link has-dropdown" id="subscriptionDropdown" data-bs-toggle="collapse" data-bs-target="#subscriptionDropdownMenu" aria-expanded="false" aria-controls="subscriptionDropdownMenu">
+                        <span>FINANCE CENTRE</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="subscriptionDropdownMenu">
+
+                        <!-- Sidebar Item: Dashboard -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("SubscriptionManager")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "SubscriptionManager", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="sliders"></i>
+                                <span class="align-middle">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Subscriptions -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Subscriptions")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Subscriptions", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="package"></i>
+                                <span class="align-middle">Subscriptions</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Payments -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Payments")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Payments", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="credit-card"></i>
+                                <span class="align-middle">Payments</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Subscription Logs -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("SubscriptionLogs")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "SubscriptionLogs", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="activity"></i>
+                                <span class="align-middle">Subscription Logs</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Trial Notifications -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("TrialNotifications")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "TrialNotifications", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="bell"></i>
+                                <span class="align-middle">Trial Notifications</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+                <!-- Section Header: SECURITY CENTRE -->
+                <li class="nav-item dropdown">
+                    <a href="#" class="sidebar-header nav-link has-dropdown" id="securityDropdown" data-bs-toggle="collapse" data-bs-target="#securityDropdownMenu" aria-expanded="false" aria-controls="securityDropdownMenu">
+                        <span>SECURITY CENTRE</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="securityDropdownMenu">
+
+                        <!-- Sidebar Item: User Accounts -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("UserAccounts")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "UserAccounts", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="user"></i>
+                                <span class="align-middle">User Accounts</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Activity Log -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("AuditLogs")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "AuditLogs", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle" data-feather="list"></i>
+                                <span class="align-middle">Activity Log</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+            </ul>
+
+        </div>
+    </nav>
+
+    
+    <!-- Main Content Section -->
+    <div class="main">
+
+
+        <!-- Custom template --See ~wwwroot/js/CustomElements.js Top-Nav Bar -->
+        <!-- Navbar Section -->
+        <nav class="navbar navbar-expand navbar-light navbar-bg">
+            <!-- Sidebar Toggle Button -->
+            <a class="sidebar-toggle js-sidebar-toggle">
+                <i class="hamburger align-self-center"></i>
+            </a>
+
+            <div class="navbar-collapse collapse">
+                <ul class="navbar-nav navbar-align">
+
+                    <!-- Notification  -->
+                    <li class="nav-item dropdown" id="alertsDropdown">
+                        <a class="nav-icon dropdown-toggle" href="@Url.Action("Index", "Notifications", new { area = "AdministratorSystem", userId = encodedUserId })" >
+                            <div class="position-relative">
+                                <i class="align-middle" data-feather="bell"></i>
+                                <span class="indicator">4</span>  <!-- Notification count -->
+                            </div>
+                        </a>
+
+                    </li>
+
+                    <!-- User Account Dropdown -->
+                    <li class="nav-item dropdown">
+                        <!-- Settings icon for smaller screens -->
+                        <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" id="settingsDropdown" aria-expanded="false">
+                            <i class="align-middle" data-feather="settings"></i>
+                        </a>
+
+                        <!-- User Profile Avatar and Name for larger screens -->
+                        <a class="nav-link dropdown-toggle" href="" id="userDropdown" aria-expanded="false">
+                            <!-- User Avatar and Name -->
+                            <img src="@(string.IsNullOrEmpty(Model.ProfileImagePath) ? Url.Content("~/img/userProfileImages/avatar.jpg") : Url.Content("~/img/userProfileImages/" + Model.ProfileImagePath))"
+                                 class="avatar img-fluid ] me-1" alt="Profile-img" />
+                            <span>@Model.UserName</span> <!-- Display the logged-in user's name -->
+                        </a>
+
+                        <!-- Dropdown Menu -->
+                        <div class="dropdown-menu dropdown-menu-end dropdownProfile" aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="@Url.Action("Index", "UserProfile", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle me-1" data-feather="user"></i> Profile
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="@Url.Action("Index", "UserSettingz", new { area = "AdministratorSystem", userId = encodedUserId })">
+                                <i class="align-middle me-1" data-feather="settings"></i> Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <!-- Log out option with Javascript functionality -->
+                            <a class="dropdown-item log-out" href="javascript:;" onclick="Logout()">
+                                <i class="align-middle me-1" data-feather="log-out"></i> Log out
+                            </a>
+                        </div>
+                    </li>
+
+                </ul>
+            </div>
+
+        </nav>
+
+        <!-- Logout function -->
+        <script>
+            function Logout() {
+                var encodedUserId = '@encodedUserId';  // Assuming this is populated with the user ID from Razor.
+
+                // Show loading indicator with Notiflix
+                Notiflix.Loading.Dots('Logging out...');
+
+                $.ajax({
+                    url: '/api/LogoutAPI/LogoutCheck',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(encodedUserId),  // Send the userId as a plain string in the request body
+                    success: function (json) {
+                        // Remove loading indicator
+                        Notiflix.Loading.Remove(500);
+
+                        if (json.success) {                           
+                            // Redirect to the root URL or provided redirect URL
+                            window.location.href = json.redirectUrl || '/';
+                        } else {
+                            // Notify failure with Notiflix
+                            Notiflix.Report.Failure('Logout Failed', json.message, 'OK');
+                        }
+                    },
+                    error: function (jqxhr, textStatus, error) {
+                        // Remove loading indicator on failure
+                        Notiflix.Loading.Remove(500);
+
+                        // Notify failure with Notiflix
+                        Notiflix.Report.Failure('Logout Failed', 'An error occurred while logging out: ' + textStatus + ', ' + error, 'OK');
+                    }
+                });
+            }
+        </script>
+
+
+
+
+
+        <!-- Main Content Area -->
+        <main class="content">
+            <div class="container-fluid p-0">
+                <!-- Render Body Content -->
+                @RenderBody() <!-- This is where the content of the current view will be injected -->
+            </div>
+        </main>
+
+        <!-- Custom template --See ~wwwroot/js/medisat.custom-elelments.js End-Bar Section -->
+        <end-bar></end-bar>
+
+    </div>
+
+ </div>

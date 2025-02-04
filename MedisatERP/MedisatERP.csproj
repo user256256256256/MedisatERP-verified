@@ -6,10 +6,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Compile Remove="Areas\CoreSystem\Views\UserSettings\**" />
-      <Content Remove="Areas\CoreSystem\Views\UserSettings\**" />
-      <EmbeddedResource Remove="Areas\CoreSystem\Views\UserSettings\**" />
-      <None Remove="Areas\CoreSystem\Views\UserSettings\**" />
+      <Compile Remove="Areas\AdministratorSystem\Views\UserSettings\**" />
+      <Content Remove="Areas\AdministratorSystem\Views\UserSettings\**" />
+      <EmbeddedResource Remove="Areas\AdministratorSystem\Views\UserSettings\**" />
+      <None Remove="Areas\AdministratorSystem\Views\UserSettings\**" />
     </ItemGroup>
 
     <ItemGroup>

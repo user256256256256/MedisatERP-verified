@@ -1,4 +1,4 @@
-using MedisatERP.Areas.CoreSystem.Models;
+using MedisatERP.Areas.AdministratorSystem.Models;
 using MedisatERP.Data;
 using MedisatERP.Hubs;
 using MedisatERP.Services;
@@ -9,11 +9,19 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Register MedisatErpDbContext for your application data
-builder.Services.AddDbContext<MedisatErpDbContext>(options =>
+builder.Services.AddDbContext<AdministratorSystemDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("MedisatConnection")));
+
+// Register MedisatErpDbContext for your application data
+builder.Services.AddDbContext<NutritionSystemDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("MedisatConnection")));
+
+// Register MedisatErpDbContext for your application data
+builder.Services.AddDbContext<SharedDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MedisatConnection")));
 
 // Register ApplicationDbContext for Identity data
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<UserDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MedisatConnection")));
 
 // Configure and Register IdentityFramework
@@ -36,7 +44,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.Lockout.MaxFailedAccessAttempts = 5;
 
     // Sign-in settings
-    options.SignIn.RequireConfirmedAccount = false;
+    options.SignIn.RequireConfirmedAccount = true;
     options.SignIn.RequireConfirmedEmail = true;
     options.SignIn.RequireConfirmedPhoneNumber = false;
 
@@ -44,7 +52,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.Tokens.EmailConfirmationTokenProvider = "Default";
     options.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultAuthenticatorProvider;
 })
-.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddEntityFrameworkStores<UserDbContext>()
 .AddDefaultTokenProviders();
 
 // Configure the token lifespan for all token providers
@@ -110,18 +118,17 @@ app.MapControllerRoute(
     name: "LogoutAPI",
     pattern: "api/{controller}/{action}");
 
-// Map routes for the "NutritionCompany" area
+// Map routes for the "NutritionCompanySystem" area
 app.MapAreaControllerRoute(
-    name: "NutritionCompany",
-    areaName: "NutritionCompany",
-    pattern: "NutritionCompany/{controller=Home}/{action=Index}/{userId}/{companyId:guid?}");
+    name: "NutritionCompanySystem",
+    areaName: "NutritionCompanySystem",
+    pattern: "NutritionCompanySystem/{controller=Home}/{action=Index}/{userId}/{companyId:guid?}");
 
-// Specifically routes to the "NutritionSystem" controller within the "NutritionCompany" area
+// Specifically routes to the "CrmDashboard" controller within the "NutritionCompanySystem" area
 app.MapAreaControllerRoute(
     name: "nutritionSystemRoute",
-    areaName: "NutritionCompany",
-    pattern: "NutritionCompany/{controller=NutritionSystem}/{action=Index}/{userId}/{companyId:guid}");
-
+    areaName: "NutritionCompanySystem",
+    pattern: "NutritionCompanySystem/{controller=CrmDashboard}/{action=Index}/{userId}/{companyId:guid}");
 
 // Map the default controller route (for non-area routes)
 app.MapDefaultControllerRoute();

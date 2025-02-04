@@ -1,4 +1,4 @@
-﻿using MedisatERP.Areas.CoreSystem.Models;
+﻿using MedisatERP.Areas.AdministratorSystem.Models;
 using MedisatERP.Data;
 using MedisatERP.Services;
 using Microsoft.AspNetCore.Identity;
@@ -17,14 +17,14 @@ namespace MedisatERP.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IEmailSender _emailSender;
-        private readonly MedisatErpDbContext _dbContext;
+        private readonly AdministratorSystemDbContext _dbContext;
         private readonly RoleRedirectService _roleRedirectService;
         private readonly IErrorCodeService _errorCodeService;
 
         public TwoFAAPIController(UserManager<IdentityUser> userManager,
                         SignInManager<IdentityUser> signInManager,
                         IEmailSender emailSender,
-                        ILogger<TwoFAAPIController> logger, MedisatErpDbContext dbContext, RoleRedirectService roleRedirectService, IErrorCodeService errorCodeService)
+                        ILogger<TwoFAAPIController> logger, AdministratorSystemDbContext dbContext, RoleRedirectService roleRedirectService, IErrorCodeService errorCodeService)
         {
             _userManager = userManager;
             _signInManager = signInManager;

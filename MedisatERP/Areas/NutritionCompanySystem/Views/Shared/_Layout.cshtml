@@ -1,0 +1,584 @@
+﻿@using MedisatERP.Areas.AdministratorSystem.Models
+@using MedisatERP.Services
+@model AspNetUser
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var encodedUserId = HashingHelper.EncodeString(Model.Id);
+
+    // Attempt to retrieve the company ID from the Model
+    Guid? companyId = Model?.CompanyId;
+
+    // If companyId is not available from the Model, use ViewData
+    if (companyId == null || companyId == Guid.Empty)
+    {
+        companyId = ViewData["CompanyId"] as Guid?;
+    }
+
+    // Encode the company ID if it's available
+    var encodedCompanyId = companyId.HasValue ? HashingHelper.EncodeGuidID(companyId.Value) : string.Empty;
+}
+
+
+<div class="wrapper">
+    <!-- Sidebar Section -->
+    <nav id="sidebar" class="sidebar js-sidebar">
+        <div class="sidebar-content js-simplebar">
+
+            <!-- Custom template -- See ~wwwroot/js/CustomElements.js -->
+            <!-- Sidebar Brand (Logo) -- Make fixed when scrolling -->
+            <sidebar-brand></sidebar-brand>
+
+            <!-- Sidebar Navigation Menu -->
+            <ul class="sidebar-nav">
+
+                <!-- Section Header: CRM CENTER -->
+                <li class="nav-item dropdown">
+                    <a href="#" class="sidebar-header nav-link has-dropdown" id="crmDropdown" data-bs-toggle="collapse" data-bs-target="#crmDropdownMenu" aria-expanded="false" aria-controls="crmDropdownMenu">
+                        <span>CRM CENTER</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="crmDropdownMenu">
+
+                        <!-- Sidebar Item: Dashboard -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("CrmDashboard")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "CrmDashboard", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId })">
+                                <i class="align-middle" data-feather="sliders"></i>
+                                <span class="align-middle">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Patients -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Patients")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Patients", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId })">
+                                <i class="align-middle" data-feather="users"></i>
+                                <span class="align-middle">Patients</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Appointments Manager -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Appointments")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Appointments", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId })">
+                                <i class="align-middle" data-feather="calendar"></i>
+                                <span class="align-middle">Appointments Manager</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Section Header: NUTRITION CENTER -->
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link has-dropdown sidebar-header" id="nutritionDropdown" data-bs-toggle="collapse" data-bs-target="#nutritionDropdownMenu" aria-expanded="false" aria-controls="nutritionDropdownMenu">
+                        <span>NUTRITION CENTER</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="nutritionDropdownMenu">
+
+                        <!-- Sidebar Item: Dashboard -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("DashboardNutrition")) ? "active" : "")">
+                            <a class="sidebar-link" href="DashboardNutrition">
+                                <i class="align-middle" data-feather="sliders"></i>
+                                <span class="align-middle">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Medical Conditions -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("MedicalConditions")) ? "active" : "")">
+                            <a class="sidebar-link" href="MedicalConditions">
+                                <i class="align-middle" data-feather="activity"></i>
+                                <span class="align-middle">Medical Conditions</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Diet Plans -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("DietPlans")) ? "active" : "")">
+                            <a class="sidebar-link" href="DietPlans">
+                                <i class="align-middle" data-feather="clipboard"></i>
+                                <span class="align-middle">Diagnosis</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Food Database -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("FoodDatabase")) ? "active" : "")">
+                            <a class="sidebar-link" href="FoodDatabase">
+                                <i class="align-middle" data-feather="database"></i>
+                                <span class="align-middle">Food Database</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Meal Plans -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("MealPlans")) ? "active" : "")">
+                            <a class="sidebar-link" href="MealPlans">
+                                <i class="align-middle" data-feather="grid"></i>
+                                <span class="align-middle">Meal Plans</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Follow Ups -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("FollowUps")) ? "active" : "")">
+                            <a class="sidebar-link" href="FollowUps">
+                                <i class="align-middle" data-feather="check-circle"></i>
+                                <span class="align-middle">Follow Ups</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Section Header: REPORT CENTER -->
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link has-dropdown sidebar-header" id="reportDropdown" data-bs-toggle="collapse" data-bs-target="#reportDropdownMenu" aria-expanded="false" aria-controls="reportDropdownMenu">
+                        <span>REPORT CENTER</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="reportDropdownMenu">
+
+                        <!-- Sidebar Item: Dashboard -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("DashboardReports")) ? "active" : "")">
+                            <a class="sidebar-link" href="DashboardReports">
+                                <i class="align-middle" data-feather="sliders"></i>
+                                <span class="align-middle">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Reports Conducted -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Reports")) ? "active" : "")">
+                            <a class="sidebar-link" href="Reports">
+                                <i class="align-middle" data-feather="file-text"></i>
+                                <span class="align-middle">Reports Conducted</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Report Type -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("ReportType")) ? "active" : "")">
+                            <a class="sidebar-link" href="ReportType">
+                                <i class="align-middle" data-feather="clipboard"></i>
+                                <span class="align-middle">Report Type</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+                <!-- Section Header: HOSPITAL PARTNERSHIPS -->
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link has-dropdown sidebar-header" id="hospitalDropdown" data-bs-toggle="collapse" data-bs-target="#hospitalDropdownMenu" aria-expanded="false" aria-controls="hospitalDropdownMenu">
+                        <span>HOSPITAL PARTNERSHIPS</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="hospitalDropdownMenu">
+
+                        <!-- Sidebar Item: Dashboard -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("DashboardHospitals")) ? "active" : "")">
+                            <a class="sidebar-link" href="DashboardHospitals">
+                                <i class="align-middle" data-feather="sliders"></i>
+                                <span class="align-middle">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Hospital Info -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("HospitalInfo")) ? "active" : "")">
+                            <a class="sidebar-link" href="HospitalInfo">
+                                <i class="align-middle" data-feather="info"></i>
+                                <span class="align-middle">Hospital Info</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Hospital Schedules -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("HospitalSchedules")) ? "active" : "")">
+                            <a class="sidebar-link" href="HospitalSchedules">
+                                <i class="align-middle" data-feather="calendar"></i>
+                                <span class="align-middle">Hospital Schedules</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+                <!-- Section Header: MEMBERSHIP CENTER -->
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link has-dropdown sidebar-header" id="membershipDropdown" data-bs-toggle="collapse" data-bs-target="#membershipDropdownMenu" aria-expanded="false" aria-controls="membershipDropdownMenu">
+                        <span>MEMBERSHIP CENTER</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="membershipDropdownMenu">
+
+                        <!-- Sidebar Item: Dashboard -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("DashboardMemberships")) ? "active" : "")">
+                            <a class="sidebar-link" href="DashboardMemberships">
+                                <i class="align-middle" data-feather="sliders"></i>
+                                <span class="align-middle">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Product Management -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("ProductManagement")) ? "active" : "")">
+                            <a class="sidebar-link" href="ProductManagement">
+                                <i class="align-middle" data-feather="package"></i>
+                                <span class="align-middle">Product Management</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Subscription Tracker -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("SubscriptionTracker")) ? "active" : "")">
+                            <a class="sidebar-link" href="SubscriptionTracker">
+                                <i class="align-middle" data-feather="layers"></i>
+                                <span class="align-middle">Subscription Tracker</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Subscription Fees -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("SubscriptionFees")) ? "active" : "")">
+                            <a class="sidebar-link" href="SubscriptionFees">
+                                <i class="align-middle" data-feather="file-text"></i>
+                                <span class="align-middle">Subscription Fees</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+
+                <!-- Section Header: FINANCE CENTER -->
+                <li class="nav-item dropdown">
+                    <!-- Finance Center Dropdown Toggle -->
+                    <a href="#" class="nav-link has-dropdown sidebar-header" id="financeDropdown" data-bs-toggle="collapse" data-bs-target="#financeDropdownMenu" aria-expanded="false" aria-controls="financeDropdownMenu">
+                        <span>FINANCE CENTER</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="financeDropdownMenu">
+
+                        <!-- Sidebar Item: Dashboard -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("DashboardFinance")) ? "active" : "")">
+                            <a class="sidebar-link" href="DashboardFinance">
+                                <i class="align-middle" data-feather="sliders"></i>
+                                <span class="align-middle">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Core Accounting -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("CoreAccounting")) ? "active" : "")">
+                            <a class="sidebar-link" href="CoreAccounting">
+                                <i class="align-middle" data-feather="package"></i>
+                                <span class="align-middle">Core Accounting</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Patient Fees Structure -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("PatientFeesStructure")) ? "active" : "")">
+                            <a class="sidebar-link" href="PatientFeesStructure">
+                                <i class="align-middle" data-feather="layers"></i>
+                                <span class="align-middle">Patient Fees Structure</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Patient Billings -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("PatientBillings")) ? "active" : "")">
+                            <a class="sidebar-link" href="PatientBillings">
+                                <i class="align-middle" data-feather="file-text"></i>
+                                <span class="align-middle">Patient Billings</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Patient Discounts -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("PatientDiscounts")) ? "active" : "")">
+                            <a class="sidebar-link" href="PatientDiscounts">
+                                <i class="align-middle" data-feather="file-text"></i>
+                                <span class="align-middle">Patient Discounts</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Manual Receipts -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("ManualReceipts")) ? "active" : "")">
+                            <a class="sidebar-link" href="ManualReceipts">
+                                <i class="align-middle" data-feather="file-text"></i>
+                                <span class="align-middle">Manual Receipts</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: E-Payments -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("EPayments")) ? "active" : "")">
+                            <a class="sidebar-link" href="EPayments">
+                                <i class="align-middle" data-feather="file-text"></i>
+                                <span class="align-middle">E-Payments</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+                <!-- Section Header: HR CENTER -->
+                <li class="nav-item dropdown">
+                    <!-- HR Center Dropdown Toggle -->
+                    <a href="#" class="nav-link has-dropdown sidebar-header" id="hrDropdown" data-bs-toggle="collapse" data-bs-target="#hrDropdownMenu" aria-expanded="false" aria-controls="hrDropdownMenu">
+                        <span>HR CENTER</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="hrDropdownMenu">
+
+                        <!-- Sidebar Item: Dashboard -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("DashboardHR")) ? "active" : "")">
+                            <a class="sidebar-link" href="DashboardHR">
+                                <i class="align-middle" data-feather="sliders"></i>
+                                <span class="align-middle">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Performance Tracking -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("PerformanceTracking")) ? "active" : "")">
+                            <a class="sidebar-link" href="PerformanceTracking">
+                                <i class="align-middle" data-feather="package"></i>
+                                <span class="align-middle">Performance Tracking</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Staff Info -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("StaffInfo")) ? "active" : "")">
+                            <a class="sidebar-link" href="StaffInfo">
+                                <i class="align-middle" data-feather="layers"></i>
+                                <span class="align-middle">Staff Info</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Contract Management -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("ContractMgt")) ? "active" : "")">
+                            <a class="sidebar-link" href="ContractMgt">
+                                <i class="align-middle" data-feather="file-text"></i>
+                                <span class="align-middle">Contract Management</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Leave Management -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("LeaveMgt")) ? "active" : "")">
+                            <a class="sidebar-link" href="LeaveMgt">
+                                <i class="align-middle" data-feather="file-text"></i>
+                                <span class="align-middle">Leave Management</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+                <!-- Section Header: COMMUNICATIONS CENTER -->
+                <li class="nav-item dropdown">
+                    <!-- Communications Center Dropdown Toggle -->
+                    <a href="#" class="nav-link has-dropdown sidebar-header" id="communicationDropdown" data-bs-toggle="collapse" data-bs-target="#communicationDropdownMenu" aria-expanded="false" aria-controls="communicationDropdownMenu">
+                        <span>COMMUNICATIONS CENTER</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="communicationDropdownMenu">
+
+                        <!-- Sidebar Item: Dashboard -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("DashboardCommunications")) ? "active" : "")">
+                            <a class="sidebar-link" href="DashboardCommunications">
+                                <i class="align-middle" data-feather="sliders"></i>
+                                <span class="align-middle">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Feedbacks -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Feedbacks")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Feedbacks", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId })">
+                                <i class="align-middle" data-feather="message-circle"></i>
+                                <span class="align-middle">Feedbacks</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Communications -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Communications")) ? "active" : "")">
+                            <a class="sidebar-link" href="Communications">
+                                <i class="align-middle" data-feather="info"></i>
+                                <span class="align-middle">Communications</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+                <!-- Section Header: SECURITY CENTER -->
+                <li class="nav-item dropdown">
+                    <!-- Security Center Dropdown Toggle -->
+                    <a href="#" class="nav-link has-dropdown sidebar-header" id="securityDropdown" data-bs-toggle="collapse" data-bs-target="#securityDropdownMenu" aria-expanded="false" aria-controls="securityDropdownMenu">
+                        <span>SECURITY CENTER</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="securityDropdownMenu">
+
+                        <!-- Sidebar Item: Dashboard -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("DashboardSecurity")) ? "active" : "")">
+                            <a class="sidebar-link" href="DashboardSecurity">
+                                <i class="align-middle" data-feather="sliders"></i>
+                                <span class="align-middle">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: User Management -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("UserAccounts")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "UserAccounts", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId })">
+                                <i class="align-middle" data-feather="package"></i>
+                                <span class="align-middle">User Accounts</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Activity Logs -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("ActivityLogs")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "ActivityLogs", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId })">
+                                <i class="align-middle" data-feather="layers"></i>
+                                <span class="align-middle">Activity Logs</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+                <!-- Section Header: WEBSITE MANAGEMENT -->
+                <li class="nav-item dropdown">
+                    <!-- Website Management Dropdown Toggle -->
+                    <a href="#" class="nav-link has-dropdown sidebar-header" id="websiteDropdown" data-bs-toggle="collapse" data-bs-target="#websiteDropdownMenu" aria-expanded="false" aria-controls="websiteDropdownMenu">
+                        <span>WEBSITE MANAGEMENT</span>
+                    </a>
+                    <ul class="collapse list-unstyled" id="websiteDropdownMenu">
+
+                        <!-- Sidebar Item: Dashboard -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("DashboardWebsite")) ? "active" : "")">
+                            <a class="sidebar-link" href="DashboardWebsite">
+                                <i class="align-middle" data-feather="sliders"></i>
+                                <span class="align-middle">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Blogs Management -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("BlogsManagement")) ? "active" : "")">
+                            <a class="sidebar-link" href="BlogsManagement">
+                                <i class="align-middle" data-feather="package"></i>
+                                <span class="align-middle">Blogs Management</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Images Management -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("ImagesManagement")) ? "active" : "")">
+                            <a class="sidebar-link" href="ImagesManagement">
+                                <i class="align-middle" data-feather="layers"></i>
+                                <span class="align-middle">Images Management</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Context Management -->
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("ContextManagement")) ? "active" : "")">
+                            <a class="sidebar-link" href="ContextManagement">
+                                <i class="align-middle" data-feather="file-text"></i>
+                                <span class="align-middle">Context Management</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+            </ul>
+        </div>
+    </nav>
+
+
+
+ <!-- Main Content Section -->
+    <div class="main">
+
+        <!-- Navbar Section -->
+        <nav class="navbar navbar-expand navbar-light navbar-bg">
+            <!-- Sidebar Toggle Button -->
+            <a class="sidebar-toggle js-sidebar-toggle">
+                <i class="hamburger align-self-center"></i>
+            </a>
+
+            <div class="navbar-collapse collapse">
+                <ul class="navbar-nav navbar-align">
+
+                    <!-- Notification  -->
+                    <li class="nav-item dropdown" id="alertsDropdown">
+                        <a class="nav-icon dropdown-toggle" href="@Url.Action("Index", "Notifications", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId  })">
+                            <div class="position-relative">
+                                <i class="align-middle" data-feather="bell"></i>
+                                <span class="indicator">4</span>  <!-- Notification count -->
+                            </div>
+                        </a>
+
+                    </li>
+
+                    <!-- User Account Dropdown -->
+                    <li class="nav-item dropdown">
+                        <!-- Settings icon for smaller screens -->
+                        <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" id="settingsDropdown" aria-expanded="false">
+                            <i class="align-middle" data-feather="settings"></i>
+                        </a>
+
+                        <!-- User Profile Avatar and Name for larger screens -->
+                        <a class="nav-link dropdown-toggle" href="" id="userDropdown" aria-expanded="false">
+                            <!-- User Avatar and Name -->
+                            <img src="@(string.IsNullOrEmpty(Model.ProfileImagePath) ? Url.Content("~/img/userProfileImages/avatar.jpg") : Url.Content("~/img/userProfileImages/" + Model.ProfileImagePath))"
+                                 class="avatar img-fluid ] me-1" alt="Profile-img" />
+                            <span>@Model.UserName</span> <!-- Display the logged-in user's name -->
+                        </a>
+
+                        <!-- Dropdown Menu -->
+                        <div class="dropdown-menu dropdown-menu-end dropdownProfile" aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="@Url.Action("Index", "UserProfile", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId  })">
+                                <i class="align-middle me-1" data-feather="user"></i> Profile
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="@Url.Action("Index", "UserSettingz", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId  })">
+                                <i class="align-middle me-1" data-feather="settings"></i> Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <!-- Log out option with Javascript functionality -->
+                            <a class="dropdown-item log-out" href="javascript:;" onclick="Logout()">
+                                <i class="align-middle me-1" data-feather="log-out"></i> Log out
+                            </a>
+                        </div>
+                    </li>
+
+                </ul>
+            </div>
+
+        </nav>
+
+        <!-- Logout function -->
+        <script>
+            function Logout() {
+                var encodedUserId = '@encodedUserId';  // Assuming this is populated with the user ID from Razor.
+
+                // Show loading indicator with Notiflix
+                Notiflix.Loading.Dots('Logging out...');
+
+                $.ajax({
+                    url: '/api/LogoutAPI/LogoutCheck',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(encodedUserId),  // Send the userId as a plain string in the request body
+                    success: function (json) {
+                        // Remove loading indicator
+                        Notiflix.Loading.Remove(500);
+
+                        if (json.success) {
+                            // Redirect to the root URL or provided redirect URL
+                            window.location.href = json.redirectUrl || '/';
+                        } else {
+                            // Notify failure with Notiflix
+                            Notiflix.Report.Failure('Logout Failed', json.message, 'OK');
+                        }
+                    },
+                    error: function (jqxhr, textStatus, error) {
+                        // Remove loading indicator on failure
+                        Notiflix.Loading.Remove(500);
+
+                        // Notify failure with Notiflix
+                        Notiflix.Report.Failure('Logout Failed', 'An error occurred while logging out: ' + textStatus + ', ' + error, 'OK');
+                    }
+                });
+            }
+        </script>
+
+        <!-- Main Content Area -->
+        <main class="content">
+            <div class="container-fluid p-0">
+                <!-- Render Body Content -->
+                @RenderBody() <!-- This is where the content of the current view will be injected -->
+            </div>
+        </main>
+
+        <!-- Custom template --See ~wwwroot/js/medisat.custom-elelments.js End-Bar Section -->
+        <end-bar></end-bar>
+
+    </div>
+
+</div>
+

@@ -1,4 +1,4 @@
-﻿using MedisatERP.Areas.CoreSystem.Models;
+﻿using MedisatERP.Areas.AdministratorSystem.Models;
 using MedisatERP.Data;
 using MedisatERP.Services;
 using Microsoft.AspNetCore.Identity;
@@ -14,12 +14,12 @@ public class LoginAPIController : Controller
 {
     private readonly UserManager<IdentityUser> _userManager;
     private readonly SignInManager<IdentityUser> _signInManager;
-    private readonly ApplicationDbContext _dbContext;
+    private readonly UserDbContext _dbContext;
     private readonly RoleRedirectService _roleRedirectService;
 	private readonly IEmailSender _emailSender;
     private readonly IErrorCodeService _errorCodeService;
 
-	public LoginAPIController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ApplicationDbContext dbContext, RoleRedirectService roleRedirectService, IEmailSender emailSender, IErrorCodeService errorCodeService)
+	public LoginAPIController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, UserDbContext dbContext, RoleRedirectService roleRedirectService, IEmailSender emailSender, IErrorCodeService errorCodeService)
     {
         _userManager = userManager;
         _signInManager = signInManager;

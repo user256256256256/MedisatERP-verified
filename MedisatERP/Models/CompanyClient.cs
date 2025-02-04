@@ -1,5 +1,5 @@
-﻿using MedisatERP.Areas.CoreSystem.Models;
-using MedisatERP.Areas.NutritionCompany.Models;
+﻿using MedisatERP.Areas.AdministratorSystem.Models;
+using MedisatERP.Areas.NutritionCompanySystem.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -45,10 +45,6 @@ public partial class CompanyClient
 
     public virtual ICollection<ClientMembership> ClientMemberships { get; set; } = new List<ClientMembership>();
 
-    public virtual ICollection<Communication> CommunicationClients { get; set; } = new List<Communication>();
-
-    public virtual ICollection<Communication> CommunicationPractitioners { get; set; } = new List<Communication>();
-
     public virtual Company Company { get; set; }
 
     public virtual ICollection<DietPlan> DietPlans { get; set; } = new List<DietPlan>();
@@ -76,12 +72,6 @@ public partial class CompanyClient
     public virtual ICollection<NutritionCompanySubscription> NutritionCompanySubscriptions { get; set; } = new List<NutritionCompanySubscription>();
 
     public virtual ICollection<NutritionalProfile> NutritionalProfiles { get; set; } = new List<NutritionalProfile>();
-
-    public virtual ICollection<PatientBilling> PatientBillings { get; set; } = new List<PatientBilling>();
-
-    public virtual ICollection<PatientDiscount> PatientDiscounts { get; set; } = new List<PatientDiscount>();
-
-    public virtual ICollection<PatientPaymentTransaction> PatientPaymentTransactions { get; set; } = new List<PatientPaymentTransaction>();
 
     public virtual ICollection<ProgressTracking> ProgressTrackings { get; set; } = new List<ProgressTracking>();
 

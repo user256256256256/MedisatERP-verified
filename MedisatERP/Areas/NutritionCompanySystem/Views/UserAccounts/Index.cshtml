@@ -1,0 +1,175 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Areas.AdministratorSystem.Models
+@using MedisatERP.Models
+@model AspNetUser
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "User Accounts";
+
+    Guid? companyId = Model?.CompanyId;
+
+    // If companyId is not available from the Model, use ViewData
+    if (companyId == null || companyId == Guid.Empty)
+    {
+        companyId = ViewData["CompanyId"] as Guid?;
+    }
+}
+
+<!-- Section Title Card -->
+<div class="card col-12 card-title-nutrition-system">
+    <div><span><i data-feather="shield"></i>USER ACCOUNTS</span></div>
+</div>
+
+<!-- User Data Grid -->
+<div class="card" id="userGrid">
+    @(Html.DevExtreme().DataGrid<AspNetUser>()
+            .ShowBorders(true)
+            .ID("gv_userList")
+            .DataSource(d => d.Mvc().Controller("AspNetUsersAPI").LoadAction("Get").Key("Id")
+            .InsertAction("Post")
+            .UpdateAction("Put")
+            .DeleteAction("Delete")
+            .LoadParams(new { companyId = companyId }))
+            .ShowColumnLines(false)
+            .ShowRowLines(true)
+            .RowAlternationEnabled(true)
+            .FilterRow(f => f.Visible(false))
+            .HeaderFilter(f => f.Visible(true))
+            .RemoteOperations(true)
+            .ColumnHidingEnabled(true)
+            .ColumnAutoWidth(true)
+            .Selection(s => s.Mode(SelectionMode.Multiple))
+            .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
+            .FocusedRowEnabled(true)
+            .Paging(p => p.PageSize(10))
+            .Editing(e => e
+            .AllowAdding(false)  // Allow adding new users
+            .AllowUpdating(true)
+            .AllowDeleting(true)
+            .UseIcons(true)
+            .Mode(GridEditMode.Popup)
+            .Popup(p => p
+            .Title("User Account")
+            .Height(450)
+            .ShowTitle(true)
+            .Position(pos => pos
+            .My(HorizontalAlignment.Center, VerticalAlignment.Center)
+            .At(HorizontalAlignment.Center, VerticalAlignment.Center)
+            .Of(new JS("window"))
+            )
+            )
+            .Form(f => f
+            .ID("userForm")
+            .Items(items =>
+            {
+                // Group 1: User Information
+                items.AddGroup()
+            .Caption("User Information")
+            .ColCount(2)
+            .ColSpan(2)
+            .Items(groupItems =>
+            {
+                groupItems.AddSimpleFor(m => m.UserName).Visible(true);
+                groupItems.AddSimpleFor(m => m.Email).Visible(true);
+                groupItems.AddSimpleFor(m => m.PhoneNumber).Visible(true);
+                groupItems.AddSimpleFor(m => m.LockoutEnabled).Visible(true);
+                groupItems.AddSimpleFor(m => m.TwoFactorEnabled).Visible(true);
+                groupItems.AddSimpleFor(m => m.PhoneNumberConfirmed).Visible(true);
+                groupItems.AddSimpleFor(m => m.EmailConfirmed).Visible(true);
+            });
+
+                // Group 2: Profile Information
+                items.AddGroup()
+            .Caption("Profile Information")
+            .ColCount(2)
+            .ColSpan(2)
+            .Items(groupItems =>
+            {
+                groupItems.AddSimpleFor(m => m.BioData).Visible(true);
+            });
+            })
+            )
+            )
+            .Columns(columns =>
+            {
+                columns.AddFor(m => m.UserName).Caption("Username").AllowEditing(true);
+                columns.AddFor(m => m.Email).Caption("Email").AllowEditing(true);
+                columns.AddFor(m => m.EmailConfirmed).Caption("Email Confirmed").DataType(GridColumnDataType.Boolean).AllowEditing(true);
+                columns.AddFor(m => m.PhoneNumberConfirmed).Caption("Phone Number Confirmed").DataType(GridColumnDataType.Boolean).AllowEditing(false);
+                columns.AddFor(m => m.TwoFactorEnabled).Caption("2FA Enabled").DataType(GridColumnDataType.Boolean).AllowEditing(false);
+                columns.AddFor(m => m.LockoutEnabled).Caption("Account Lock Out Enabled").DataType(GridColumnDataType.Boolean).AllowEditing(false);
+                columns.AddFor(m => m.AccessFailedCount).Caption("Access Failed Count").AllowEditing(false).DataType(GridColumnDataType.Number);
+                columns.AddFor(m => m.LockoutEnd).Caption("End Date for Locked Out Account").AllowEditing(false).DataType(GridColumnDataType.DateTime).Format("MM/dd/yyyy HH:mm");
+                columns.AddFor(m => m.PhoneNumber).Caption("Phone Number").AllowEditing(false);
+
+                // Normalized fields not necessary to be visible -- Used to listen to UserName / Email changes
+                columns.AddFor(m => m.NormalizedUserName).Visible(false);
+                columns.AddFor(m => m.NormalizedEmail).Visible(false);
+
+                // Display current roles as a comma-separated string
+                columns.Add()
+            .Caption("Current Roles")
+            .DataField("CurrentRoles")
+            .AllowEditing(false);
+
+                // Display ProfileImagePath as an img using CellTemplate
+                columns.AddFor(m => m.ProfileImagePath).AllowEditing(false)
+            .Caption("Profile Image")
+            .Width(100)
+            .AllowFiltering(false)
+            .AllowSorting(false)
+            .CellTemplate(@<text>
+        <div>
+            <img src="<%- value && value.length > 0 ? '/img/userProfileImages/' + value : '/img/avatars/avatar.jpg' %>" alt="Profile Image" class="rounded-circle user-profile-img" />
+        </div>
+    </text>);
+
+                // BioData with wrapping and hiding overflow
+                columns.AddFor(m => m.BioData).Caption("Bio Info").AllowEditing(true)
+            .CellTemplate(@<text>
+        <div class="text-wrap text-break overflow-hidden" style="max-height: 100px; display: block;">
+            <%- value %>
+        </div>
+    </text>);
+
+                // Manage Button Column (for Edit/Delete)
+                columns.Add()
+    .Type(GridCommandColumnType.Buttons)
+    .Width(80)
+    .Caption("Manage")
+    .Name("ManageButton")
+    .Buttons(b =>
+    {
+                b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
+                b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
+            });
+            })
+        .OnRowUpdating("onRowUpdating") // Bind the row updating event
+        .OnInitNewRow("onInitNewRow") // Ensure onInitNewRow is called
+        .Summary(s => s
+        .TotalItems(totalItems =>
+        {
+            totalItems.AddFor(m => m.UserName).SummaryType(SummaryType.Count);
+        })
+        )
+        )
+</div>
+
+<script>
+    // Handling row change for the user grid
+    function onMainRowChanged(e) {
+        const rowData = e.row && e.row.data;
+        // You can add your custom logic here to handle row change
+    }
+
+    // Handle the initialization of a new row
+    function onInitNewRow(e) {
+        e.data.CompanyId = '@companyId';
+    }
+
+    // Handle row updating event
+    function onRowUpdating(e) {
+        // Add custom logic for updating the row if needed
+    }
+</script>

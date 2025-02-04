@@ -1,4 +1,4 @@
-﻿using MedisatERP.Areas.CoreSystem.Models;
+﻿using MedisatERP.Areas.AdministratorSystem.Models;
 using MedisatERP.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,11 +11,11 @@ namespace MedisatERP.Services
     public class RoleRedirectService : ControllerBase
     {
         private readonly UserManager<IdentityUser> _userManager;
-        private readonly MedisatErpDbContext _dbContext;
+        private readonly AdministratorSystemDbContext _dbContext;
         private readonly IErrorCodeService _errorCodeService;
 
 
-        public RoleRedirectService(UserManager<IdentityUser> userManager, MedisatErpDbContext dbContext, IErrorCodeService errorCodeService)
+        public RoleRedirectService(UserManager<IdentityUser> userManager, AdministratorSystemDbContext dbContext, IErrorCodeService errorCodeService)
         {
             _userManager = userManager;
             _dbContext = dbContext;
@@ -51,7 +51,7 @@ namespace MedisatERP.Services
                 {
                     var encodedUserId = HashingHelper.EncodeString(userId);
                     Console.WriteLine($"Encoded UserId: {encodedUserId}");
-                    redirectUrl = $"/CoreSystem/SystemManager/Index/{encodedUserId}";
+                    redirectUrl = $"/AdministratorSystem/SystemManager/Index/{encodedUserId}";
                 }
             }
             else if (roles.Contains("Nutrition Company Administrator"))
@@ -63,7 +63,7 @@ namespace MedisatERP.Services
                     var encodedUserId = HashingHelper.EncodeString(userId);
                     var encodedCompanyId = HashingHelper.EncodeGuidID(companyId.Value);
                     Console.WriteLine($"Encoded UserId: {encodedUserId}");
-                    redirectUrl = $"/NutritionCompany/NutritionSystem/Index/{encodedUserId}/{encodedCompanyId}";
+                    redirectUrl = $"/NutritionCompanySystem/CrmDashboard/Index/{encodedUserId}/{encodedCompanyId}";
                 }
             }
             else
@@ -118,7 +118,7 @@ namespace MedisatERP.Services
                         var encodedUserId = HashingHelper.EncodeString(userId);
                         var encodedCompanyId = HashingHelper.EncodeGuidID(companyId);
                         Console.WriteLine($"Encoded UserId: {encodedUserId}");
-                        redirectUrl = $"/NutritionCompany/NutritionSystem/Index/{encodedUserId}/{encodedCompanyId}";
+                        redirectUrl = $"/NutritionCompanySystem/CrmDashboard/Index/{encodedUserId}/{encodedCompanyId}";
                     }
                 }
 

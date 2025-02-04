@@ -8,9 +8,9 @@ namespace MedisatERP.Controllers
 	[Route("[controller]/[action]/{userId?}")]
 	public class TwoFAController : Controller
 	{
-		private readonly MedisatErpDbContext _dbContext;
+		private readonly AdministratorSystemDbContext _dbContext;
 		// Constructor to inject DbContext
-		public TwoFAController(MedisatErpDbContext dbContext)
+		public TwoFAController(AdministratorSystemDbContext dbContext)
 		{
 			_dbContext = dbContext;
 		}

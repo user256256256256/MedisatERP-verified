@@ -361,7 +361,7 @@ public async Task<ActionResult> LoginCheck(string email, string password)
                 Console.WriteLine($"Encoded CompanyId: {encodedCompanyId}");
 
                 // Construct the redirect URL
-                var redirectUrl = $"/NutritionCompany/NutritionSystem/Index/{encodedCompanyId}";
+                var redirectUrl = $"/NutritionCompanySystem/NutritionSystem/Index/{encodedCompanyId}";
 
                 // Return the response with the redirect URL
                 return Ok(new { success = true, mresponse = "Login successful", redirectUrl });
@@ -914,7 +914,7 @@ public async Task<ActionResult> LoginCheck(string email, string password)
                 Console.WriteLine($"Encoded CompanyId: {encodedCompanyId}");
 
                 // Construct the redirect URL
-                var redirectUrl = $"/NutritionCompany/NutritionSystem/Index/{encodedCompanyId}";
+                var redirectUrl = $"/NutritionCompanySystem/NutritionSystem/Index/{encodedCompanyId}";
 
                 // Return the response with the redirect URL
                 return Ok(new { success = true, mresponse = "Login successful", redirectUrl });
@@ -1073,7 +1073,7 @@ public class LoginAPIController : ControllerBase
                     Console.WriteLine($"Encoded CompanyId: {encodedCompanyId}");
 
                     // Construct the redirect URL
-                    var redirectUrl = $"/NutritionCompany/NutritionSystem/Index/{encodedCompanyId}";
+                    var redirectUrl = $"/NutritionCompanySystem/NutritionSystem/Index/{encodedCompanyId}";
 
                     // Return the response with the redirect URL
                     return Ok(new { success = true, mresponse = "Login successful", redirectUrl });
@@ -1343,7 +1343,7 @@ public class LoginAPIController : ControllerBase
     using System;
 using System.Collections.Generic;
 using MedisatERP.Areas.CoreSystem.Models;
-using MedisatERP.Areas.NutritionCompany.Models;
+using MedisatERP.Areas.NutritionCompanySystem.Models;
 using MedisatERP.Models;
 using Microsoft.EntityFrameworkCore;
 
