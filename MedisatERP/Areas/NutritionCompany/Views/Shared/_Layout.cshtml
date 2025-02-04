@@ -58,7 +58,7 @@
 
                         <!-- Sidebar Item: Appointments Manager -->
                         <li class="sidebar-item @((Context.Request.Path.Value.Contains("Appointments")) ? "active" : "")">
-                            <a class="sidebar-link" href="Appointments">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Appointments", new { area = "NutritionCompany", userId = encodedUserId, companyId = encodedCompanyId })">
                                 <i class="align-middle" data-feather="calendar"></i>
                                 <span class="align-middle">Appointments Manager</span>
                             </a>

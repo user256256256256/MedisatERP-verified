@@ -28,6 +28,10 @@ public partial class NutritionalProfile
 
     public decimal? Weight { get; set; }
 
+    public string ActivityLevel { get; set; }
+
+    public int? DailyWaterIntake { get; set; }
+
     public virtual Allergy Allergy { get; set; }
 
     public virtual CompanyClient Client { get; set; }

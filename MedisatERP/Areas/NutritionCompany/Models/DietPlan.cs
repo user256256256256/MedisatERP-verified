@@ -24,6 +24,10 @@ public partial class DietPlan
 
     public DateTime? LastUpdated { get; set; }
 
+    public string DietType { get; set; }
+
+    public string Goal { get; set; }
+
     public virtual Allergy Allergy { get; set; }
 
     public virtual CompanyClient Client { get; set; }

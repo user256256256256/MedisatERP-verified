@@ -19,7 +19,7 @@
 
 <div class="card p-3">
     @(
-        Html.DevExtreme().DataGrid<Company>()
+            Html.DevExtreme().DataGrid<Company>()
             .ShowBorders(true)
             .ID("gv_companyList")
             .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId")
@@ -58,26 +58,26 @@
                 columns.AddFor(m => m.Address.PostalCode).AllowEditing(true); ;
                 columns.AddFor(m => m.Address.Country).AllowEditing(true); ;
 
-            // Display companyLogoFilePath as an img using CellTemplate
-            columns.AddFor(m => m.CompanyLogoFilePath).AllowEditing(false)
+                // Display companyLogoFilePath as an img using CellTemplate
+                columns.AddFor(m => m.CompanyLogoFilePath).AllowEditing(false)
             .Caption("Company Logo")
             .Width(100)
             .AllowFiltering(false)
             .AllowSorting(false)
             .CellTemplate(@<text>
-            <div>
-                <img src="<%- value && value.length > 0 ? '/img/companyLogoImages/' + value : '/img/companyLogoImages/defaultCompanyLogo.jpeg' %>" alt="Company Logo" class="company-logo" />
-            </div>
-            </text>);
+        <div>
+            <img src="<%- value && value.length > 0 ? '/img/companyLogoImages/' + value : '/img/companyLogoImages/defaultCompanyLogo.jpeg' %>" alt="Company Logo" class="company-logo" />
+        </div>
+    </text>);
 
-            // Profile popup
-            columns.Add()
-            .Type(GridCommandColumnType.Buttons)
-            .Width(80)
-            .Caption("Profile")
-            .Name("ProfileButton")
-            .Buttons(b =>
-            {
+                // Profile popup
+                columns.Add()
+    .Type(GridCommandColumnType.Buttons)
+    .Width(80)
+    .Caption("Profile")
+    .Name("ProfileButton")
+    .Buttons(b =>
+    {
                 b.Add()
             .Hint("Click for details")
             .Icon("mediumiconslayout")
@@ -85,32 +85,32 @@
             .OnClick("showCompProfile");
             });
 
-            // Manage Button Column (for Edit/Delete)
-            columns.Add()
-            .Type(GridCommandColumnType.Buttons)
-            .Width(80)
-            .Caption("Manage")
-            .Name("ManageButton")
-            .Buttons(b =>
-            {
+                // Manage Button Column (for Edit/Delete)
+                columns.Add()
+    .Type(GridCommandColumnType.Buttons)
+    .Width(80)
+    .Caption("Manage")
+    .Name("ManageButton")
+    .Buttons(b =>
+    {
                 b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
                 b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
-                
+
             });
 
-            // Select Company Colum Button
-            columns.Add()
-            .Type(GridCommandColumnType.Buttons)
-            .Width(80)
-            .Caption("Select")
-            .Name("SelectButton")
-            .Buttons(b =>
-            {
+                // Select Company Colum Button
+                columns.Add()
+    .Type(GridCommandColumnType.Buttons)
+    .Width(80)
+    .Caption("Select")
+    .Name("SelectButton")
+    .Buttons(b =>
+    {
                 b.Add()
-                    .Name("Select")
-                    .Hint("Select Company")
+            .Name("Select")
+            .Hint("Select Company")
             .Icon("fas fa-eye") // Use an appropriate icon, like checkmark
-                    .OnClick("onSelectCompany"); // Event handler for when the button is clicked
+            .OnClick("onSelectCompany"); // Event handler for when the button is clicked
             });
 
             })
@@ -151,7 +151,7 @@
                 groupItems.AddSimpleFor(m => m.CreatedAt).Visible(true);
             });
 
-            
+
             // Group 2: Contact Information
             items.AddGroup()
             .Caption("Contact Information")
@@ -193,6 +193,7 @@
 
         )
 </div>
+
 
 <div>
     @using (Html.DevExtreme().NamedTemplate("embedded_comp_profile"))

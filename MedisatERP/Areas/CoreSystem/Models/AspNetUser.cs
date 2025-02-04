@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using MedisatERP.Areas.NutritionCompany.Models;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 
@@ -36,13 +37,13 @@ public partial class AspNetUser
 
     public int AccessFailedCount { get; set; }
 
-    public Guid? CompanyId { get; set; }  // Nullable CompanyId for users who might not belong to a company
+    public Guid? CompanyId { get; set; }
 
     public string ProfileImagePath { get; set; }
 
-    public string BioData { get; set; }  // New BioData property
+    public string BioData { get; set; }
 
-    public virtual Company Company { get; set; }  // Navigation property to Company
+    public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 
     public virtual ICollection<AspNetUserClaim> AspNetUserClaims { get; set; } = new List<AspNetUserClaim>();
 
@@ -50,11 +51,19 @@ public partial class AspNetUser
 
     public virtual ICollection<AspNetUserToken> AspNetUserTokens { get; set; } = new List<AspNetUserToken>();
 
+    public virtual ICollection<AspNetUserRoles> AspNetUserRoles { get; set; } = new List<AspNetUserRoles>();
+
     public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
 
     public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 
-    public virtual ICollection<AspNetRole> Roles { get; set; } = new List<AspNetRole>();
+    public virtual ICollection<HospitalReferral> HospitalReferrals { get; set; } = new List<HospitalReferral>();
 
-    public virtual ICollection<AspNetUserRoles> AspNetUserRoles { get; set; } = new List<AspNetUserRoles>(); // Ensure this line is included
+    public virtual ICollection<HospitalSchedule> HospitalSchedules { get; set; } = new List<HospitalSchedule>();
+
+    public virtual ICollection<PartnershipAgreement> PartnershipAgreements { get; set; } = new List<PartnershipAgreement>();
+
+    public virtual ICollection<StaffInfo> StaffInfos { get; set; } = new List<StaffInfo>();
+
+    public virtual ICollection<AspNetRole> Roles { get; set; } = new List<AspNetRole>();
 }

@@ -32,7 +32,7 @@
         .InsertAction("Post")
         .UpdateAction("Put")
         .DeleteAction("Delete")
-        .LoadParams(new { companyId = companyId}) // Pass the CompanyId as load params
+        .LoadParams(new { companyId = companyId }) // Pass the CompanyId as load params
         )
         .ShowColumnLines(false)
         .ShowRowLines(true)
@@ -44,6 +44,7 @@
         .ColumnHidingEnabled(true)
         .ColumnAutoWidth(true)
         .OnFocusedRowChanged("onMainRowChanged")
+        .OnInitNewRow("onInitNewRow")
         .Columns(columns =>
         {
             // Company Clients Data Columns
@@ -67,6 +68,9 @@
             columns.AddFor(m => m.Address.PostalCode).Caption("Postal Code").Visible(true);
             columns.AddFor(m => m.Address.Country).Caption("Country").Visible(true);
 
+            // Company Info
+            columns.AddFor(m => m.CompanyId).Caption("Company ID").Visible(true);
+
             // Profile popup
             columns.Add()
             .Type(GridCommandColumnType.Buttons)
@@ -77,13 +81,15 @@
                 b.Add()
             .Hint("Click for details")
             .Icon("mediumiconslayout")
-            .Visible(true);
+            .Visible(true)
+            .OnClick("showClientProfile");
             });
 
+            // Updated caption to make it unique
             columns.Add()
             .Type(GridCommandColumnType.Buttons)
             .Width(80)
-            .Caption("Manage")
+            .Caption("Actions")  // Updated the caption to make it unique
             .Buttons(b =>
             {
                 b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
@@ -95,7 +101,7 @@
         .FocusedRowEnabled(true)
         .Editing(e => e
         .AllowAdding(true)
-        .AllowUpdating(false)
+        .AllowUpdating(true)
         .AllowDeleting(true)
         .UseIcons(true)
         .Mode(GridEditMode.Popup)
@@ -117,6 +123,7 @@
             .ColSpan(2)
             .Items(groupItems =>
             {
+
                 groupItems.AddSimpleFor(m => m.ClientName);
                 groupItems.AddSimpleFor(m => m.DateOfBirth);
                 groupItems.AddSimpleFor(m => m.Gender);
@@ -132,6 +139,7 @@
                 groupItems.AddSimpleFor(m => m.MaritalStatus);
                 groupItems.AddSimpleFor(m => m.Nationality);
                 groupItems.AddSimpleFor(m => m.CreatedAt).Visible(false);
+                groupItems.AddSimpleFor(m => m.CompanyId).Visible(false);
             });
         }).ScrollingEnabled(true))
         )
@@ -146,10 +154,87 @@
         )
 </div>
 
+
+
+<div>
+    @(
+        Html.DevExtreme().Popup()  // Create a popup for new user account
+        .ID("pop_client_profile")  // Set ID of the popup
+        .Width("80%")  // Set width of the popup
+        .Height("550")  // Set height of the popup
+        .ShowTitle(true)  // Show title in the popup
+                          //.ShadingColor("Purple")
+        .Title("Client Profile")  // Set title of the popup
+        .Visible(false)  // Initially hide the popup
+        .ShowCloseButton(true)  // Show close button
+        .DragEnabled(true)  // Enable dragging of the popup
+        .DeferRendering(false)  // Disable deferred rendering for the popup content
+        .OnContentReady(@<text>
+        function(e) {
+        const template = $('#embedded_client_profile');  // Select the embedded template
+        e.component.option('contentTemplate', template);  // Set the popup content template
+        }
+    </text>) // This closes the OnContentReady and the popup method
+        )
+</div>
+
+<div>
+    @using (Html.DevExtreme().NamedTemplate("embedded_client_profile"))
+    {
+        @(Html.DevExtreme().TabPanel()  // Create a TabPanel widget
+            .DeferRendering(false)  // Disables deferred rendering (loads all tabs at once)
+            .Height("auto")  // Automatically adjusts the height of the TabPanel
+            .ScrollingEnabled(true) // Enable scrolling
+            .Items(tab =>  // Define tabs for the TabPanel
+            {
+                tab.Add()  // Add the first tab
+                .Title("Profile Info 1")  // Set the title of the tab
+                .Icon("fas fa-users")  // Set the icon for the tab
+                .Template(new TemplateName("embedded_profile_info 1"));  // Set the template for the tab content
+
+                tab.Add()  // Add the second tab
+                .Title("Profile Info 2")  // Set the title of the tab
+                .Icon("fas fa-credit-card")  // Set the icon for the tab
+                .Template(new TemplateName("embedded_profile_info 2"));  // Set the template for the tab content
+
+            })
+            )
+    }
+</div>
+
+<div>
+    @using (Html.DevExtreme().NamedTemplate("embedded_profile_info 1"))
+    {
+        <div>
+            <h1>CLIENT PROFILE INFORMATION TO BE INSERTED HERE</h1>
+        </div>
+    }
+</div>
+
+<div>
+    @using (Html.DevExtreme().NamedTemplate("embedded_profile_info 2"))
+    {
+        <div>
+            <h1>CLIENT PROFILE INFORMATION TO BE INSERTED HERE</h1>
+        </div>
+    }
+</div>
+
 <script>
     // Handling row change for the client grid
     function onMainRowChanged(e) {
         const rowData = e.row && e.row.data;
         // You can add your custom logic here to handle row change
     }
+
+    // Handle the initialization of a new row
+    function onInitNewRow(e) {
+        e.data.CompanyId = '@companyId';
+    }
+
+    function showClientProfile() {
+        const popup = $('#pop_client_profile').dxPopup('instance');  // Get the popup instance
+        popup.show();  // Show the popup
+    }
+
 </script>

@@ -26,6 +26,8 @@ public partial class MealLogging
 
     public int? CarbsConsumed { get; set; }
 
+    public string MealTime { get; set; }
+
     public virtual CompanyClient Client { get; set; }
 
     public virtual FoodDatabase FoodItem { get; set; }

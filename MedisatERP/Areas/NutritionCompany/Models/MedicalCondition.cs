@@ -14,6 +14,8 @@ public partial class MedicalCondition
 
     public DateTime? DiagnosisDate { get; set; }
 
+    public string Severity { get; set; }
+
     public virtual CompanyClient Client { get; set; }
 
     public virtual ICollection<DietPlan> DietPlans { get; set; } = new List<DietPlan>();

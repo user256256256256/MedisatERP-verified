@@ -113,6 +113,9 @@ namespace MedisatERP.Controllers
 
             try
             {
+                // Log the received values
+                Console.WriteLine($"Received values: {values}");
+
                 // Deserialize the incoming request values 
                 var valuesDict = JsonConvert.DeserializeObject<IDictionary<string, object>>(values);
 
@@ -125,6 +128,9 @@ namespace MedisatERP.Controllers
                                                    .ToDictionary(kv => kv.Key, kv => kv.Value);
 
                 PopulateModel(model, companyClientsData); // Populate the company clients model.
+
+                // Log the populated model data
+                Console.WriteLine($"Populated model: {JsonConvert.SerializeObject(model)}");
 
                 // Initialize Address if not provided
                 if (model.Address == null)
@@ -140,6 +146,12 @@ namespace MedisatERP.Controllers
                     model.Address.State = addressData["State"]?.ToString();
                     model.Address.PostalCode = addressData["PostalCode"]?.ToString();
                     model.Address.Country = addressData["Country"]?.ToString();
+                }
+
+                // Log the address data
+                if (model.Address != null)
+                {
+                    Console.WriteLine($"Populated address: {JsonConvert.SerializeObject(model.Address)}");
                 }
 
                 // Save the new company client record to the database 
@@ -176,6 +188,7 @@ namespace MedisatERP.Controllers
                 // Return a standardized error response
                 return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
             }
+
         }
 
 

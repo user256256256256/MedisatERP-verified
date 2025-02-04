@@ -29,7 +29,7 @@ public partial class AuditLog
 
     public string ComplianceStatus { get; set; }
 
-    public Guid CompanyId { get; set; }
+    public Guid? CompanyId { get; set; }
 
     public virtual Company Company { get; set; }
 
