@@ -38,6 +38,10 @@ namespace MedisatERP.Areas.NutritionCompanySystem.Controllers
                                            .Where(c => c.Id == decodedUserId)
                                            .FirstOrDefaultAsync();
 
+                var company = await _dbContext.Companies
+                                      .Where(c => c.CompanyId == decodedCompanyId)
+                                      .FirstOrDefaultAsync();
+
                 if (user == null)
                 {
                     return NotFound(); // Return a 404 if the user is not found
@@ -45,6 +49,7 @@ namespace MedisatERP.Areas.NutritionCompanySystem.Controllers
 
                 // Pass the user model and companyId to the view, which will be available in the layout
                 ViewData["CompanyId"] = decodedCompanyId;
+                ViewData["CompanyLogoFilePath"] = company.CompanyLogoFilePath;
                 // Pass the user model to the view, which will be available in the layout
                 return View(user);
             }

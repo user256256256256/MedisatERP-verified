@@ -193,12 +193,12 @@ dl {
     margin-bottom: 1rem;
 }
 
-    ol ol,
-    ul ul,
-    ol ul,
-    ul ol {
-        margin-bottom: 0;
-    }
+ol ol,
+ul ul,
+ol ul,
+ul ol {
+    margin-bottom: 0;
+}
 
 dt {
     font-weight: 700;
@@ -4292,7 +4292,6 @@ textarea.form-control-lg {
 
 .navbar-collapse {
     flex-basis: 100%;
-    flex-grow: 1;
     align-items: center;
 }
 

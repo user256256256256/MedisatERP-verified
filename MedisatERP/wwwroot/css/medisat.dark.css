@@ -4141,12 +4141,13 @@ textarea.form-control-lg {
     position: relative
 }
 
-    .navbar > .container, .navbar > .container-fluid, .navbar > .container-lg, .navbar > .container-md, .navbar > .container-sm, .navbar > .container-xl {
-        align-items: center;
-        display: flex;
-        flex-wrap: inherit;
-        justify-content: space-between
-    }
+
+.navbar > .container, .navbar > .container-fluid, .navbar > .container-lg, .navbar > .container-md, .navbar > .container-sm, .navbar > .container-xl {
+    align-items: center;
+    display: flex;
+    flex-wrap: inherit;
+    justify-content: space-between
+}
 
 .navbar-brand {
     color: var(--bs-navbar-brand-color);
@@ -4157,10 +4158,10 @@ textarea.form-control-lg {
     white-space: nowrap
 }
 
-    .navbar-brand:focus, .navbar-brand:hover {
-        color: var(--bs-navbar-brand-hover-color);
-        text-decoration: none
-    }
+.navbar-brand:focus, .navbar-brand:hover {
+    color: var(--bs-navbar-brand-hover-color);
+    text-decoration: none
+}
 
 .navbar-nav {
     --bs-nav-link-padding-x: 0;
@@ -4176,13 +4177,13 @@ textarea.form-control-lg {
     padding-left: 0
 }
 
-    .navbar-nav .nav-link.active, .navbar-nav .nav-link.show {
-        color: var(--bs-navbar-active-color)
-    }
+.navbar-nav .nav-link.active, .navbar-nav .nav-link.show {
+    color: var(--bs-navbar-active-color)
+}
 
-    .navbar-nav .dropdown-menu {
-        position: static
-    }
+.navbar-nav .dropdown-menu {
+    position: static
+}
 
 .navbar-text {
     color: var(--bs-navbar-color);
@@ -4190,15 +4191,15 @@ textarea.form-control-lg {
     padding-top: .5rem
 }
 
-    .navbar-text a, .navbar-text a:focus, .navbar-text a:hover {
-        color: var(--bs-navbar-active-color)
-    }
+.navbar-text a, .navbar-text a:focus, .navbar-text a:hover {
+    color: var(--bs-navbar-active-color)
+}
 
 .navbar-collapse {
     align-items: center;
     flex-basis: 100%;
-    flex-grow: 1
 }
+
 
 .navbar-toggler {
     background-color: transparent;
@@ -4249,55 +4250,55 @@ textarea.form-control-lg {
         justify-content: flex-start
     }
 
-        .navbar-expand-sm .navbar-nav {
-            flex-direction: row
-        }
+    .navbar-expand-sm .navbar-nav {
+        flex-direction: row
+    }
 
-            .navbar-expand-sm .navbar-nav .dropdown-menu {
-                position: absolute
-            }
+    .navbar-expand-sm .navbar-nav .dropdown-menu {
+        position: absolute
+    }
 
-            .navbar-expand-sm .navbar-nav .nav-link {
-                padding-left: var(--bs-navbar-nav-link-padding-x);
-                padding-right: var(--bs-navbar-nav-link-padding-x)
-            }
+    .navbar-expand-sm .navbar-nav .nav-link {
+        padding-left: var(--bs-navbar-nav-link-padding-x);
+        padding-right: var(--bs-navbar-nav-link-padding-x)
+    }
 
-        .navbar-expand-sm .navbar-nav-scroll {
-            overflow: visible
-        }
+    .navbar-expand-sm .navbar-nav-scroll {
+        overflow: visible
+    }
 
-        .navbar-expand-sm .navbar-collapse {
-            display: flex !important;
-            flex-basis: auto
-        }
+    .navbar-expand-sm .navbar-collapse {
+        display: flex !important;
+        flex-basis: auto
+    }
 
-        .navbar-expand-sm .navbar-toggler {
-            display: none
-        }
+    .navbar-expand-sm .navbar-toggler {
+        display: none
+    }
 
-        .navbar-expand-sm .offcanvas {
-            background-color: transparent !important;
-            border: 0 !important;
-            flex-grow: 1;
-            height: auto !important;
-            position: static;
-            transform: none !important;
-            transition: none;
-            visibility: visible !important;
-            width: auto !important;
-            z-index: auto
-        }
+    .navbar-expand-sm .offcanvas {
+        background-color: transparent !important;
+        border: 0 !important;
+        flex-grow: 1;
+        height: auto !important;
+        position: static;
+        transform: none !important;
+        transition: none;
+        visibility: visible !important;
+        width: auto !important;
+        z-index: auto
+    }
 
-            .navbar-expand-sm .offcanvas .offcanvas-header {
-                display: none
-            }
+    .navbar-expand-sm .offcanvas .offcanvas-header {
+        display: none
+    }
 
-            .navbar-expand-sm .offcanvas .offcanvas-body {
-                display: flex;
-                flex-grow: 0;
-                overflow-y: visible;
-                padding: 0
-            }
+    .navbar-expand-sm .offcanvas .offcanvas-body {
+        display: flex;
+        flex-grow: 0;
+        overflow-y: visible;
+        padding: 0
+    }
 }
 
 @media(min-width:768px) {
@@ -4306,55 +4307,55 @@ textarea.form-control-lg {
         justify-content: flex-start
     }
 
-        .navbar-expand-md .navbar-nav {
-            flex-direction: row
-        }
+    .navbar-expand-md .navbar-nav {
+        flex-direction: row
+    }
 
-            .navbar-expand-md .navbar-nav .dropdown-menu {
-                position: absolute
-            }
+    .navbar-expand-md .navbar-nav .dropdown-menu {
+        position: absolute
+    }
 
-            .navbar-expand-md .navbar-nav .nav-link {
-                padding-left: var(--bs-navbar-nav-link-padding-x);
-                padding-right: var(--bs-navbar-nav-link-padding-x)
-            }
+    .navbar-expand-md .navbar-nav .nav-link {
+        padding-left: var(--bs-navbar-nav-link-padding-x);
+        padding-right: var(--bs-navbar-nav-link-padding-x)
+    }
 
-        .navbar-expand-md .navbar-nav-scroll {
-            overflow: visible
-        }
+    .navbar-expand-md .navbar-nav-scroll {
+        overflow: visible
+    }
 
-        .navbar-expand-md .navbar-collapse {
-            display: flex !important;
-            flex-basis: auto
-        }
+    .navbar-expand-md .navbar-collapse {
+        display: flex !important;
+        flex-basis: auto
+    }
 
-        .navbar-expand-md .navbar-toggler {
-            display: none
-        }
+    .navbar-expand-md .navbar-toggler {
+        display: none
+    }
 
-        .navbar-expand-md .offcanvas {
-            background-color: transparent !important;
-            border: 0 !important;
-            flex-grow: 1;
-            height: auto !important;
-            position: static;
-            transform: none !important;
-            transition: none;
-            visibility: visible !important;
-            width: auto !important;
-            z-index: auto
-        }
+    .navbar-expand-md .offcanvas {
+        background-color: transparent !important;
+        border: 0 !important;
+        flex-grow: 1;
+        height: auto !important;
+        position: static;
+        transform: none !important;
+        transition: none;
+        visibility: visible !important;
+        width: auto !important;
+        z-index: auto
+    }
 
-            .navbar-expand-md .offcanvas .offcanvas-header {
-                display: none
-            }
+    .navbar-expand-md .offcanvas .offcanvas-header {
+        display: none
+    }
 
-            .navbar-expand-md .offcanvas .offcanvas-body {
-                display: flex;
-                flex-grow: 0;
-                overflow-y: visible;
-                padding: 0
-            }
+    .navbar-expand-md .offcanvas .offcanvas-body {
+        display: flex;
+        flex-grow: 0;
+        overflow-y: visible;
+        padding: 0
+    }
 }
 
 @media(min-width:992px) {
@@ -4402,16 +4403,16 @@ textarea.form-control-lg {
             z-index: auto
         }
 
-            .navbar-expand-lg .offcanvas .offcanvas-header {
-                display: none
-            }
+        .navbar-expand-lg .offcanvas .offcanvas-header {
+            display: none
+        }
 
-            .navbar-expand-lg .offcanvas .offcanvas-body {
-                display: flex;
-                flex-grow: 0;
-                overflow-y: visible;
-                padding: 0
-            }
+        .navbar-expand-lg .offcanvas .offcanvas-body {
+            display: flex;
+            flex-grow: 0;
+            overflow-y: visible;
+            padding: 0
+        }
 }
 
 @media(min-width:1200px) {
@@ -14192,7 +14193,6 @@ body {
 
 .sidebar-toggle {
     cursor: pointer;
-    display: flex;
     height: 26px;
     width: 26px;
 }

@@ -15,10 +15,10 @@
         companyId = ViewData["CompanyId"] as Guid?;
     }
 
+
     // Encode the company ID if it's available
     var encodedCompanyId = companyId.HasValue ? HashingHelper.EncodeGuidID(companyId.Value) : string.Empty;
 }
-
 
 <div class="wrapper">
     <!-- Sidebar Section -->
@@ -52,6 +52,13 @@
                             <a class="sidebar-link" href="@Url.Action("Index", "Patients", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId })">
                                 <i class="align-middle" data-feather="users"></i>
                                 <span class="align-middle">Patients</span>
+                            </a>
+                        </li>
+
+                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("OnlineApplicants")) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "OnlineApplicants", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId })">
+                                <i class="align-middle" data-feather="users"></i>
+                                <span class="align-middle">Online Appointments</span>
                             </a>
                         </li>
 
@@ -474,13 +481,21 @@
     <div class="main">
 
         <!-- Navbar Section -->
-        <nav class="navbar navbar-expand navbar-light navbar-bg">
+        <nav class="navbar navbar-expand navbar-light navbar-bg flex flex-row">
             <!-- Sidebar Toggle Button -->
             <a class="sidebar-toggle js-sidebar-toggle">
                 <i class="hamburger align-self-center"></i>
             </a>
+            
+            <a class="align-self-center text-center" style="flex-grow: 1;">
+                <img src="@(string.IsNullOrEmpty(ViewData["CompanyLogoFilePath"]?.ToString())
+                 ? Url.Content("~/img/companyLogoImages/defaultCompanyLogo.jpeg")
+                 : Url.Content("~/img/companyLogoImages/" + ViewData["CompanyLogoFilePath"]))"
+                     alt="company-logo"
+                     style="max-height:3rem; max-width:7rem;" />
+            </a>
 
-            <div class="navbar-collapse collapse">
+            <div class="navbar-collapse collapse" sytle="flex-grow: 0;">
                 <ul class="navbar-nav navbar-align">
 
                     <!-- Notification  -->

@@ -2135,6 +2135,9 @@ public partial class MedisatErpDbContext : DbContext
 }
 
 
-
-
-
+Create online applicants page with approval or disapproval logic
+Intergrate the API
+Add lyfex logo in the Company system
+Add reason on appointment page
+Clients table update, make gender, nationality, country, maritial status dropdowns and add emergency person relationship, whatsapp no.
+Solve delete error 

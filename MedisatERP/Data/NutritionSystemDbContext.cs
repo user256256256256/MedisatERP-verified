@@ -85,6 +85,8 @@ public partial class NutritionSystemDbContext : DbContext
 
     public virtual DbSet<WorkplaceLookup> WorkplaceLookups { get; set; }
 
+    public virtual DbSet<OnlineApplicants> OnlineApplicants { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=MedisatConnection");
 
@@ -841,9 +843,25 @@ public partial class NutritionSystemDbContext : DbContext
                 .HasMaxLength(100);
         });
 
+        modelBuilder.Entity<OnlineApplicants>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__OnlineApplicants__Id");
+            entity.ToTable("OnlineApplicants", "dbo");
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.FirstName).IsRequired().HasMaxLength(255).IsUnicode(true);
+            entity.Property(e => e.LastName).IsRequired().HasMaxLength(255).IsUnicode(true);
+            entity.Property(e => e.Email).HasMaxLength(255).IsUnicode(true).IsRequired(false);
+            entity.Property(e => e.MobilePhoneNo).HasMaxLength(20).IsUnicode(true).IsRequired(false);
+            entity.Property(e => e.Address).HasMaxLength(500).IsUnicode(true).IsRequired(false);
+            entity.Property(e => e.Age).IsRequired(false);
+            entity.Property(e => e.Reason).HasMaxLength(500).IsUnicode(true).IsRequired(false);
+            entity.Property(e => e.PreferredSchedule).HasColumnType("date").IsRequired(false);
+            entity.Property(e => e.HowDidYouHearAboutUs).HasMaxLength(255).IsUnicode(true).IsRequired(false);
+            entity.Property(e => e.AcceptPrivacyPolicies).IsRequired();
+            entity.Property(e => e.CreatedDate).HasDefaultValueSql("GETDATE()").IsRequired();
+        });
+
         OnModelCreatingPartial(modelBuilder);
-
-
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

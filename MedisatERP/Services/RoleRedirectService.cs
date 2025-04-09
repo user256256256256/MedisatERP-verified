@@ -44,9 +44,9 @@ namespace MedisatERP.Services
             string redirectUrl = null;
 
             // Role-based redirection logic
-            if (roles.Contains("System Administrator"))
+            if (roles.Contains("System Manager"))
             {
-                Console.WriteLine("User is a System Administrator.");
+                Console.WriteLine("User is a System Manager.");
                 if (userId != null)
                 {
                     var encodedUserId = HashingHelper.EncodeString(userId);
@@ -54,9 +54,9 @@ namespace MedisatERP.Services
                     redirectUrl = $"/AdministratorSystem/SystemManager/Index/{encodedUserId}";
                 }
             }
-            else if (roles.Contains("Nutrition Company Administrator"))
+            else if (roles.Contains("System Administrator"))
             {
-                Console.WriteLine("User is a Nutrition Company Administrator.");
+                Console.WriteLine("User is a System Administrator.");
 
                 if (userId != null)
                 {
@@ -68,7 +68,7 @@ namespace MedisatERP.Services
             }
             else
             {
-                Console.WriteLine("User is neither a System Administrator nor a Nutrition Company Administrator.");
+                Console.WriteLine("User is neither a System Administrator nor a System Administrator.");
                 return new OkObjectResult(new { success = true, mresponse = "Login successful" });
             }
 
@@ -110,9 +110,9 @@ namespace MedisatERP.Services
                 Console.WriteLine($"AspNetUser found, UserId: {userId}");
 
                 string redirectUrl = null;
-                if (roles.Contains("System Administrator") && roles.Contains("Nutrition Company Administrator"))
+                if (roles.Contains("System Manager") && roles.Contains("System Administrator"))
                 {
-                    Console.WriteLine("User is a System Administrator and a Nutrition Company Administrator.");
+                    Console.WriteLine("User is a System Manager and a System Administrator.");
                     if (!string.IsNullOrEmpty(userId))
                     {
                         var encodedUserId = HashingHelper.EncodeString(userId);

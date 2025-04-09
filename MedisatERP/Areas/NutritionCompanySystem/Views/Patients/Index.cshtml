@@ -15,6 +15,7 @@
         companyId = ViewData["CompanyId"] as Guid?;
     }
 
+
 }
 
 
@@ -57,6 +58,7 @@
             columns.AddFor(m => m.Email).Caption("Email").Visible(true);
             columns.AddFor(m => m.PhoneNumber).Caption("Phone").Visible(true);
             columns.AddFor(m => m.EmergencyContactName).Caption("Emergency Contact Name").Visible(true);
+            // Add Emergency contact relationship
             columns.AddFor(m => m.EmergencyContactPhone).Caption("Emergency Contact Phone").Visible(true);
             columns.AddFor(m => m.MaritalStatus).Caption("Marital Status").Visible(true);
             columns.AddFor(m => m.Nationality).Caption("Nationality").Visible(true);
@@ -71,7 +73,7 @@
             columns.AddFor(m => m.Address.Country).Caption("Country").Visible(true);
 
             // Company Info
-            columns.AddFor(m => m.CompanyId).Caption("Company ID").Visible(true);
+            columns.AddFor(m => m.CompanyId).Caption("Company ID").Visible(false);
 
             // Profile popup
             columns.Add()
@@ -126,9 +128,9 @@
             .Items(groupItems =>
             {
 
-                groupItems.AddSimpleFor(m => m.ClientName);
+                groupItems.AddSimpleFor(m => m.ClientName); // Distribute to Sir Name and Given name 
                 groupItems.AddSimpleFor(m => m.DateOfBirth);
-                groupItems.AddSimpleFor(m => m.Gender);
+                groupItems.AddSimpleFor(m => m.Gender); // make a dropdown
                 groupItems.AddSimpleFor(m => m.Email);
                 groupItems.AddSimpleFor(m => m.PhoneNumber);
                 groupItems.AddSimpleFor(m => m.Address.Street);
@@ -136,10 +138,11 @@
                 groupItems.AddSimpleFor(m => m.Address.State);
                 groupItems.AddSimpleFor(m => m.Address.PostalCode);
                 groupItems.AddSimpleFor(m => m.Address.Country);
-                groupItems.AddSimpleFor(m => m.EmergencyContactName);
+                groupItems.AddSimpleFor(m => m.EmergencyContactName); 
+                // Add Emergency contact relationship
                 groupItems.AddSimpleFor(m => m.EmergencyContactPhone);
-                groupItems.AddSimpleFor(m => m.MaritalStatus);
-                groupItems.AddSimpleFor(m => m.Nationality);
+                groupItems.AddSimpleFor(m => m.MaritalStatus); // make a dropdown
+                groupItems.AddSimpleFor(m => m.Nationality); // nationality
                 groupItems.AddSimpleFor(m => m.CreatedAt).Visible(false);
                 groupItems.AddSimpleFor(m => m.CompanyId).Visible(false);
             });

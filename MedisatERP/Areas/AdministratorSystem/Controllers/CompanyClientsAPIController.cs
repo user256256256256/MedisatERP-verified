@@ -1,5 +1,4 @@
-﻿
-using DevExtreme.AspNet.Data;
+﻿using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -23,12 +22,9 @@ namespace MedisatERP.Controllers
     public class CompanyClientsAPIController : Controller
     {
         private readonly AdministratorSystemDbContext _administratorSystemDbContext;
-        private readonly SharedDbContext _sharedDbContext;
-
         public CompanyClientsAPIController(AdministratorSystemDbContext administratorSystemDbContext, SharedDbContext sharedDbContext)
         {
             _administratorSystemDbContext = administratorSystemDbContext;
-            _sharedDbContext = sharedDbContext;
         }
 
         /// <summary>
@@ -330,6 +326,7 @@ namespace MedisatERP.Controllers
                 // Retrieve the company client to delete
                 var model = await _administratorSystemDbContext.CompanyClients
                     .Include(c => c.Address) // Ensure Address data is eagerly loaded
+                    .Include(c => c.Appointments) // Include appointments related to this client
                     .FirstOrDefaultAsync(item => item.ClientId == key);
 
                 // Check if the model is null
@@ -344,6 +341,7 @@ namespace MedisatERP.Controllers
                 // Log the model that was found for deletion
                 Console.WriteLine($"Found CompanyClient with ID: {key}. Address exists: {model.Address != null}");
 
+                
                 // Remove the associated address, if it exists
                 if (model.Address != null)
                 {
@@ -386,6 +384,7 @@ namespace MedisatERP.Controllers
                 return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
             }
         }
+
 
 
         [HttpGet]

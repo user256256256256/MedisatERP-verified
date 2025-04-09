@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
         connectedCallback() {
             this.innerHTML = `
                 <div class="text-center mt-4">
-                    <h3>MEDISAT ERP</h3>
+                    <img class="welcome-logo" src="/img/companyLogoImages/logo-2-tp.png" alt="medisat-logo-1" style="max-height:8rem; max-width:8rem;" />
                  </div>
             `;
         }
@@ -19,7 +19,9 @@ document.addEventListener('DOMContentLoaded', function () {
             this.innerHTML = `
                 <!-- Sidebar Brand (Logo) -->
                 <a class="sidebar-brand" href="/">
-                    <center><span class="align-middle">MEDISAT ERP </span></center>
+                    <center>
+                        <img class="welcome-logo" src="/img/companyLogoImages/logo-1.jpg" alt="medisat-logo-1" style="max-height:10rem; max-width:10rem;" />
+                    </center>
                 </a>
             `;
         }
