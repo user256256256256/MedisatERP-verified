@@ -1,4 +1,4 @@
-﻿xnamespace MedisatERP.Services
+﻿namespace MedisatERP.Services
 {
 
     public interface IRoleRedirectService
