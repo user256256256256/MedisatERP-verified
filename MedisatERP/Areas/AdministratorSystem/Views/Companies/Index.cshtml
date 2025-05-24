@@ -1,0 +1,98 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Models
+@model AspNetUser
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Companies";
+    var userId = Model.Id;
+}
+
+<!-- Section Title Card -->
+<div class="card col-12 card-title">
+    <center><span><i data-feather="briefcase"></i>COMPANIES</span></center>
+</div>
+
+<div>
+    @Html.Partial("~/Areas/AdministratorSystem/Views/Shared/DevExtreme/_CompanyTabPanel.cshtml")
+</div>
+
+<div class="card" id="companyGrid">
+    @(
+        Html.DevExtreme().DataGrid<Company>()
+        .ShowBorders(true)
+        .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId")
+        .InsertAction("Post")
+        .UpdateAction("Put")
+        .DeleteAction("Delete"))
+        .Columns(columns =>
+        {
+            columns.AddFor(m => m.CompanyName).Caption("Company Name");
+            columns.AddFor(m => m.ContactPerson).Caption("Contact Person");
+            columns.AddFor(m => m.ContactPersonPhone).Caption("Phone");
+            columns.AddFor(m => m.CompanyEmail).Caption("Email");
+            columns.AddFor(m => m.CompanyPhone).Caption("Company Phone");
+            columns.AddFor(m => m.Country).Caption("Country").Lookup(lookup => lookup.DataSource(Enum.GetValues(typeof(MedisatERP.Areas.AdministratorSystem.Data.Enum.Countries)).Cast<MedisatERP.Areas.AdministratorSystem.Data.Enum.Countries>().Select(e => new { Name = e.ToString() })).DisplayExpr("Name").ValueExpr("Name")).CellTemplate(@<text><div><%- value %></div>  </text>);
+            columns.AddFor(m => m.Status).Caption("Status").AllowEditing(false);
+            columns.AddFor(m => m.CreatedAt).Caption("Created At").AllowEditing(false);
+            columns.AddFor(m => m.CompanyInitials).Caption("Initials");
+            columns.AddFor(m => m.CompanyWebsite).Caption("Website");
+            columns.AddFor(m => m.Street).Caption("Street");
+            columns.AddFor(m => m.City).Caption("City");
+            columns.AddFor(m => m.State).Caption("State");
+            columns.AddFor(m => m.PostalCode).Caption("Postal Code");
+            columns.AddFor(m => m.CompanyLogoFilePath).AllowEditing(false).Caption("Company Logo").Width(100).AllowFiltering(false).AllowSorting(false).CellTemplate(@<text><div><img src="<%- value && value.length > 0 ? '/img/companyLogoImages/' + value : '/img/companyLogoImages/defaultCompanyLogo.jpeg' %>" alt="Company Logo" class="company-logo" /></div></text>);
+            columns.AddFor(m => m.AboutCompany).Caption("About").CellTemplate(@<text><div class="text-wrap text-break" style="max-height: 100px; overflow: auto;"><%- value %></div></text>);
+            columns.AddFor(m => m.Motto).Caption("Motto");
+            columns.Add()
+            .Type(GridCommandColumnType.Buttons)
+            .Caption("Manage")
+            .Name("ManageButton")
+            .Buttons(b =>
+            {
+                b.Add().Name(GridColumnButtonName.Edit).Hint("Edit Company");
+                b.Add().Name(GridColumnButtonName.Delete).Hint("Delete Company");
+                b.Add().Hint("Company Profile").Icon("mediumiconslayout").OnClick("showCompanyProfile");
+                b.Add().Name("Select").Hint("Select Company").Icon("fas fa-eye").OnClick("onSelectCompany");
+            });
+        })
+        .Paging(p => p.PageSize(10))
+        .FilterRow(f => f.Visible(true))
+        .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search Companies..."))
+        .ShowColumnLines(true)
+        .ShowRowLines(true)
+        .RowAlternationEnabled(true)
+        .ColumnHidingEnabled(true)
+        .ColumnAutoWidth(true)
+        .OnFocusedRowChanged("onMainRowChanged")
+        .Selection(s => s.Mode(SelectionMode.Multiple))
+        .FocusedRowEnabled(true)
+        .HeaderFilter(f => f.Visible(true))
+        .GroupPanel(p => p.Visible(true))
+        .Grouping(g => g.AutoExpandAll(true))
+        .RemoteOperations(true)
+        .Summary(s => s
+        .TotalItems(totalItems =>
+        {
+            totalItems.AddFor(m => m.CompanyName).SummaryType(SummaryType.Count);
+        })
+        .GroupItems(groupItems =>
+        {
+            groupItems.Add().SummaryType(SummaryType.Count);
+        })
+        )
+        .Editing(e => e
+        .AllowAdding(true)
+        .AllowUpdating(true)
+        .AllowDeleting(true)
+        .UseIcons(true)
+        .Mode(GridEditMode.Popup)
+        .Popup(p => p
+        .Title("Company Details")
+        .Height(450)
+        .ShowTitle(true)
+        )
+        )
+        )
+</div>
+

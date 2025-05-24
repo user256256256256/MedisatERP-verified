@@ -11,17 +11,18 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using MedisatERP.Data;
-using MedisatERP.Areas.AdministratorSystem.Models;
+
 using Microsoft.Data.SqlClient;
+using MedisatERP.Models;
 
 namespace MedisatERP.Controllers
 {
     [Route("api/[controller]/[action]")]
     public class SubscriptionPlansAPIController : Controller
     {
-        private AdministratorSystemDbContext _context;
+        private ApplicationDbContext _context;
 
-        public SubscriptionPlansAPIController(AdministratorSystemDbContext context) {
+        public SubscriptionPlansAPIController(ApplicationDbContext context) {
             _context = context;
         }
 

@@ -1,0 +1,126 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Models
+@model AspNetUser
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "User Accounts";
+    var userId = Model.Id;
+}
+
+<!-- Section Title Card -->
+<div class="card col-12 card-title">
+    <center><span><i data-feather="edit-2"></i>USER ACCOUNTS</span></center>
+</div>
+
+<div class="form-group col-md-4">
+    @(Html.DevExtreme().SelectBox()
+        .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId"))
+        .DisplayExpr("CompanyName")
+        .ValueExpr("CompanyId")
+        .SearchEnabled(true)
+        .ShowClearButton(true)
+        .Placeholder("Filter by Company:")
+        .Width("100%")
+        .ID("txt_company")
+        .OnValueChanged(@<text>
+        function(e){
+        const grid = $('#gv_userList').dxDataGrid('instance');
+        grid.refresh();  
+        }
+    </text>)
+        )
+</div>
+
+<div class="card" id="userGrid">
+    @(
+        Html.DevExtreme().DataGrid<AspNetUser>()
+        .ID("gv_userList")
+        .ShowBorders(true)
+        .DataSource(d => d.Mvc().Controller("AspNetUsersAPI").LoadAction("Get").Key("Id").LoadParams(new {companyId = new JS("getCompanyId") })
+        .InsertAction("Post")
+        .UpdateAction("Put")
+        .DeleteAction("Delete"))
+        .Columns(columns =>
+        {
+            columns.AddFor(m => m.UserName).Caption("Username");
+            columns.AddFor(m => m.Email).Caption("Email");
+            columns.AddFor(m => m.PhoneNumber).Caption("User Contact");
+            columns.AddFor(m => m.Name).Caption("Full Name");
+            columns.AddFor(m => m.Gender).Caption("Gender").Lookup(lookup => lookup.DataSource(Enum.GetValues(typeof(MedisatERP.Areas.AdministratorSystem.Data.Enum.Gender)).Cast<MedisatERP.Areas.AdministratorSystem.Data.Enum.Gender>().Select(e => new { Name = e.ToString() })).DisplayExpr("Name").ValueExpr("Name")).CellTemplate(@<text><div><%- value %></div>  </text>);
+            columns.AddFor(m => m.Country).Caption("Country").Lookup(lookup => lookup.DataSource(Enum.GetValues(typeof(MedisatERP.Areas.AdministratorSystem.Data.Enum.Countries)).Cast<MedisatERP.Areas.AdministratorSystem.Data.Enum.Countries>().Select(e => new { Name = e.ToString() })).DisplayExpr("Name").ValueExpr("Name")).CellTemplate(@<text><div><%- value %></div>  </text>);
+            columns.AddFor(m => m.Dob).Caption("Date of Birth");
+            columns.AddFor(m => m.CreatedAt).Caption("Created At").AllowEditing(false);
+            columns.AddFor(m => m.UpdatedAt).Caption("Updated At").AllowEditing(false);
+            columns.AddFor(m => m.EmailConfirmed).Caption("Email Confirmed");
+            columns.AddFor(m => m.PhoneNumberConfirmed).Caption("Phone Number Confirmed");
+            columns.AddFor(m => m.TwoFactorEnabled).Caption("Two-Factor Enabled");
+            columns.AddFor(m => m.LockoutEnabled).Caption("Lockout Enabled");
+            columns.AddFor(m => m.AccessFailedCount).Caption("Access Failed Count").AllowEditing(false);
+            columns.AddFor(m => m.ProfileImagePath).AllowEditing(false).Caption("Profile Image").Width(100).CellTemplate(@<text><div> <img src="<%- value && value.length > 0 ? '/img/userProfileImages/' + value : '/img/avatars/avatar.jpg' %>" alt="Profile Image" class="rounded-circle user-profile-img" /></div></text>);
+            columns.AddFor(m => m.BioData).Caption("Bio Info").CellTemplate(@<text><div class="text-wrap text-break overflow-hidden" style="max-height: 100px; display: block;"><%- value %></div></text>);
+            columns.Add()
+            .Type(GridCommandColumnType.Buttons)
+            .Caption("Manage")
+            .Name("ManageButton")
+            .Buttons(b =>
+            {
+                b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
+                b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
+                b.Add().Hint("Account Status").Icon("fas fa-user-shield").OnClick("toggleAccountStatus");
+            });
+        })
+        .Paging(p => p.PageSize(10))
+        .FilterRow(f => f.Visible(true))
+        .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
+        .ShowColumnLines(true)
+        .ShowRowLines(true)
+        .RowAlternationEnabled(true)
+        .ColumnHidingEnabled(true)
+        .ColumnAutoWidth(true)
+        .Selection(s => s.Mode(SelectionMode.Multiple))
+        .FocusedRowEnabled(true)
+        .HeaderFilter(f => f.Visible(true))
+        .GroupPanel(p => p.Visible(true))
+        .Grouping(g => g.AutoExpandAll(false))
+        .RemoteOperations(true)
+        .Summary(s => s
+        .TotalItems(totalItems =>
+        {
+            totalItems.AddFor(m => m.UserName).SummaryType(SummaryType.Count);
+        })
+        .GroupItems(groupItems =>
+        {
+            groupItems.Add().SummaryType(SummaryType.Count);
+        })
+        )
+        .Editing(e => e
+        .AllowAdding(true)
+        .AllowUpdating(true)
+        .AllowDeleting(true)
+        .UseIcons(true)
+        .Mode(GridEditMode.Popup)
+        .Popup(p => p
+        .Title("User Account")
+        .Height(450)
+        .ShowTitle(true)
+        .Position(pos => pos
+        .My(HorizontalAlignment.Center, VerticalAlignment.Center)
+        .At(HorizontalAlignment.Center, VerticalAlignment.Center)
+        .Of(new JS("window"))
+        )
+        )
+        )
+        )
+</div>
+
+<script>
+    function toggleAccountStatus() {
+        return true;
+    }
+    
+    function getCompanyId() {
+        var companyId = $("#txt_company").dxSelectBox('option', 'value');
+        return companyId || null;
+    }
+</script>

@@ -1,53 +1,47 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MedisatERP.Data;  // Assuming you have MedisatErpDbContext
-using MedisatERP.Services;  // Assuming you have HashingHelper class
+using MedisatERP.Data;  
+using MedisatERP.Services;  
 using Microsoft.EntityFrameworkCore;
 
 namespace MedisatERP.Areas.AdministratorSystem.Controllers
 {
     [Area("AdministratorSystem")]
-    [Route("AdministratorSystem/[controller]/[action]/{userId?}")]
-    public class FeedbackController : Controller
+    [Route("AdministratorSystem/[controller]/[action]")]
+    public class FeedbacksController : Controller
     {
-        private readonly AdministratorSystemDbContext _dbContext;
+        private readonly UserService _userService;
+        private readonly ExceptionHandlerService _exceptionHandlerService;
+        private readonly ILogger<FeedbacksController> _logger;
+        private readonly ValidateSessionService _validateSessionService;
 
-        // Constructor to inject DbContext
-        public FeedbackController(AdministratorSystemDbContext dbContext)
+        public FeedbacksController(UserService userService, ExceptionHandlerService exceptionHandlerService, ILogger<FeedbacksController> logger, ValidateSessionService validateSessionService)
         {
-            _dbContext = dbContext;
+            _userService = userService;
+            _exceptionHandlerService = exceptionHandlerService;
+            _logger = logger;
+            _validateSessionService = validateSessionService;
         }
-
-        // GET: AdministratorSystem/Feedback/Index/{userId}
-        public async Task<IActionResult> Index(string userId)
+        public async Task<IActionResult> Index()
         {
-            if (string.IsNullOrEmpty(userId))
+            var redirectResult = _validateSessionService.ValidateUserSession();
+            if (redirectResult != null)
             {
-                return BadRequest("User ID is required.");
+                return redirectResult;
             }
+
+            string userId = HttpContext.Session.GetString("UserId");
 
             try
             {
-                // Decode the userId from the URL
-                var decodedUserId = HashingHelper.DecodeString(userId);
+                var user = await _userService.GetUserAsync(userId);
 
-                // Retrieve the user using the decodedUserId from the db
-                var user = await _dbContext.AspNetUsers
-                                           .Where(c => c.Id == decodedUserId)
-                                           .FirstOrDefaultAsync();
-
-                if (user == null)
-                {
-                    return NotFound(); // Return a 404 if the user is not found
-                }
-
-                // Pass the user model to the view, which will be available in the layout
                 return View(user);
             }
-            catch (FormatException)
+            catch (Exception ex)
             {
-                // Handle invalid Base64 string
-                return BadRequest("Invalid User ID format.");
+                return _exceptionHandlerService.HandleException(ex, this);
             }
         }
     }
+
 }

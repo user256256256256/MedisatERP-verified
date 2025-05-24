@@ -2,86 +2,100 @@
     ViewData["Title"] = "Login";
 }
 
-<div class="container-fluid position-relative d-flex p-0 h-100 authentication-bg">
-    <div class="container-fluid">
-        <div class="row justify-content-center align-items-center h-100">
-            <!-- Column for the login card -->
-            <div class="col-sm-10 col-md-4 col-lg-3 mx-auto">
+<div class="container-fluid position-relative d-flex p-0 h-100 authentication-bg justify-content-center align-items-center">
+    <div class="col-sm-10 col-md-4 col-lg-3 mx-auto">
+        <div class="d-flex flex-column justify-content-center">
 
-                <!-- Custom template --See ~wwwroot/js/medista.custom-elements.js WelcomeLogo -->
+            <!-- Custom template --See ~wwwroot/js/medisat.custom-elements.js WelcomeLogo -->
+            <welcome-logo></welcome-logo>
 
-                <welcome-logo></welcome-logo>
+            <!-- Card for the login form -->
+            <div class="card shadow">
+                <div class="card-body">
+                    <!-- Welcome message -->
+                    <h5 class="text-center mb-4">Welcome Back</h5>
+                    <div class="m-sm-3">
+                        <form>
+                            <!-- Username or Email input field -->
+                            <div class="mb-3">
+                                <label class="form-label" for="txt_username">Username or Email</label>
+                                @(Html.DevExtreme().TextBox()
+                                    .Width("100%")
+                                    .Height(40)
+                                    .ID("textUsernameOrEmail")
+                                    .Placeholder("Enter your username or email")
+                                    )
+                            </div>
+                            <!-- Password input field -->
+                            <div class="mb-3 position-relative">
+                                <label class="form-label" for="txt_password">Password</label>
+                                @(Html.DevExtreme().TextBox()
+                                    .Width("100%")
+                                    .Height(40)
+                                    .Mode(TextBoxMode.Password)
+                                    .ID("textPassword")
+                                    .Placeholder("Enter your password")
+                                    )
+                                <!-- Checkbox to toggle password visibility -->
 
-                <!-- Card for the login form -->
-                <div class="card shadow">
-                    <div class="card-body">
-                        <!-- Welcome message -->
-                        <h5 class="text-center mb-4">Welcome Back</h5>
-                        <div class="m-sm-3">
-                            <form>
-                                <!-- Email input field -->
-                                <div class="mb-3">
-                                    <label class="form-label" for="txt_username">Email</label>
-                                    @(Html.DevExtreme().TextBox()
-                                        .Width("100%")
-                                        .Height(40)
-                                        .ID("textEmail")
-                                        .Placeholder("Enter your email")
-                                        )
-                                </div>
-                                <!-- Password input field -->
-                                <div class="mb-3">
-                                    <label class="form-label" for="txt_password">Password</label>
-                                    @(Html.DevExtreme().TextBox()
-                                        .Width("100%")
-                                        .Height(40)
-                                        .Mode(TextBoxMode.Password)
-                                        .ID("textPassword")
-                                        .Placeholder("Enter your password")
-                                        )
-                                </div>
-                                <!-- Forgot password link -->
-                                <div class="mb-3 text-end">
-                                    <a class="form-check-label text-small" asp-controller="ForgotPassword" asp-action="Index">Forgot Password?</a>
+                                <div class="form-check position-absolute" style="font-size:0.85rem">
+                                    <input type="checkbox" id="showPasswordCheckbox" class="form-check-input" onclick="togglePasswordVisibility()">
+                                    <label class="form-check-label" for="showPasswordCheckbox"> <small>Show password</small> </label>
                                 </div>
 
-                                <!-- Login button -->
-                                <div class="d-grid gap-2 mt-4">
-                                    @(Html.DevExtreme().Button()
-                                        .Text("LOGIN")
-                                        .Type(ButtonType.Default)
-                                        .Icon("arrowright")
-                                        .StylingMode(ButtonStylingMode.Outlined)
-                                        .Width("100%")
-                                        .Height(40)
-                                        .OnClick("loginProc")
-                                        .ID("loginButton")
-                                        )
-                                </div>
-                            </form>
-                        </div>
+                            </div>
+
+                            <!-- Forgot password link -->
+                            <div class="mb-3 text-end">
+                                <a class="form-check-label text-small" asp-controller="PasswordReset" asp-action="Index">Forgot Password?</a>
+                            </div>
+
+                            <!-- Login button -->
+                            <div class="d-grid gap-2 mt-4">
+                                @(Html.DevExtreme().Button()
+                                    .Text("LOGIN")
+                                    .Type(ButtonType.Default)
+                                    .Icon("arrowright")
+                                    .StylingMode(ButtonStylingMode.Outlined)
+                                    .Width("100%")
+                                    .Height(40)
+                                    .OnClick("loginProc")
+                                    .ID("loginButton")
+                                    )
+                            </div>
+                        </form>
                     </div>
                 </div>
-
-                <!-- Custom template --See ~wwwroot/js/medista.custom-elements.js WelcomeFooter -->
-                <welcome-footer></welcome-footer>
-
             </div>
+
+            <!-- Custom template --See ~wwwroot/js/medisat.custom-elements.js WelcomeFooter -->
+            <welcome-footer></welcome-footer>
+
         </div>
     </div>
+
 </div>
 
 <script>
+    function togglePasswordVisibility() {
+        const passwordTextBox = DevExpress.ui.dxTextBox.getInstance(document.getElementById('textPassword'));
+        const isChecked = document.getElementById('showPasswordCheckbox').checked;
+        passwordTextBox.option("mode", isChecked ? "text" : "password");
+    }
+
+    var usernameOrEmailValue = '';
+    var passwordValue = '';
+
     function loginProc() {
         // Retrieve values from the input fields
-        var username = $("#textEmail").dxTextBox('option', 'value');
-        var password = $("#textPassword").dxTextBox('option', 'value');
+        var identifier = usernameOrEmailValue; // now just username or email
+        var password = passwordValue;
 
         // Define the API endpoint
         const url = 'api/LoginAPI/LoginCheck';
 
         // Prepare the data to be sent
-        const data = { email: username, password: password }; // Use 'email' as the key
+        const data = { identifier: identifier, password: password };
 
         // Show loading indicator
         Notiflix.Loading.Dots('Authenticating...');
@@ -116,6 +130,15 @@
             });
     }
 
+    // Add event listeners for input fields
+    document.getElementById('textUsernameOrEmail').addEventListener('input', function (event) {
+        usernameOrEmailValue = event.target.value;
+    });
+
+    document.getElementById('textPassword').addEventListener('input', function (event) {
+        passwordValue = event.target.value;
+    });
+
     // Add an event listener for the Enter key to trigger the login button click
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Enter') {
@@ -123,4 +146,5 @@
             document.getElementById('loginButton').click(); // Trigger the login button click
         }
     });
+
 </script>

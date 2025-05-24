@@ -1,10 +1,11 @@
-﻿@using MedisatERP.Areas.AdministratorSystem.Models
+﻿@using MedisatERP.Models
 @using MedisatERP.Services
 @model AspNetUser
 
+
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    var encodedUserId = HashingHelper.EncodeString(Model.Id);
+    var encodedUserId = TranscodingService.EncodeString(Model.Id);
 }
 
 <div class="wrapper">
@@ -21,45 +22,45 @@
                 <!-- Section Header: MEDISAT CENTER -->
                 <li class="nav-item dropdown">
                     <a href="#" class="sidebar-header nav-link has-dropdown" id="medisatDropdown" data-bs-toggle="collapse" data-bs-target="#medisatDropdownMenu" aria-expanded="false" aria-controls="medisatDropdownMenu">
-                        <span>SYSTEM MANAGEMENT</span>
+                        <span>CRM CENTER</span>
                     </a>
                     <ul class="collapse list-unstyled" id="medisatDropdownMenu">
 
                         <!-- Sidebar Item: Dashboard -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("SystemManager")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "SystemManager", new { area = "AdministratorSystem", userId = encodedUserId })">
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Dashboards", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("Crm", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Crm", "Dashboards", new { area = "AdministratorSystem" })" title="Go to CRM Dashboard" aria-label="CRM Dashboard">
                                 <i class="align-middle" data-feather="sliders"></i>
-                                <span class="align-middle">Dashboard</span>
+                                <span class="align-middle">Crm Dashboard</span>
                             </a>
                         </li>
 
                         <!-- Sidebar Item: Company Info -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Company")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "Company", new { area = "AdministratorSystem", userId = encodedUserId })">
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Companies", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Companies", new { area = "AdministratorSystem" })" title="View Company Information" aria-label="Company Info">
                                 <i class="align-middle" data-feather="briefcase"></i>
-                                <span class="align-middle">Company Info</span>
+                                <span class="align-middle">Companies</span>
                             </a>
                         </li>
 
                         <!-- Sidebar Item: Clients -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Clients")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "Clients", new { area = "AdministratorSystem", userId = encodedUserId })">
-                                <i class="align-middle" data-feather="users"></i>
-                                <span class="align-middle">Clients</span>
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("CompanyClients", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "CompanyClients", new { area = "AdministratorSystem" })" title="View Company Information" aria-label="Company Clients Info">
+                                <i class="align-middle" data-feather="briefcase"></i>
+                                <span class="align-middle">Company Clients</span>
                             </a>
                         </li>
 
                         <!-- Sidebar Item: Feedback -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Feedback")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "Feedback", new { area = "AdministratorSystem", userId = encodedUserId })">
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Feedbacks", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "Feedbacks", new { area = "AdministratorSystem" })" title="View Feedback" aria-label="Feedback">
                                 <i class="align-middle" data-feather="edit-2"></i>
-                                <span class="align-middle">Feedback</span>
+                                <span class="align-middle">Feedbacks</span>
                             </a>
                         </li>
 
                         <!-- Sidebar Item: Data Migration -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("DataMigrations")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "DataMigrations", new { area = "AdministratorSystem", userId = encodedUserId })">
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("DataMigrations", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "DataMigrations", new { area = "AdministratorSystem" })" title="Migrate Data" aria-label="Data Migration">
                                 <i class="align-middle" data-feather="arrow-right-circle"></i>
                                 <span class="align-middle">Data Migration</span>
                             </a>
@@ -71,47 +72,47 @@
                 <!-- Section Header: FINANCE CENTRE -->
                 <li class="nav-item dropdown">
                     <a href="#" class="sidebar-header nav-link has-dropdown" id="subscriptionDropdown" data-bs-toggle="collapse" data-bs-target="#subscriptionDropdownMenu" aria-expanded="false" aria-controls="subscriptionDropdownMenu">
-                        <span>FINANCE CENTRE</span>
+                        <span>SUBSCRIPTIONS CENTRE</span>
                     </a>
                     <ul class="collapse list-unstyled" id="subscriptionDropdownMenu">
 
-                        <!-- Sidebar Item: Dashboard -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("SubscriptionManager")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "SubscriptionManager", new { area = "AdministratorSystem", userId = encodedUserId })">
-                                <i class="align-middle" data-feather="sliders"></i>
-                                <span class="align-middle">Dashboard</span>
+                        <!-- Sidebar Item: Finance -->
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Dashboards", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("Subscriptions", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Subscriptions", "Dashboards", new { area = "AdministratorSystem" })" title="Go to Finance Dashboard" aria-label="Finance Dashboard">
+                                <i class="align-middle" data-feather="dollar-sign"></i>
+                                <span class="align-middle">Subscriptions Dashboard</span>
                             </a>
                         </li>
 
                         <!-- Sidebar Item: Subscriptions -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Subscriptions")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "Subscriptions", new { area = "AdministratorSystem", userId = encodedUserId })">
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Subscriptions", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("Subscriptions", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Subscriptions", "Subscriptions", new { area = "AdministratorSystem" })" title="View Subscriptions" aria-label="Subscriptions">
                                 <i class="align-middle" data-feather="package"></i>
                                 <span class="align-middle">Subscriptions</span>
                             </a>
                         </li>
 
                         <!-- Sidebar Item: Payments -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Payments")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "Payments", new { area = "AdministratorSystem", userId = encodedUserId })">
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Subscriptions", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("Payments", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Payments", "Subscriptions", new { area = "AdministratorSystem" })" title="Process Payments" aria-label="Payments">
                                 <i class="align-middle" data-feather="credit-card"></i>
                                 <span class="align-middle">Payments</span>
                             </a>
                         </li>
 
                         <!-- Sidebar Item: Subscription Logs -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("SubscriptionLogs")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "SubscriptionLogs", new { area = "AdministratorSystem", userId = encodedUserId })">
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Subscriptions", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("SubscriptionLogs", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("SubscriptionLogs", "Subscriptions", new { area = "AdministratorSystem" })" title="View Subscription Logs" aria-label="Subscription Logs">
                                 <i class="align-middle" data-feather="activity"></i>
                                 <span class="align-middle">Subscription Logs</span>
                             </a>
                         </li>
 
                         <!-- Sidebar Item: Trial Notifications -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("TrialNotifications")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "TrialNotifications", new { area = "AdministratorSystem", userId = encodedUserId })">
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Subscriptions", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("Trials", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Trials", "Subscriptions", new { area = "AdministratorSystem" })" title="View Trial Notifications" aria-label="Trial Notifications">
                                 <i class="align-middle" data-feather="bell"></i>
-                                <span class="align-middle">Trial Notifications</span>
+                                <span class="align-middle">Trials</span>
                             </a>
                         </li>
 
@@ -126,18 +127,42 @@
                     <ul class="collapse list-unstyled" id="securityDropdownMenu">
 
                         <!-- Sidebar Item: User Accounts -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("UserAccounts")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "UserAccounts", new { area = "AdministratorSystem", userId = encodedUserId })">
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Dashboards", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("Security", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Security", "Dashboards", new { area = "AdministratorSystem" })" title="Go to Security Dashboard" aria-label="Finance Dashboard">
+                                <i class="align-middle" data-feather="lock"></i>
+                                <span class="align-middle">Security Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: User Accounts -->
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("UserAccounts", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("UserAccounts", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("UserAccounts", "UserAccounts", new { area = "AdministratorSystem" })" title="Manage User Accounts" aria-label="User Accounts">
                                 <i class="align-middle" data-feather="user"></i>
                                 <span class="align-middle">User Accounts</span>
                             </a>
                         </li>
 
-                        <!-- Sidebar Item: Activity Log -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("AuditLogs")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "AuditLogs", new { area = "AdministratorSystem", userId = encodedUserId })">
-                                <i class="align-middle" data-feather="list"></i>
-                                <span class="align-middle">Activity Log</span>
+                        <!-- Sidebar Item: RBAC -->
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("UserAccounts", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("Rbac", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Rbac", "UserAccounts", new { area = "AdministratorSystem" })" title="Role-Based Access Control Management" aria-label="User Accounts">
+                                <i class="align-middle" data-feather="shield"></i>
+                                <span class="align-middle">RBAC</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: RBAC -->
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("UserAccounts", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("Claims", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Claims", "UserAccounts", new { area = "AdministratorSystem" })" title="User claims management" aria-label="User Accounts">
+                                <i class="align-middle" data-feather="key"></i>
+                                <span class="align-middle">User claims</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Audit Logs -->
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("AuditLogs", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Index", "AuditLogs", new { area = "AdministratorSystem" })" title="View Feedback" aria-label="AuditLogs">
+                                <i class="align-middle" data-feather="edit-2"></i>
+                                <span class="align-middle">Audit Logs</span>
                             </a>
                         </li>
 
@@ -162,18 +187,18 @@
                 <i class="hamburger align-self-center"></i>
             </a>
 
-            <div class="navbar-collapse collapse" style="flex-grow: 1;">
+            <div class="navbar-collapse collapse">
                 <ul class="navbar-nav navbar-align">
 
-                    <!-- Notification  -->
+                    <!-- Notification -->
                     <li class="nav-item dropdown" id="alertsDropdown">
-                        <a class="nav-icon dropdown-toggle" href="@Url.Action("Index", "Notifications", new { area = "AdministratorSystem", userId = encodedUserId })" >
+                        <a class="nav-icon dropdown-toggle" href="@Url.Action("Notifications", "UserManagement", new { area = "AdministratorSystem" })"
+                           aria-haspopup="true" aria-expanded="false">
                             <div class="position-relative">
                                 <i class="align-middle" data-feather="bell"></i>
                                 <span class="indicator">4</span>  <!-- Notification count -->
                             </div>
                         </a>
-
                     </li>
 
                     <!-- User Account Dropdown -->
@@ -193,16 +218,22 @@
 
                         <!-- Dropdown Menu -->
                         <div class="dropdown-menu dropdown-menu-end dropdownProfile" aria-labelledby="userDropdown">
-                            <a class="dropdown-item" href="@Url.Action("Index", "UserProfile", new { area = "AdministratorSystem", userId = encodedUserId })">
+                            <a class="dropdown-item" href="@Url.Action("UserProfile", "UserManagement", new { area = "AdministratorSystem" })"
+                               aria-label="Go to Profile">
                                 <i class="align-middle me-1" data-feather="user"></i> Profile
                             </a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="@Url.Action("Index", "UserSettingz", new { area = "AdministratorSystem", userId = encodedUserId })">
+                            <a class="dropdown-item" href="@Url.Action("UserSettings", "UserManagement", new { area = "AdministratorSystem" })"
+                               aria-label="Go to Settings">
                                 <i class="align-middle me-1" data-feather="settings"></i> Settings
                             </a>
                             <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="@Url.Action("Help", "UserManagement", new { area = "AdministratorSystem" })" aria-label="Help Section">
+                                <i class="align-middle me-1" data-feather="help-circle"></i> Help
+                            </a>
+                            <div class="dropdown-divider"></div>
                             <!-- Log out option with Javascript functionality -->
-                            <a class="dropdown-item log-out" href="javascript:;" onclick="Logout()">
+                            <a class="dropdown-item log-out" href="javascript:;" onclick="Logout()" aria-label="Log out">
                                 <i class="align-middle me-1" data-feather="log-out"></i> Log out
                             </a>
                         </div>
@@ -216,42 +247,51 @@
         <!-- Logout function -->
         <script>
             function Logout() {
-                var encodedUserId = '@encodedUserId';  // Assuming this is populated with the user ID from Razor.
+                // Show confirmation dialog using Notiflix
+                Notiflix.Confirm.Show(
+                    'Confirm Logout', // Title of the dialog
+                    'Are you sure you want to log out?', // Message to the user
+                    'Yes', // Confirm button text
+                    'No', // Cancel button text
+                    function () { // If "Yes" is clicked, proceed with logout
+                        var encodedUserId = '@encodedUserId';  // Assuming this is populated with the user ID from Razor.
 
-                // Show loading indicator with Notiflix
-                Notiflix.Loading.Dots('Logging out...');
+                        // Show loading indicator with Notiflix using Bars style
+                        Notiflix.Loading.Pulse('Logging out...');
 
-                $.ajax({
-                    url: '/api/LogoutAPI/LogoutCheck',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(encodedUserId),  // Send the userId as a plain string in the request body
-                    success: function (json) {
-                        // Remove loading indicator
-                        Notiflix.Loading.Remove(500);
+                        // Perform the AJAX request to log out
+                        $.ajax({
+                            url: '/api/LogoutAPI/LogoutCheck',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(encodedUserId),  // Send the userId as a plain string in the request body
+                            success: function (json) {
+                                // Remove loading indicator
+                                Notiflix.Loading.Remove(500);
 
-                        if (json.success) {                           
-                            // Redirect to the root URL or provided redirect URL
-                            window.location.href = json.redirectUrl || '/';
-                        } else {
-                            // Notify failure with Notiflix
-                            Notiflix.Report.Failure('Logout Failed', json.message, 'OK');
-                        }
+                                if (json.success) {
+                                    // Redirect to the root URL or provided redirect URL
+                                    window.location.href = json.redirectUrl || '/';
+                                } else {
+                                    // Notify failure with Notiflix
+                                    Notiflix.Report.Failure('Logout Failed', json.message, 'OK');
+                                }
+                            },
+                            error: function (jqxhr, textStatus, error) {
+                                // Remove loading indicator on failure
+                                Notiflix.Loading.Remove(500);
+
+                                // Notify failure with Notiflix
+                                Notiflix.Report.Failure('Logout Failed', 'An error occurred while logging out: ' + textStatus + ', ' + error, 'OK');
+                            }
+                        });
                     },
-                    error: function (jqxhr, textStatus, error) {
-                        // Remove loading indicator on failure
-                        Notiflix.Loading.Remove(500);
-
-                        // Notify failure with Notiflix
-                        Notiflix.Report.Failure('Logout Failed', 'An error occurred while logging out: ' + textStatus + ', ' + error, 'OK');
+                    function () { // If "No" is clicked, do nothing
+                        Notiflix.Notify.Info('Logout Cancelled'); // Optionally, show a "Cancelled" message
                     }
-                });
+                );
             }
         </script>
-
-
-
-
 
         <!-- Main Content Area -->
         <main class="content">

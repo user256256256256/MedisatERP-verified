@@ -1,0 +1,485 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Models
+@model AspNetUser
+
+@{
+    var userId = Model.Id;
+}
+
+<script>
+    window.jsPDF = window.jspdf.jsPDF;
+</script>
+
+<div>
+    @(
+        Html.DevExtreme().Popup()  
+        .ID("pop_comp_profile")  
+        .Width("80%")  
+        .Height("550")  
+        .ShowTitle(true)  
+        .Title("Company Profile")  
+        .Visible(false)  
+        .ShowCloseButton(true)  
+        .DragEnabled(true)  
+        .DeferRendering(false)  
+        .OnContentReady(@<text>
+        function(e) {
+        const template = $('#embedded_comp_profile');  
+        e.component.option('contentTemplate', template);  
+        }
+    </text>) 
+        )
+</div>
+
+
+<div>
+    @using (Html.DevExtreme().NamedTemplate("embedded_comp_profile"))
+    {
+        @(Html.DevExtreme().TabPanel()  
+            .DeferRendering(false)  
+            .Height("auto")  
+            .ScrollingEnabled(true) 
+            .Items(tab =>  
+            {
+                tab.Add()  
+                .Title("Clients")  
+                .Icon("fas fa-users")  
+                .Template(new TemplateName("embedded_clients"));  
+
+                tab.Add()  
+                .Title("Subscription Info")  
+                .Icon("fas fa-credit-card")  
+                .Template(new TemplateName("embedded_subscription_info"));  
+
+                tab.Add()  
+                .Title("Payment Info")  
+                .Icon("fas fa-wallet")  
+                .Template(new TemplateName("embedded_payment_info"));
+
+                tab.Add()  
+                .Title("Upload Company Logo")  
+                .Icon("fas fa-upload")  
+                .Template(new TemplateName("embedded_upload_logo"));  
+            })
+            )
+    }
+</div>
+
+
+<div>
+    @using (Html.DevExtreme().NamedTemplate("embedded_comp_profile"))
+    {
+        @(Html.DevExtreme().TabPanel()  
+            .DeferRendering(false)  
+            .Height("auto")  
+            .ScrollingEnabled(true) 
+            .Items(tab =>  
+            {
+                tab.Add()  
+                .Title("Clients")  
+                .Icon("fas fa-users")  
+                .Template(new TemplateName("embedded_clients"));  
+
+                tab.Add()  
+                .Title("Subscription Info")  
+                .Icon("fas fa-credit-card")  
+                .Template(new TemplateName("embedded_subscription_info"));
+
+                tab.Add()  
+                .Title("Payment Info")  
+                .Icon("fas fa-wallet") 
+                .Template(new TemplateName("embedded_payment_info"));
+
+                tab.Add() 
+                .Title("Upload Company Logo") 
+                .Icon("fas fa-upload") 
+                .Template(new TemplateName("embedded_upload_logo"));  
+            })
+            )
+    }
+</div>
+
+<div>
+    @using (Html.DevExtreme().NamedTemplate("embedded_clients"))
+    {
+        <div class="card" id="userGrid">
+            @(
+                Html.DevExtreme().DataGrid<CompanyClient>()
+                .ID("gv_clientList")
+                .ShowBorders(true)
+                .DataSource(d => d.Mvc().Controller("CompanyClientsAPI").LoadAction("Get").Key("Id").LoadParams(new { CompanyId = new JS("getCompanyId") }))
+                .Columns(columns =>
+                {
+                    columns.AddFor(m => m.ClientName).Caption("Name");
+                    columns.AddFor(m => m.Email).Caption("Email");
+                    columns.AddFor(m => m.PhoneNumber).Caption("Tel");
+                    columns.AddFor(m => m.Gender).Caption("Gender");
+                    columns.AddFor(m => m.DateOfBirth).Caption("DOB");
+                    columns.AddFor(m => m.EmergencyContactName).Caption("Emergency Contact Name");
+                    columns.AddFor(m => m.EmergencyContactPhone).Caption("Emergency Contact Phone");
+                    columns.AddFor(m => m.MaritalStatus).Caption("Marital Status");
+                    columns.AddFor(m => m.Nationality).Caption("Nationality");
+                    columns.AddFor(m => m.Street).Caption("Street");
+                    columns.AddFor(m => m.City).Caption("City");
+                    columns.AddFor(m => m.State).Caption("State");
+                    columns.AddFor(m => m.PostalCode).Caption("Postal Code");
+                    columns.AddFor(m => m.Country).Caption("Country");
+                    columns.AddFor(m => m.EmergencyContactRelationship).Caption("Emergency Contact Relationship");
+                    columns.Add()
+                    .Type(GridCommandColumnType.Buttons)
+                    .Width(92)
+                    .Caption("Manage")
+                    .Name("ManageClientsButton")
+                    .Buttons(b =>
+                    {
+                        b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
+                    });
+                })
+                .Paging(p => p.PageSize(10))
+                .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
+                .ShowColumnLines(false)
+                .ShowRowLines(true)
+                .RowAlternationEnabled(true)
+                .ColumnHidingEnabled(true)
+                .ColumnAutoWidth(true)
+                .Height("400px")
+                .Selection(s => s.Mode(SelectionMode.Multiple))
+                .FocusedRowEnabled(true)
+                .HeaderFilter(f => f.Visible(true))
+                .GroupPanel(p => p.Visible(false))
+                .Grouping(g => g.AutoExpandAll(false))
+                .RemoteOperations(true)
+                .Summary(s => s
+                .TotalItems(totalItems =>
+                {
+                    totalItems.AddFor(m => m.ClientName).SummaryType(SummaryType.Count);
+                })
+                .GroupItems(groupItems =>
+                {
+                    groupItems.Add().SummaryType(SummaryType.Count);
+                })
+                )
+                .Editing(e => e
+                .AllowAdding(false)
+                .AllowUpdating(true)
+                .AllowDeleting(true)
+                .UseIcons(true)
+                .Mode(GridEditMode.Batch)
+                )
+                .Export(export => export
+                .Enabled(true)
+                .AllowExportSelectedData(true)
+                .Formats(new[] { "pdf" })
+                )
+                .OnExporting("exportToPDF")
+                )
+        </div>
+
+    }
+</div>
+
+<div>
+    @using (Html.DevExtreme().NamedTemplate("embedded_subscription_info"))
+    {
+        <div id="subscriptionTileView">
+            @(
+                Html.DevExtreme().TileView()  
+                .ID("gv_compSubscriptionInfo")  
+                .DataSource(d => d.Mvc().Controller("SubscriptionsAPI").LoadAction("GetCompanySubscription").Key("Id")  
+                .LoadParams(new { CompanyId = new JS("getCompanyId") }))  
+
+                .ItemMargin(10)  
+                .ItemTemplate(@<text>
+            <div class="tile-item">
+                <h4><%- Company.CompanyName %></h4>
+                <p><strong>Start Date:</strong> <%- StartDate %></p>
+                <p><strong>End Date:</strong> <%- EndDate %></p>
+                <p><strong>Status:</strong> <%- IsActive ? "Active" : "Inactive" %></p>
+                <p><strong>Payment Status:</strong> <%- PaymentStatus %></p>
+                <p><strong>Plan Name:</strong> <%- SubscriptionPlan.PlanName.PlanName %></p>
+                <p><strong>Price:</strong> <%- SubscriptionPlan.PlanName.Price %>$</p>
+                <p><strong>Duration:</strong> <%- SubscriptionPlan.Duration %> Months</p>
+                <p><strong>Description:</strong> <%- SubscriptionPlan.Description %></p>
+            </div>
+        </text>)
+                )
+        </div>
+    }
+</div>
+
+<div>
+    @using (Html.DevExtreme().NamedTemplate("embedded_payment_info"))
+    {
+        <div class="card" id="userGrid">
+    @(
+        Html.DevExtreme().DataGrid<SubscriptionPayment>()
+        .ShowBorders(true)
+        .ID("gv_payments_comp_info")
+        .DataSource(d => d.Mvc().Controller("SubscriptionPaymentsAPI").LoadAction("Get").Key("Id"))
+        .Columns(columns =>
+        {
+            columns.AddFor(m => m.Subscription.Company.CompanyName).Caption("Company Name");
+            columns.AddFor(m => m.PaymentDate).Format("yyyy-MM-dd HH:mm:ss").Caption("Timestamp");
+            columns.AddFor(m => m.Subscription.SubscriptionPlan.PlanName.Price).Caption("Price");
+            columns.AddFor(m => m.Status).Caption("Status");
+            columns.AddFor(m => m.Method).Caption("Method");
+            columns.AddFor(m => m.TransactionId).Caption("ID");
+            columns.AddFor(m => m.IsRefunded).Caption("Refunded Status");
+            columns.AddFor(m => m.Subscription.SubscriptionPlan.PlanName.PlanName).Caption("Plan Type");
+            columns.AddFor(m => m.Subscription.SubscriptionPlan.Duration).Caption("Duration");
+            columns.AddFor(m => m.Subscription.SubscriptionPlan.BillingCycle).Caption("Billing Cycle");
+            columns.Add()
+            .Type(GridCommandColumnType.Buttons)
+            .Caption("Manage")
+            .Name("ManageSubscriptionPaymentsButtons")
+            .Buttons(b =>
+            {
+                b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
+                b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
+            });
+        })
+        .Paging(p => p.PageSize(10))
+        .FilterRow(f => f.Visible(false))
+        .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
+        .ShowColumnLines(false)
+        .ShowRowLines(true)
+        .RowAlternationEnabled(true)
+        .ColumnHidingEnabled(true)
+        .ColumnAutoWidth(true)
+        .Height("400px") 
+        .Selection(s => s.Mode(SelectionMode.Multiple))
+        .FocusedRowEnabled(true)
+        .HeaderFilter(f => f.Visible(true))
+        .GroupPanel(p => p.Visible(false))
+        .Grouping(g => g.AutoExpandAll(false))
+        .RemoteOperations(true)
+        .Summary(s => s
+        .TotalItems(totalItems =>
+        {
+            totalItems.AddFor(m => m.Subscription.Company.CompanyName).SummaryType(SummaryType.Count);
+        })
+        .GroupItems(groupItems =>
+        {
+            groupItems.Add().SummaryType(SummaryType.Count);
+        })
+        )
+        .Editing(e => e
+        .AllowAdding(false)
+        .AllowUpdating(true)
+        .AllowDeleting(true)
+        .UseIcons(true)
+        .Mode(GridEditMode.Popup)
+        .Popup(p => p
+        .Title("Subscription Payment")
+        .Height(450)
+        .ShowTitle(true)
+        .Position(pos => pos
+        .My(HorizontalAlignment.Center, VerticalAlignment.Center)
+        .At(HorizontalAlignment.Center, VerticalAlignment.Center)
+        .Of(new JS("window"))
+        )
+        )
+        )
+        )
+</div>
+    }
+</div>
+
+<div>
+    @using (Html.DevExtreme().NamedTemplate("embedded_upload_logo"))
+    {
+        <div>
+            @(Html.DevExtreme().DataGrid<Company>()
+                    .ID("gv_companyLogo") 
+                    .DataSource(d => d.Mvc()
+                    .Controller("CompaniesAPI")  
+                    .LoadAction("GetCompanyLogo") 
+                    .Key("CompanyId") 
+                    .LoadParams(new { CompanyId = new JS("getCompanyId") }))  
+                    .ColumnAutoWidth(true)
+                    .Columns(columns =>
+                    {
+                    columns.AddFor(m => m.CompanyLogoFilePath)
+                    .Caption("Logo")
+                    .Width(200) 
+                    .AllowEditing(false)  
+                    .AllowSorting(false)  
+                    .CellTemplate(@<text>
+            <div>
+                <img src="/img/companyLogoImages/<%- value %>" alt="Company Logo" class="company-logo" />
+            </div>
+        </text>); 
+                    })
+                )
+        </div>
+
+        <div class="upload-logo-section">
+            @(Html.DevExtreme().FileUploader()
+                .ID("companyLogoUploader")
+                .Name("Company Logo")
+                .SelectButtonText("Change company logo")
+                .LabelText("Select image")
+                .Accept("image/*")
+                .UploadMode(FileUploadMode.UseButtons)
+                .AllowCanceling(true)
+                .UploadButtonText("Upload logo")
+                .AllowedFileExtensions(new[] { ".jpg", ".jpeg", ".png" })
+                .InputAttr("aria-lable", "Select image")
+                .OnUploaded("onUpload"))
+        </div>
+    }
+</div>
+
+
+<script>
+
+    let compoId = "";  
+
+    function onMainRowChanged(e) {
+
+        const rowData = e.row && e.row.data;
+        compoId = rowData.CompanyId;  
+        const grid = $('#gv_clientList').dxDataGrid('instance'); 
+        const logoGrid = $('#gv_companyLogo').dxDataGrid('instance');
+        const subscriptionInfo = $('#gv_compSubscriptionInfo').dxTileView('instance');
+        const paymentsInfo = $('#gv_payments_comp_info').dxDataGrid('instance');
+
+        grid.refresh();
+        logoGrid.refresh();
+        subscriptionInfo.getDataSource().load();
+        paymentsInfo.refresh();
+    }
+
+    function getCompanyId() {
+        console.log(compoId)
+        return compoId;  
+    }
+
+    function showCompanyProfile() {
+       const popup = $('#pop_comp_profile').dxPopup('instance');
+       popup.show();
+    }
+
+
+    function onUpload(e) {
+        var file = e.file;  
+        var companyId = getCompanyId();  
+        var formData = new FormData();
+        formData.append('companyLogo', file); 
+        Notiflix.Loading.Dots("Uploading your logo...");
+
+        $.ajax({
+            url: `/api/CompaniesAPI/UploadLogo?companyId=${encodeURIComponent(companyId)}`,  
+            type: 'PUT',
+            data: formData,
+            contentType: false,  
+            processData: false, 
+        })
+            .done(function (json) {
+                Notiflix.Loading.Remove(500);
+
+                if (json.success) {
+                    Notiflix.Report.Success(
+                        "Upload Success",
+                        json.message,
+                        "OK",
+                        function () {
+                            location.reload();  
+                        }
+                    );
+                } else {
+                    Notiflix.Report.Failure("Upload Failure", json.message, "OK");
+                }
+            })
+            .fail(function (jqxhr, textStatus, error) {
+                Notiflix.Loading.Remove(500);
+
+                var errorMessage = "Failed to upload the logo: " + textStatus + ", " + error; 
+
+                if (jqxhr.responseJSON && jqxhr.responseJSON.message) {
+                    errorMessage = jqxhr.responseJSON.message; 
+                } else if (jqxhr.responseJSON && jqxhr.responseJSON.error) {
+                    errorMessage = jqxhr.responseJSON.error; 
+                } else if (jqxhr.responseJSON && jqxhr.responseJSON.errors) {
+                    errorMessage = jqxhr.responseJSON.errors.map(function (err) { return err.description; }).join(", "); 
+                }
+
+                Notiflix.Report.Failure("Upload Failed", errorMessage, "OK");
+            });
+    }
+
+    
+    function onSelectCompany(e) {
+        var companyId = getCompanyId();
+        var userId = "@userId"; // Replace with actual userId variable or value
+
+        console.log("Selected Company Id:", companyId);
+
+        Notiflix.Loading.Dots('Redirecting to your selection...');
+
+       $.ajax({
+        url: `/api/CompaniesAPI/RedirectToCompany?userId=${encodeURIComponent(userId)}&companyId=${encodeURIComponent(companyId)}`,
+        method: 'POST',
+        contentType: 'application/json',
+        success: function (json) {
+            Notiflix.Loading.Remove(500);
+
+            if (json.success) {
+                if (json.redirectUrl) {
+                    window.location.href = json.redirectUrl;  
+                } else {
+                    Notiflix.Report.Failure('Redirecting Failed', 'An issue occurred while redirecting. Please try again later.', 'OK');
+                }
+            } else {
+                Notiflix.Report.Failure('Selection Redirection Failed', 'Unauthorized Access', 'OK');
+            }
+        },
+        error: function (jqxhr, textStatus, error) {
+            Notiflix.Loading.Remove(500);
+
+            var errorMessage = 'Failed to update selection: ' + error; 
+
+            if (jqxhr.responseJSON && jqxhr.responseJSON.message) {
+                errorMessage = jqxhr.responseJSON.message; 
+            } else if (jqxhr.responseJSON && jqxhr.responseJSON.error) {
+                errorMessage = jqxhr.responseJSON.error; 
+            } else if (jqxhr.responseJSON && jqxhr.responseJSON.errors) {
+                errorMessage = jqxhr.responseJSON.errors.map(function (err) { return err.description; }).join(', ');
+            }
+
+            // Show error message using Notiflix
+            Notiflix.Report.Failure('Redirecting Failed', errorMessage, 'OK');
+        }
+    });
+
+    }
+
+
+    function exportToPDF(e) {
+        var doc = new jsPDF({
+            orientation: 'landscape',
+            unit: 'pt',
+            format: 'a3'
+        });
+
+        DevExpress.pdfExporter.exportDataGrid({
+            jsPDFDocument: doc,
+            component: e.component,
+            indent: 5,
+            customizeCell: function (options) {
+                if (options.gridCell.rowType === 'header') {
+                    options.pdfCell.fontStyle = 'bold';
+                }
+                options.pdfCell.minWidth = options.gridCell.column.visibleWidth;
+                options.pdfCell.styles = { fontSize: 8 };
+                if (options.pdfCell.content) {
+                    options.pdfCell.content = options.pdfCell.content.toString();
+                }
+                options.pdfCell.wordWrap = true;
+            }
+        }).then(function () {
+            doc.save("MedisatCompanyClients.pdf");
+        });
+    }
+
+</script>

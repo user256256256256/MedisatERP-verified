@@ -1,0 +1,70 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Models
+@model AspNetUser
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Trials";
+    var userId = Model.Id;
+}
+
+<!-- Section Title Card -->
+<div class="card col-12 card-title">
+    <center><span><i data-feather="edit-2"></i> CUSTOMER FEEDBACK</span></center>
+</div>
+
+<div class="card" id="userGrid">
+    @(
+        Html.DevExtreme().DataGrid<TrialNotification>()
+        .ShowBorders(true)
+        .DataSource(d => d.Mvc().Controller("TrialsAPI").LoadAction("Get").Key("Id"))
+        .Columns(columns =>
+        {
+            columns.AddFor(m => m.Company.CompanyName).Caption("Company Name");
+            columns.AddFor(m => m.TrialStartDate).Caption("Start Date");
+            columns.AddFor(m => m.TrialEndDate).Caption("End Date");
+            columns.AddFor(m => m.IsNotified).Caption("Notified");
+            columns.AddFor(m => m.SentAt).Caption("Last Reminded");
+            columns.AddFor(m => m.NotificationType.Type).Caption("Type");
+            columns.AddFor(m => m.NotificationType.Message).Caption("Message");
+            columns.Add()
+            .Type(GridCommandColumnType.Buttons)
+            .Caption("Manage")
+            .Name("ManageTrialsButtons")
+            .Buttons(b =>
+            {
+                b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
+            });
+        })
+        .Paging(p => p.PageSize(10))
+        .FilterRow(f => f.Visible(false))
+        .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
+        .ShowColumnLines(false)
+        .ShowRowLines(true)
+        .RowAlternationEnabled(true)
+        .ColumnHidingEnabled(true)
+        .ColumnAutoWidth(true)
+        .Selection(s => s.Mode(SelectionMode.Multiple))
+        .FocusedRowEnabled(true)
+        .HeaderFilter(f => f.Visible(true))
+        .GroupPanel(p => p.Visible(false))
+        .Grouping(g => g.AutoExpandAll(false))
+        .RemoteOperations(true)
+        .Summary(s => s
+        .TotalItems(totalItems =>
+        {
+            totalItems.AddFor(m => m.Company.CompanyName).SummaryType(SummaryType.Count);
+        })
+        .GroupItems(groupItems =>
+        {
+            groupItems.Add().SummaryType(SummaryType.Count);
+        })
+        )
+        .Editing(e => e
+        .AllowAdding(false)
+        .AllowUpdating(false)
+        .AllowDeleting(false)
+        .UseIcons(true)
+        )
+        )
+</div>

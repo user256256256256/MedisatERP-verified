@@ -5,45 +5,48 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MedisatERP.Controllers
 {
-	[Route("[controller]/[action]/{userId?}")]
-	public class TwoFAController : Controller
-	{
-		private readonly AdministratorSystemDbContext _dbContext;
-		// Constructor to inject DbContext
-		public TwoFAController(AdministratorSystemDbContext dbContext)
-		{
-			_dbContext = dbContext;
-		}
-		public async Task<IActionResult> Index(string userId)
-		{
-			if (string.IsNullOrEmpty(userId))
-			{
-				return BadRequest("User ID is required.");
-			}
+    [Route("[controller]/[action]")]
+    public class TwoFAController : Controller
+    {
+        private readonly UserService _userService;
+        private readonly ExceptionHandlerService _exceptionHandlerService;
+        private readonly ILogger<TwoFAController> _logger;
+        private readonly ValidateSessionService _validateSessionService;
 
-			try
-			{
-				// Decode the userId from the URL
-				var decodedUserId = HashingHelper.DecodeString(userId);
+        public TwoFAController(UserService userService, ExceptionHandlerService exceptionHandlerService, ILogger<TwoFAController> logger, ValidateSessionService validateSessionService)
+        {
+            _userService = userService;
+            _exceptionHandlerService = exceptionHandlerService;
+            _logger = logger;
+            _validateSessionService = validateSessionService;  // Inject the helper
+        }
 
-				// Retrieve the user using the decodedUserId from the db
-				var user = await _dbContext.AspNetUsers
-										   .Where(c => c.Id == decodedUserId)
-										   .FirstOrDefaultAsync();
+        public async Task<IActionResult> Index()
+        {
+            // Validate session and check if user ID exists
+            var redirectResult = _validateSessionService.ValidateUserSession();
+            if (redirectResult != null)
+            {
+                return redirectResult;  // If user ID is missing, redirect to Home
+            }
 
-				if (user == null)
-				{
-					return NotFound(); // Return a 404 if the user is not found
-				}
+            // Retrieve user ID from session (if valid session)
+            string userId = HttpContext.Session.GetString("UserId");
 
-				// Pass the user model to the view, which will be available in the layout
-				return View(user);
-			}
-			catch (FormatException)
-			{
-				// Handle invalid Base64 string
-				return BadRequest("Invalid User ID format.");
-			}
-		}
-	}
+            try
+            {
+                // Retrieve user details using the UserService
+                var user = await _userService.GetUserAsync(userId);
+
+                // Return the view with the user model if everything is successful
+                return View(user);
+            }
+            catch (Exception ex)
+            {
+                // Delegate to ExceptionHandlerService for proper exception handling
+                return _exceptionHandlerService.HandleException(ex, this);
+            }
+        }
+    }
+
 }

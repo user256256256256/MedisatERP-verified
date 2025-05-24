@@ -5,12 +5,26 @@
             $('#sidebarNav').metisMenu();  // Assuming you're using the MetisMenu jQuery plugin
         }
 
+        // Retrieve and apply the sidebar state from local storage on page load
+        var sidebarState = localStorage.getItem('sidebarState');
+        if (sidebarState === 'collapsed') {
+            $('.sidebar').addClass('collapsed');
+        } else {
+            $('.sidebar').removeClass('collapsed');
+        }
+
         // Sidebar mobile toggle (if applicable)
         $('.js-sidebar-toggle').on('click', function () {
             // Toggle the 'collapsed' class on the sidebar
             $('.sidebar').toggleClass('collapsed');
-        });
 
+            // Save the sidebar state to local storage
+            if ($('.sidebar').hasClass('collapsed')) {
+                localStorage.setItem('sidebarState', 'collapsed');
+            } else {
+                localStorage.setItem('sidebarState', 'expanded');
+            }
+        });
         // Prevent click propagation in mega-menu dropdown
         $(document).on('click', '.mega-menu.dropdown-menu', function (e) {
             e.stopPropagation();
@@ -67,7 +81,6 @@
             parentLi.addClass("active");
         });
 
-
         // Toggle the dropdown menu on click
         $('#userDropdown, #settingsDropdown').on('click', function (event) {
             event.preventDefault();
@@ -82,8 +95,5 @@
                 $('.nav-item.dropdown a').attr('aria-expanded', 'false');
             }
         });
-
-
     });
-
 })(window, document, window.jQuery);

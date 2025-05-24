@@ -60,5 +60,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     customElements.define('end-bar', EndBarSection);
 
+    class SecurityHelpText extends HTMLElement {
+        connectedCallback() {
+            this.innerHTML = `
+                <div class="text-center text-secondary mt-3 mb-3 px-2" style="max-width: 300px; margin: 0 auto; word-wrap: break-word; overflow-wrap: break-word;">
+                    <small>If you're having trouble, contact <strong>security@medisat.com</strong> for further assistance.</small>
+                </div>
+            `;
+        }
+    }
+    customElements.define('help-text', SecurityHelpText);
+
+
 });
 

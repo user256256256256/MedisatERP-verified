@@ -1,55 +1,77 @@
 ﻿using MedisatERP.Services;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-[ApiController]
-[Route("api/[controller]/[action]")]
-public class LogoutAPIController : Controller
+
+namespace MedisatERP.Controllers
 {
-    private readonly SignInManager<IdentityUser> _signInManager;
-    private readonly IErrorCodeService _errorCodeService;
 
-    public LogoutAPIController(SignInManager<IdentityUser> signInManager, IErrorCodeService errorCodeService)
+    [ApiController]
+    [Route("api/[controller]/[action]")]
+    public class LogoutAPIController : Controller
     {
-        _signInManager = signInManager;
-        _errorCodeService = errorCodeService;
-    }
+        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly IErrorCodeService _errorCodeService;
+        private readonly ILogger<LogoutAPIController> _logger;
 
-    [HttpPost]
-    public IActionResult LogoutCheck([FromBody] string userId)
-    {
-        try
+        public LogoutAPIController(
+            SignInManager<IdentityUser> signInManager,
+            IErrorCodeService errorCodeService,
+            ILogger<LogoutAPIController> logger)
         {
-            // Check if userId is null or empty
+            _signInManager = signInManager;
+            _errorCodeService = errorCodeService;
+            _logger = logger;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LogoutCheck([FromBody] string userId)
+        {
             if (string.IsNullOrEmpty(userId))
             {
-                var errorDetails = _errorCodeService.GetErrorDetails("INVALID_USER_ID");
-                Console.WriteLine("userId is null or empty");
-                return Json(new { success = false, message = errorDetails.ErrorMessage });
+                return HandleError("INVALID_USER_ID", "userId is null or empty");
             }
 
-            // Optionally decode the userId if needed
-            var decodedUserId = HashingHelper.DecodeString(userId);
+            var decodedUserId = DecodeUserId(userId);
             if (decodedUserId == null)
             {
-                var errorDetails = _errorCodeService.GetErrorDetails("INVALID_USER_ID_AFTER_DECODING");
-                Console.WriteLine("Decoded userId is null");
-                return Json(new { success = false, message = errorDetails.ErrorMessage });
+                return HandleError("INVALID_USER_ID", "Decoded userId is null");
             }
 
-            Console.WriteLine("The decoded user id is :" + decodedUserId);
+            _logger.LogInformation("Decoded userId: {UserId} successfully retrieved", decodedUserId);
 
-            // Log out successful
-            return Json(new { success = true, message = "Logout successful.", redirectUrl = "/" });
+            try
+            {
+                await _signInManager.SignOutAsync();
+                _logger.LogInformation("Logout successful for userId: {UserId}", decodedUserId);
+                return Json(new { success = true, message = "Logout successful.", redirectUrl = "/" });
+            }
+            catch (Exception ex)
+            {
+                return HandleError("LOGOUT_FAILED", "Logout failed due to an exception", ex);
+            }
         }
-        catch (Exception ex)
+
+        private string DecodeUserId(string userId)
         {
-            var errorDetails = _errorCodeService.GetErrorDetails("LOGOUT_FAILED");
-            Console.WriteLine($"Logout failed: {ex.ToString()}");
+            try
+            {
+                // Optionally decode the userId if required
+                return TranscodingService.DecodeString(userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during userId decoding");
+                return null;
+            }
+        }
+
+        private IActionResult HandleError(string errorCode, string logMessage, Exception exception = null)
+        {
+            var errorDetails = _errorCodeService.GetErrorDetails(errorCode);
+            _logger.LogWarning(exception, logMessage);
             return Json(new { success = false, message = errorDetails.ErrorMessage });
         }
     }
+
+
 }
-
-

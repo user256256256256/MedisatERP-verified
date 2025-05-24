@@ -1,14 +1,10 @@
 --This EF command is used for automatically creating models to Areas/CoreSystem/Models -f
 
 --When no specif tables are specified use:
-dotnet ef dbcontext scaffold "Data Source=medisaterp.lyfexafrica.com;uid=adminMedisatERP;pwd=Planchinobo256;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -o Areas/NutritionCompany/Models -f
+dotnet ef dbcontext scaffold "Name=MedisatConnection" Microsoft.EntityFrameworkCore.SqlServer -o Models -f --context ApplicationDbContext --context-dir Data
 
---When specific tables and DbContext location is specified --Advised
-dotnet ef dbcontext scaffold "Data Source=medisaterp.lyfexafrica.com;uid=adminMedisatERP;pwd=Planchinobo256;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -o Areas/NutritionCompany/Models -f --context ApplicationDbContext --context-dir Data --table Table1 --table Table2
 
-Example of usage:
 
-dotnet ef dbcontext scaffold "Data Source=medisaterp.lyfexafrica.com;uid=adminMedisatERP;pwd=Planchinobo256;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -o Areas/CoreSystem/Models -f --table Companies --table Subscription --table Payment --table SubscriptionActivityLookup  --table BillingCycleLookup --table PaymentMethodLookup --table PaymentStatusLookup --table SubscriptionLog --table SubscriptionPlan --table SubscriptionPlanNameLookup --table TrialNotificationLookup --table TrialNotification
 
 
 

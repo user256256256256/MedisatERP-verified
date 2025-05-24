@@ -1,0 +1,179 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Models
+@model AspNetUser
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Online Applicants";
+    var userId = Model.Id;
+
+    Guid? companyId = Model?.CompanyId;
+
+    if (companyId == null || companyId == Guid.Empty)
+    {
+        companyId = ViewData["CompanyId"] as Guid?;
+    }
+}
+
+<!-- Section Title Card -->
+<div class="card col-12 card-title-nutrition-system">
+    <div><span><i data-feather="calendar"></i>ONLINE APPLICANTS</span></div>
+</div>
+
+<div class="card" style="padding:20px">
+    @(
+        Html.DevExtreme().DataGrid<OnlineApplicant>()
+            .ID("gv_patientList")
+            .ShowBorders(true)
+            .DataSource(d => d.Mvc().Controller("OnlineApplicantsAPI").LoadAction("Get").Key("Id")
+            .InsertAction("Post")
+            .UpdateAction("Put")
+            .DeleteAction("Delete"))
+            .Columns(columns =>
+            {
+                columns.AddFor(m => m.FirstName).Caption("First Name");
+                columns.AddFor(m => m.LastName).Caption("Last Name");
+                columns.AddFor(m => m.Email).Caption("Email");
+                columns.AddFor(m => m.MobilePhoneNo).Caption("Mobile Phone");
+                columns.AddFor(m => m.Address).Caption("Address");
+                columns.AddFor(m => m.Age).Caption("Age");
+                columns.AddFor(m => m.Reason).Caption("Reason");
+                columns.AddFor(m => m.PreferredSchedule).Caption("Preferred Schedule").Format("dd MMM, yyyy");
+                columns.AddFor(m => m.HowDidYouHearAboutUs).Caption("How Did You Hear About Us");
+                columns.AddFor(m => m.AcceptPrivacyPolicies).Caption("Accepted Privacy Policies");
+                columns.AddFor(m => m.CreatedDate).Caption("Created Date").Format("dd MMM, yyyy HH:mm:ss");
+
+                columns.Add()
+                .Type(GridCommandColumnType.Buttons)
+                .Width(92)
+                .Caption("Manage")
+                .Name("ManageApplicantButton")
+                .Buttons(b =>
+                {
+                    b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
+                    b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
+                    b.Add().Hint("Approve applicant to become a client").Icon("fas fa-check-circle").OnClick("onApprove");
+                    b.Add().Hint("Reject applicant from becoming a client").Icon("fas fa-times-circle").OnClick("rejectApplicantAction");
+                });
+            })
+        .Paging(p => p.PageSize(10))
+        .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
+        .ShowColumnLines(false)
+        .ShowRowLines(true)
+        .RowAlternationEnabled(true)
+        .ColumnHidingEnabled(true)
+        .ColumnAutoWidth(true)
+        .Selection(s => s.Mode(SelectionMode.Multiple))
+        .FocusedRowEnabled(true)
+        .HeaderFilter(f => f.Visible(true))
+        .GroupPanel(p => p.Visible(false))
+        .Grouping(g => g.AutoExpandAll(false))
+        .RemoteOperations(true)
+        .Summary(s => s
+        .TotalItems(totalItems =>
+        {
+            totalItems.AddFor(m => m.FirstName).SummaryType(SummaryType.Count);
+        })
+        .GroupItems(groupItems =>
+        {
+            groupItems.Add().SummaryType(SummaryType.Count);
+        })
+        )
+        .Editing(e => e
+        .AllowAdding(true)
+        .AllowUpdating(true)
+        .AllowDeleting(true)
+        .UseIcons(true)
+        .Mode(GridEditMode.Popup)
+        .Popup(p => p
+        .Title("Online Applicants")
+        .Height(450)
+        .ShowTitle(true)
+        .Position(pos => pos
+        .My(HorizontalAlignment.Center, VerticalAlignment.Center)
+        .At(HorizontalAlignment.Center, VerticalAlignment.Center)
+        .Of(new JS("window"))
+        )
+        )
+        )
+        )
+</div>
+
+<script>
+
+    function onApprove(e) {
+        var data = e.row.data;
+        var applicantId = data.Id;
+        var companyId = '@companyId'; 
+        approveApplicantAction(applicantId, companyId);
+    }
+
+        function approveApplicantAction(applicantId, companyId) {
+        Notiflix.Confirm.Show(
+            'Confirm Approval',
+            'Are you sure you want to approve this applicant?',
+            'Approve',
+            'Cancel',
+            function () {
+                Notiflix.Loading.Dots('Redirecting to your selection...');
+                $.ajax({
+                    url: `/api/OnlineApplicantsAPI/ApproveApplicant?applicantId=${encodeURIComponent(applicantId)}&companyId=${encodeURIComponent(companyId)}`,
+                    type: 'PUT',
+                    contentType: false,
+                    processData: false,
+                })
+                .done(function (json) {
+
+                    Notiflix.Loading.Remove(500);
+
+                    if (json.success) {
+                        Notiflix.Report.Success(
+                            "Approval Success",
+                            json.message,
+                            "OK",
+                            function () {
+                                location.reload();
+                            }
+                        );
+                    } else {
+                        Notiflix.Report.Failure("Approval Failed", json.message, "OK");
+                    }
+                })
+                .fail(function (jqxhr, textStatus, error) {
+                    Notiflix.Loading.Remove(500);
+
+                    var errorMessage = "Failed to approve applicant: " + textStatus + ", " + error;
+
+                    if (jqxhr.responseJSON && jqxhr.responseJSON.message) {
+                        errorMessage = jqxhr.responseJSON.message;
+                    } else if (jqxhr.responseJSON && jqxhr.responseJSON.error) {
+                        errorMessage = jqxhr.responseJSON.error;
+                    } else if (jqxhr.responseJSON && jqxhr.responseJSON.errors) {
+                        errorMessage = jqxhr.responseJSON.errors.map(function (err) { return err.description; }).join(", ");
+                    }
+
+                    Notiflix.Report.Failure("Approval Failed", errorMessage, "OK");
+                });
+            },
+            function () {
+                console.log("Approval cancelled.");
+            }
+        );
+    }
+
+
+    function rejectApplicantAction() {
+        Notiflix.Confirm.Show(
+            'Confirm Rejection', 
+            'Are you sure you want to reject this applicant?', 
+            'Approve', 
+            'Cancel', 
+            function () { 
+                console.log("Applicant approved!");
+            },
+            function () { 
+                console.log("Approval cancelled.");
+            }
+        );
+    }
+</script>

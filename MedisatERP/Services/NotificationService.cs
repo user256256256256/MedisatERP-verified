@@ -13,9 +13,9 @@ namespace MedisatERP.Services
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IHubContext<NotificationHub> _hubContext;
-        private readonly AdministratorSystemDbContext _dbContext;
+        private readonly ApplicationDbContext _dbContext;
 
-        public NotificationService(UserManager<IdentityUser> userManager, IHubContext<NotificationHub> hubContext, AdministratorSystemDbContext dbContext)
+        public NotificationService(UserManager<IdentityUser> userManager, IHubContext<NotificationHub> hubContext, ApplicationDbContext dbContext)
         {
             _userManager = userManager;
             _hubContext = hubContext;

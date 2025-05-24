@@ -6,48 +6,59 @@ using Microsoft.EntityFrameworkCore;
 namespace MedisatERP.Areas.AdministratorSystem.Controllers
 {
     [Area("AdministratorSystem")]
-    [Route("AdministratorSystem/[controller]/[action]/{userId?}")]
+    [Route("AdministratorSystem/[controller]/[action]")]
     public class UserAccountsController : Controller
     {
-        private readonly AdministratorSystemDbContext _dbContext;
+        private readonly UserService _userService;
+        private readonly ExceptionHandlerService _exceptionHandlerService;
+        private readonly ILogger<UserAccountsController> _logger;
+        private readonly ValidateSessionService _validateSessionService;
 
-        // Constructor to inject DbContext
-        public UserAccountsController(AdministratorSystemDbContext dbContext)
+        public UserAccountsController(UserService userService, ExceptionHandlerService exceptionHandlerService, ILogger<UserAccountsController> logger, ValidateSessionService validateSessionService)
         {
-            _dbContext = dbContext;
+            _userService = userService;
+            _exceptionHandlerService = exceptionHandlerService;
+            _logger = logger;
+            _validateSessionService = validateSessionService;
         }
 
-        // GET: AdministratorSystem/UserAccounts/Index/{userId}
-        public async Task<IActionResult> Index(string userId)
+        public Task<IActionResult> UserAccounts()
         {
-            if (string.IsNullOrEmpty(userId))
+            return GetUserAccountAsync("UserAccounts");
+        }
+
+        public Task<IActionResult> Rbac()
+        {
+            return GetUserAccountAsync("Rbac");
+        }
+
+        public Task<IActionResult> Claims()
+        {
+            return GetUserAccountAsync("Claims");
+        }
+
+        private async Task<IActionResult> GetUserAccountAsync(string viewName)
+        {
+            var redirectResult = _validateSessionService.ValidateUserSession();
+
+            if (redirectResult != null)
             {
-                return BadRequest("User ID is required.");
+                return redirectResult; 
             }
+
+            string userId = HttpContext.Session.GetString("UserId");
 
             try
             {
-                // Decode the userId from the URL
-                var decodedUserId = HashingHelper.DecodeString(userId);
-
-                // Retrieve the user using the decodedUserId from the db
-                var user = await _dbContext.AspNetUsers
-                                           .Where(c => c.Id == decodedUserId)
-                                           .FirstOrDefaultAsync();
-
-                if (user == null)
-                {
-                    return NotFound(); // Return a 404 if the user is not found
-                }
-
-                // Pass the user model to the view, which will be available in the layout
-                return View(user);
+                var user = await _userService.GetUserAsync(userId);
+                return View(viewName, user);
             }
-            catch (FormatException)
+            catch (Exception ex)
             {
-                // Handle invalid Base64 string
-                return BadRequest("Invalid User ID format.");
+                _logger.LogError(ex, "An error occurred while fetching user data.");
+                return _exceptionHandlerService.HandleException(ex, this);
             }
         }
     }
+
 }

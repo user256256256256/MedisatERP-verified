@@ -1,24 +1,24 @@
-﻿@using MedisatERP.Areas.AdministratorSystem.Models
+﻿@using MedisatERP.Models
 @using MedisatERP.Services
 @model AspNetUser
 
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    var encodedUserId = HashingHelper.EncodeString(Model.Id);
 
-    // Attempt to retrieve the company ID from the Model
     Guid? companyId = Model?.CompanyId;
 
-    // If companyId is not available from the Model, use ViewData
-    if (companyId == null || companyId == Guid.Empty)
+    if (!companyId.HasValue || companyId == Guid.Empty)
     {
         companyId = ViewData["CompanyId"] as Guid?;
     }
 
-
-    // Encode the company ID if it's available
-    var encodedCompanyId = companyId.HasValue ? HashingHelper.EncodeGuidID(companyId.Value) : string.Empty;
+    var encodedCompanyId = companyId.HasValue
+        ? TranscodingService.EncodeGuidID(companyId.Value)
+        : string.Empty;
+    
+    var encodedUserId = TranscodingService.EncodeString(Model.Id);
 }
+
 
 <div class="wrapper">
     <!-- Sidebar Section -->
@@ -39,36 +39,54 @@
                     </a>
                     <ul class="collapse list-unstyled" id="crmDropdownMenu">
 
-                        <!-- Sidebar Item: Dashboard -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("CrmDashboard")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "CrmDashboard", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId })">
-                                <i class="align-middle" data-feather="sliders"></i>
-                                <span class="align-middle">Dashboard</span>
+                        <!-- Sidebar Item: CRM Dashboard -->
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Dashboards", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("Crm", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Crm", "Dashboards", new { area = "NutritionCompanySystem" })" title="Go to CRM Dashboard" aria-label="CRM Dashboard">
+                                <i class="align-middle" data-feather="activity"></i>
+                                <span class="align-middle">CRM Dashboard</span>
                             </a>
                         </li>
 
                         <!-- Sidebar Item: Patients -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Patients")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "Patients", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId })">
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Crm", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("Patients", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Patients", "Crm", new { area = "NutritionCompanySystem" })" title="Go to Patients Dashboard" aria-label="Patients Dashboard">
                                 <i class="align-middle" data-feather="users"></i>
                                 <span class="align-middle">Patients</span>
                             </a>
                         </li>
 
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("OnlineApplicants")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "OnlineApplicants", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId })">
-                                <i class="align-middle" data-feather="users"></i>
-                                <span class="align-middle">Online Appointments</span>
+                        <!-- Sidebar Item: Online Applicants -->
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Crm", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("OnlineApplicants", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("OnlineApplicants", "Crm", new { area = "NutritionCompanySystem" })" title="Go to Online Applicants Dashboard" aria-label="Online Applicants Dashboard">
+                                <i class="align-middle" data-feather="user-check"></i>
+                                <span class="align-middle">Online Applicants</span>
                             </a>
                         </li>
 
-                        <!-- Sidebar Item: Appointments Manager -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Appointments")) ? "active" : "")">
-                            <a class="sidebar-link" href="@Url.Action("Index", "Appointments", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId })">
+                        <!-- Sidebar Item: Appointments -->
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Crm", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("Appointments", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Appointments", "Crm", new { area = "NutritionCompanySystem" })" title="Go to Appointments Dashboard" aria-label="Appointments Dashboard">
                                 <i class="align-middle" data-feather="calendar"></i>
-                                <span class="align-middle">Appointments Manager</span>
+                                <span class="align-middle">Appointments</span>
                             </a>
                         </li>
+
+                        <!-- Sidebar Item: Communications -->
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Crm", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("Communications", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Communications", "Crm", new { area = "NutritionCompanySystem" })" title="Go to Communications Dashboard" aria-label="Communications Dashboard">
+                                <i class="align-middle" data-feather="message-circle"></i>
+                                <span class="align-middle">Communications</span>
+                            </a>
+                        </li>
+
+                        <!-- Sidebar Item: Nutrition Calendar -->
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Crm", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("NutritionCalendar", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("NutritionCalendar", "Crm", new { area = "NutritionCompanySystem" })" title="Go to Nutrition Calendar Dashboard" aria-label="Nutrition Calendar Dashboard">
+                                <i class="align-middle" data-feather="calendar"></i>
+                                <span class="align-middle">Nutrition Calendar</span>
+                            </a>
+                        </li>
+
                     </ul>
                 </li>
 
@@ -401,11 +419,12 @@
                     </a>
                     <ul class="collapse list-unstyled" id="securityDropdownMenu">
 
-                        <!-- Sidebar Item: Dashboard -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("DashboardSecurity")) ? "active" : "")">
-                            <a class="sidebar-link" href="DashboardSecurity">
-                                <i class="align-middle" data-feather="sliders"></i>
-                                <span class="align-middle">Dashboard</span>
+
+                        <!-- Sidebar Item: Security Dashboard -->
+                        <li class="sidebar-item @(Context.Request.RouteValues["controller"].ToString().Equals("Dashboards", StringComparison.OrdinalIgnoreCase) && Context.Request.RouteValues["action"].ToString().Equals("Security", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a class="sidebar-link" href="@Url.Action("Security", "Dashboards", new { area = "NutritionCompanySystem" })" title="Go to Security Dashboard" aria-label="Security Dashboard">
+                                <i class="align-middle" data-feather="shield"></i>
+                                <span class="align-middle">Security Dashboard</span>
                             </a>
                         </li>
 
@@ -546,41 +565,56 @@
 
         </nav>
 
+
         <!-- Logout function -->
         <script>
             function Logout() {
-                var encodedUserId = '@encodedUserId';  // Assuming this is populated with the user ID from Razor.
+                // Show confirmation dialog using Notiflix
+                Notiflix.Confirm.Show(
+                    'Confirm Logout', // Title of the dialog
+                    'Are you sure you want to log out?', // Message to the user
+                    'Yes', // Confirm button text
+                    'No', // Cancel button text
+                    function () { // If "Yes" is clicked, proceed with logout
+                        var encodedUserId = '@encodedUserId';  // Assuming this is populated with the user ID from Razor.
 
-                // Show loading indicator with Notiflix
-                Notiflix.Loading.Dots('Logging out...');
+                        // Show loading indicator with Notiflix using Bars style
+                        Notiflix.Loading.Pulse('Logging out...');
 
-                $.ajax({
-                    url: '/api/LogoutAPI/LogoutCheck',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(encodedUserId),  // Send the userId as a plain string in the request body
-                    success: function (json) {
-                        // Remove loading indicator
-                        Notiflix.Loading.Remove(500);
+                        // Perform the AJAX request to log out
+                        $.ajax({
+                            url: '/api/LogoutAPI/LogoutCheck',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(encodedUserId),  // Send the userId as a plain string in the request body
+                            success: function (json) {
+                                // Remove loading indicator
+                                Notiflix.Loading.Remove(500);
 
-                        if (json.success) {
-                            // Redirect to the root URL or provided redirect URL
-                            window.location.href = json.redirectUrl || '/';
-                        } else {
-                            // Notify failure with Notiflix
-                            Notiflix.Report.Failure('Logout Failed', json.message, 'OK');
-                        }
+                                if (json.success) {
+                                    // Redirect to the root URL or provided redirect URL
+                                    window.location.href = json.redirectUrl || '/';
+                                } else {
+                                    // Notify failure with Notiflix
+                                    Notiflix.Report.Failure('Logout Failed', json.message, 'OK');
+                                }
+                            },
+                            error: function (jqxhr, textStatus, error) {
+                                // Remove loading indicator on failure
+                                Notiflix.Loading.Remove(500);
+
+                                // Notify failure with Notiflix
+                                Notiflix.Report.Failure('Logout Failed', 'An error occurred while logging out: ' + textStatus + ', ' + error, 'OK');
+                            }
+                        });
                     },
-                    error: function (jqxhr, textStatus, error) {
-                        // Remove loading indicator on failure
-                        Notiflix.Loading.Remove(500);
-
-                        // Notify failure with Notiflix
-                        Notiflix.Report.Failure('Logout Failed', 'An error occurred while logging out: ' + textStatus + ', ' + error, 'OK');
+                    function () { // If "No" is clicked, do nothing
+                        Notiflix.Notify.Info('Logout Cancelled'); // Optionally, show a "Cancelled" message
                     }
-                });
+                );
             }
         </script>
+
 
         <!-- Main Content Area -->
         <main class="content">

@@ -1,0 +1,287 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Models
+@model AspNetUser
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "User Profile";
+    var userId = Model.Id;
+}
+
+<div class="mb-4 d-flex align-items-center gap-2 " id="change-profile-img">
+    <img src="@(string.IsNullOrEmpty(Model.ProfileImagePath) ? Url.Content("~/img/userProfileImages/avatar.jpg") : Url.Content("~/img/userProfileImages/" + Model.ProfileImagePath))" class=" rounded-circle user-profile-img" alt="User Image" />
+
+    <div class="file-uploader">
+        @(Html.DevExtreme().FileUploader()
+            .ID("uploadProfileImg")
+            .Name("Profile Picture")
+            .SelectButtonText("Change profile picture")
+            .LabelText("")
+            .Accept("image/*")
+            .UploadMode(FileUploadMode.UseButtons)
+            .AllowCanceling(true)
+            .UploadButtonText("Upload image")
+            .AllowedFileExtensions(new[] { ".jpg", ".jpeg", ".png" })
+            .InputAttr("aria-label", "Select image")
+            .OnUploaded("onUploadProfileImg"))
+    </div>
+
+</div>
+
+<div class="section my-3">
+    <h2 class="section-title">Profile </h2>
+    <p class="section-lead">This page is just an example for you to create your own page.</p>
+</div>
+
+
+<div class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label>User Name:</label>
+                @(Html.DevExtreme().TextBox()
+                    .ID("txt_user_name")
+                    .Value(Model.UserName)
+                    .Width("100%")
+                    .ReadOnly(true)
+                    )
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label>Email:</label>
+                @(Html.DevExtreme().TextBox()
+                    .ID("txt_email")
+                    .Value(Model.Email)
+                    .Width("100%")
+                    .ReadOnly(true)
+                    )
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label>Phone Number:</label>
+                @(Html.DevExtreme().TextBox()
+                    .ID("txt_phone")
+                    .Value(Model.PhoneNumber)
+                    .Width("100%")
+                    .ReadOnly(true)
+                    )
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label>Password:</label>
+                @(Html.DevExtreme().TextBox()
+                    .ID("txt_password")
+                    .Mode(TextBoxMode.Password)
+                    .Placeholder("************")
+                    .Value("")
+                    .Width("100%")
+                    .ReadOnly(true)
+                    )
+            </div>
+
+            <div class="col-md-12 mb-3">
+                <label>Bio Data:</label>
+                @(Html.DevExtreme().TextArea()
+                    .ID("txt_bio_data")
+                    .Value(Model.BioData)
+                    .Height(100)
+                    .Width("100%")
+                    .ReadOnly(true)
+                    )
+            </div>
+        </div>
+
+        <div>
+            <button id="btn_edit" class="btn btn-primary d-inline-block" onclick="editCancelButtonClicked()">Edit</button>
+
+            <button id="btn_save" class="btn btn-success d-none" onclick="saveButtonClicked()">Save</button>
+        </div>
+
+    </div>
+</div>
+
+
+<script>
+
+     let originalValues = {};
+
+    function editCancelButtonClicked() {
+        if ($("#btn_edit").text() === "Edit") {
+
+            originalValues.userName = $("#txt_user_name").dxTextBox("option", "value");
+            originalValues.email = $("#txt_email").dxTextBox("option", "value");
+            originalValues.phoneNumber = $("#txt_phone").dxTextBox("option", "value");
+            originalValues.password = $("#txt_password").dxTextBox("option", "value");
+            originalValues.bioData = $("#txt_bio_data").dxTextArea("option", "value");
+
+            $("#txt_user_name").dxTextBox("option", "readOnly", false);
+            $("#txt_email").dxTextBox("option", "readOnly", false);
+            $("#txt_phone").dxTextBox("option", "readOnly", false);
+            $("#txt_password").dxTextBox("option", "readOnly", false);
+            $("#txt_bio_data").dxTextArea("option", "readOnly", false);
+
+            $("#btn_save").removeClass("d-none").addClass("d-inline-block");
+
+            $("#btn_edit").text("Cancel").removeClass("btn-primary").addClass("btn-danger");
+        } else {
+            cancelButtonClicked();
+        }
+    }
+
+
+    function saveButtonClicked() {
+        var updatedUserData = {};
+
+        let currentUserName = $("#txt_user_name").dxTextBox("option", "value");
+        if (currentUserName !== originalValues.userName) {
+            updatedUserData.UserName = currentUserName;
+            updatedUserData.NormalizedUserName = currentUserName.toUpperCase();
+        }
+
+        let currentEmail = $("#txt_email").dxTextBox("option", "value");
+        if (currentEmail !== originalValues.email) {
+            updatedUserData.Email = currentEmail;
+            updatedUserData.NormalizedEmail = currentEmail.toUpperCase();
+        }
+
+        let currentPhone = $("#txt_phone").dxTextBox("option", "value");
+        if (currentPhone !== originalValues.phoneNumber) {
+            updatedUserData.PhoneNumber = currentPhone;
+        }
+
+        let currentPassword = $("#txt_password").dxTextBox("option", "value");
+        if (currentPassword !== originalValues.password) {
+            updatedUserData.Password = currentPassword;
+        }
+
+        let currentBioData = $("#txt_bio_data").dxTextArea("option", "value");
+        if (currentBioData !== originalValues.bioData) {
+            updatedUserData.BioData = currentBioData;
+        }
+
+        if (Object.keys(updatedUserData).length === 0) {
+            Notiflix.Report.Info('No Changes', 'No fields have been changed.', 'OK');
+            return;
+        }
+
+        var userId = '@Model.Id';  
+
+        var jsonString = JSON.stringify(updatedUserData);
+
+        Notiflix.Loading.Dots('Saving your profile...');
+
+        $.ajax({
+            url: `/api/AspNetUsersAPI/Put?key=${encodeURIComponent(userId)}&values=${encodeURIComponent(jsonString)}`,
+            method: 'PUT',
+            contentType: 'application/json',
+            success: function (json) {
+
+                Notiflix.Loading.Remove(500);
+
+                if (json.success) {
+                    Notiflix.Report.Success(
+                        'Profile Updated', json.message ,'OK',
+                        function () {
+                            window.location.reload();
+                        }
+                    );
+                } else {
+                    Notiflix.Report.Failure('Profile Update Failed', json.message , 'OK');
+                }
+            },
+            error: function (jqxhr, textStatus, error) {
+                Notiflix.Loading.Remove(500);
+
+                var errorMessage = 'Failed to update profile: ' + error;
+
+                if (jqxhr.responseJSON && jqxhr.responseJSON.message) {
+                    errorMessage = jqxhr.responseJSON.message; 
+                } else if (jqxhr.responseJSON && jqxhr.responseJSON.error) {
+                    errorMessage = jqxhr.responseJSON.error; 
+                } else if (jqxhr.responseJSON && jqxhr.responseJSON.errors) {
+                    errorMessage = jqxhr.responseJSON.errors.map(function (err) { return err.description; }).join(', '); 
+                }
+
+                Notiflix.Report.Failure('Profile Update Failed', errorMessage, 'OK');
+            }
+        });
+
+
+    }
+
+    function cancelButtonClicked() {
+        $("#txt_user_name").dxTextBox("option", "value", originalValues.userName);
+        $("#txt_email").dxTextBox("option", "value", originalValues.email);
+        $("#txt_phone").dxTextBox("option", "value", originalValues.phoneNumber);
+        $("#txt_password").dxTextBox("option", "value", originalValues.password);
+        $("#txt_bio_data").dxTextArea("option", "value", originalValues.bioData);
+
+        switchToReadOnly();
+    }
+
+    function switchToReadOnly() {
+        $("#txt_user_name").dxTextBox("option", "readOnly", true);
+        $("#txt_email").dxTextBox("option", "readOnly", true);
+        $("#txt_phone").dxTextBox("option", "readOnly", true);
+        $("#txt_password").dxTextBox("option", "readOnly", true);
+        $("#txt_bio_data").dxTextArea("option", "readOnly", true);
+
+        $("#btn_edit").removeClass("d-none").addClass("d-inline-block").text("Edit").removeClass("btn-danger").addClass("btn-primary");
+        $("#btn_save").addClass("d-none").removeClass("d-inline-block");
+    }
+
+
+    function onUploadProfileImg(e) {
+        var file = e.file;  
+        console.log("File selected:", file);
+
+        var userId = "@userId";
+
+        var formData = new FormData();
+        formData.append('profilePicture', file);  
+
+        Notiflix.Loading.Dots("Uploading your profile picture...");
+
+      $.ajax({
+        url: `/api/AspNetUsersAPI/UploadUserProfilePic?userId=${encodeURIComponent(userId)}`,
+        type: 'PUT',
+        data: formData,
+        contentType: false, 
+        processData: false,  
+        })
+        .done(function (json) {
+            Notiflix.Loading.Remove(500);
+
+            if (json.success) {
+                Notiflix.Report.Success(
+                    "Upload Success",
+                    json.message ,
+                    "OK",
+                    function () {
+                        location.reload();  
+                    }
+                );
+            } else {
+                Notiflix.Report.Failure("Upload Failure", json.message , "OK");
+            }
+    })
+    .fail(function (jqxhr, textStatus, error) {
+        Notiflix.Loading.Remove(500);
+
+        var errorMessage = "Failed to upload the profile picture: " + textStatus + ", " + error; 
+
+        if (jqxhr.responseJSON && jqxhr.responseJSON.message) {
+            errorMessage = jqxhr.responseJSON.message; 
+        } else if (jqxhr.responseJSON && jqxhr.responseJSON.error) {
+            errorMessage = jqxhr.responseJSON.error; 
+        } else if (jqxhr.responseJSON && jqxhr.responseJSON.errors) {
+            errorMessage = jqxhr.responseJSON.errors.map(function (err) { return err.description; }).join(", "); 
+        }
+
+        Notiflix.Report.Failure("Upload Failed", errorMessage, "OK");
+    });
+
+    }
+
+
+</script>

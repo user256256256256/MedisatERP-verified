@@ -9,9 +9,9 @@ namespace MedisatERP.Areas.AdministratorSystem.Controllers
     [Route("AdministratorSystem/[controller]/[action]")]
     public class SubscriptionPlansController : Controller
     {
-        private readonly AdministratorSystemDbContext _dbContext;
+        private readonly ApplicationDbContext _dbContext;
 
-        public SubscriptionPlansController(AdministratorSystemDbContext dbContext)
+        public SubscriptionPlansController(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
         }
@@ -27,7 +27,7 @@ namespace MedisatERP.Areas.AdministratorSystem.Controllers
             try
             {
                 // Decode the userId from the URL
-                var decodedUserId = HashingHelper.DecodeString(userId);
+                var decodedUserId = TranscodingService.DecodeString(userId);
 
                 // Retrieve the user using the decodedUserId from the db
                 var user = await _dbContext.AspNetUsers.Where(c => c.Id == decodedUserId)

@@ -6,47 +6,64 @@ using Microsoft.EntityFrameworkCore;
 namespace MedisatERP.Areas.AdministratorSystem.Controllers
 {
     [Area("AdministratorSystem")]
-    [Route("AdministratorSystem/[controller]/[action]/{userId?}")]
+    [Route("AdministratorSystem/[controller]/[action]")]
     public class SubscriptionsController : Controller
     {
-        private readonly AdministratorSystemDbContext _dbContext;
+        private readonly UserService _userService;
+        private readonly ExceptionHandlerService _exceptionHandlerService;
+        private readonly ILogger<SubscriptionsController> _logger;
+        private readonly ValidateSessionService _validateSessionService;
 
-        // Constructor to inject DbContext
-        public SubscriptionsController(AdministratorSystemDbContext dbContext)
+        public SubscriptionsController(UserService userService, ExceptionHandlerService exceptionHandlerService, ILogger<SubscriptionsController> logger, ValidateSessionService validateSessionService)
         {
-            _dbContext = dbContext;
+            _userService = userService;
+            _exceptionHandlerService = exceptionHandlerService;
+            _logger = logger;
+            _validateSessionService = validateSessionService;
         }
-        // GET
-        public async Task<IActionResult> Index(string userId)
+
+        public Task<IActionResult> Subscriptions()
         {
-            if (string.IsNullOrEmpty(userId))
+            return GetSubscriptionViewAsync("Subscriptions");
+        }
+
+        public Task<IActionResult> Payments()
+        {
+            return GetSubscriptionViewAsync("Payments");
+        }
+
+        public Task<IActionResult> SubscriptionLogs()
+        {
+            return GetSubscriptionViewAsync("SubscriptionLogs");
+        }
+
+        public Task<IActionResult> Trials()
+        {
+            return GetSubscriptionViewAsync("Trials");
+        }
+
+        private async Task<IActionResult> GetSubscriptionViewAsync(string viewName)
+        {
+            var redirectResult = _validateSessionService.ValidateUserSession();
+
+            if (redirectResult != null)
             {
-                return BadRequest("User ID is required.");
+                return redirectResult;
             }
+
+            string userId = HttpContext.Session.GetString("UserId");
+
             try
             {
-                // Decode the userId fromt the URL
-                var decodedUserId = HashingHelper.DecodeString(userId);
-
-                // Retrieve the user using the decodedUserId from the db
-                var user = await _dbContext.AspNetUsers.Where(c => c.Id == decodedUserId)
-                    .FirstOrDefaultAsync();
-
-                if (user == null)
-                {
-                    return NotFound(); // Return a 404 if the company is not found
-                }
-
-                return View(user);
+                var user = await _userService.GetUserAsync(userId);
+                return View(viewName, user);
             }
-            catch (FormatException)
+            catch (Exception ex)
             {
-                // Handle invalid Base64 string
-                return BadRequest("Invalid User ID format.");
+                _logger.LogError(ex, "Error retrieving user details for subscription");
+                return _exceptionHandlerService.HandleException(ex, this);
             }
-
         }
-
-
     }
+
 }

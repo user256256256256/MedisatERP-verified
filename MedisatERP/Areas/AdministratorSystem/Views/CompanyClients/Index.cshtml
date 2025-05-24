@@ -1,0 +1,152 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Models
+@model AspNetUser
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Companies Clients Information";
+    var userId = Model.Id;
+}
+
+<!-- Section Title Card -->
+<div class="card col-12 card-title">
+    <center><span><i data-feather="users"></i> COMPANY CLIENTS </span></center>
+</div>
+
+<!-- Filter by Company-->
+<div class="row mb-3">
+    <div class="form-group col-md-4">
+        <label class="my-3">Company Name:</label>
+        @(Html.DevExtreme().SelectBox()
+            .DataSource(d => d.Mvc().Controller("CompaniesAPI").LoadAction("Get").Key("CompanyId"))
+            .DisplayExpr("CompanyName")
+            .ValueExpr("CompanyId")
+            .SearchEnabled(true)
+            .ShowClearButton(true)
+            .Placeholder("Select Company")
+            .Width("100%")
+            .ID("txt_company")
+            .OnValueChanged(@<text>
+            function(e){
+            const grid = $('#gv_clientList').dxDataGrid('instance');
+            grid.refresh();
+            }
+        </text>)
+        )
+    </div>
+</div>
+
+<script>
+    window.jsPDF = window.jspdf.jsPDF;
+</script>
+
+<div class="card" id="userGrid">
+    @(
+        Html.DevExtreme().DataGrid<CompanyClient>()
+        .ID("gv_clientList")
+        .ShowBorders(true)
+        .DataSource(d => d.Mvc().Controller("CompanyClientsAPI").LoadAction("Get").Key("Id").LoadParams(new {CompanyId = new JS("getCompanyId") })
+        .UpdateAction("Put")
+        .DeleteAction("Delete"))
+        .Columns(columns =>
+        {
+            columns.AddFor(m => m.ClientName).Caption("Name");
+            columns.AddFor(m => m.Email).Caption("Email");
+            columns.AddFor(m => m.PhoneNumber).Caption("Tel");
+            columns.AddFor(m => m.Gender).Caption("Gender");
+            columns.AddFor(m => m.DateOfBirth).Caption("DOB");
+            columns.AddFor(m => m.EmergencyContactName).Caption("Emergency Contact Name");
+            columns.AddFor(m => m.EmergencyContactPhone).Caption("Emergency Contact Phone");
+            columns.AddFor(m => m.MaritalStatus).Caption("Marital Status");
+            columns.AddFor(m => m.Nationality).Caption("Nationality");
+            columns.AddFor(m => m.Street).Caption("Street");
+            columns.AddFor(m => m.City).Caption("City");
+            columns.AddFor(m => m.State).Caption("State");
+            columns.AddFor(m => m.PostalCode).Caption("Postal Code");
+            columns.AddFor(m => m.Country).Caption("Country");
+            columns.AddFor(m => m.EmergencyContactRelationship).Caption("Emergency Contact Relationship");
+            columns.Add()
+            .Type(GridCommandColumnType.Buttons)
+            .Width(92)
+            .Caption("Manage")
+            .Name("ManageClientsButton")
+            .Buttons(b =>
+            {
+                b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
+            });
+        })
+        .Paging(p => p.PageSize(10))
+        .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
+        .ShowColumnLines(false)
+        .ShowRowLines(true)
+        .RowAlternationEnabled(true)
+        .ColumnHidingEnabled(true)
+        .ColumnAutoWidth(true)
+        .Selection(s => s.Mode(SelectionMode.Multiple))
+        .FocusedRowEnabled(true)
+        .HeaderFilter(f => f.Visible(true))
+        .GroupPanel(p => p.Visible(false))
+        .Grouping(g => g.AutoExpandAll(false))
+        .RemoteOperations(true)
+        .Summary(s => s
+        .TotalItems(totalItems =>
+        {
+            totalItems.AddFor(m => m.ClientName).SummaryType(SummaryType.Count);
+        })
+        .GroupItems(groupItems =>
+        {
+            groupItems.Add().SummaryType(SummaryType.Count);
+        })
+        )
+        .Editing(e => e
+        .AllowAdding(false)
+        .AllowUpdating(true)
+        .AllowDeleting(true)
+        .UseIcons(true)
+        .Mode(GridEditMode.Batch)
+        )
+        .Export(export => export
+        .Enabled(true)
+        .AllowExportSelectedData(true)
+        .Formats(new[] { "pdf" })
+        )
+        .OnExporting("exportToPDF")
+        )
+</div>
+
+<script>
+
+    function exportToPDF(e) {
+        var doc = new jsPDF({
+            orientation: 'landscape',
+            unit: 'pt',
+            format: 'a3'
+        });
+
+        DevExpress.pdfExporter.exportDataGrid({
+            jsPDFDocument: doc,
+            component: e.component,
+            indent: 5,
+            customizeCell: function (options) {
+                if (options.gridCell.rowType === 'header') {
+                    options.pdfCell.fontStyle = 'bold';
+                }
+                options.pdfCell.minWidth = options.gridCell.column.visibleWidth;
+                options.pdfCell.styles = { fontSize: 8 };
+                if (options.pdfCell.content) {
+                    options.pdfCell.content = options.pdfCell.content.toString();
+                }
+                options.pdfCell.wordWrap = true;
+            }
+        }).then(function () {
+            doc.save("MedisatCompanyClients.pdf");
+        });
+    }
+
+    function getCompanyId() {
+        var companyId = $("#txt_company").dxSelectBox('option', 'value');
+        return companyId;
+    }
+
+</script>
+

@@ -6,17 +6,18 @@
     <!-- Card with error message -->
     <div class="card shadow-sm">
         <div class="card-header bg-danger text-white text-center">
-            <h4>An Error Occurred!</h4>
+            <h4>An Unexpected Error Occurred!</h4>
         </div>
         <div class="card-body text-center">
             <p class="lead">@ViewData["ErrorMessage"]</p>
+            <p>If the problem persists, please contact support at <strong>support@medisat.com</strong>.</p>
             <a href="/" class="btn btn-primary btn-lg" id="returnHomeButton">Return Home</a>
         </div>
     </div>
 
     <!-- Error message as alert -->
-    <div class="alert alert-danger mt-4" role="alert">
-        An error has occurred. Please try again later or contact support if the problem persists.
+    <div class="alert alert-danger mt-4" role="alert" aria-live="assertive">
+        <strong>Error:</strong> Something went wrong. Please try again later or contact support.
     </div>
 </div>
 
@@ -28,4 +29,9 @@
             document.getElementById('returnHomeButton').click(); // Trigger the return home button click
         }
     });
+
+    // Optionally, focus on the "Return Home" button on page load
+    window.onload = function() {
+        document.getElementById('returnHomeButton').focus();
+    };
 </script>

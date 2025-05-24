@@ -1,145 +1,34 @@
-﻿using MedisatERP.Areas.AdministratorSystem.Models;
-using MedisatERP.Data;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.Design;
-
-namespace MedisatERP.Services
+﻿xnamespace MedisatERP.Services
 {
-    // RoleRedirectService.cs
-    public class RoleRedirectService : ControllerBase
+
+    public interface IRoleRedirectService
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly AdministratorSystemDbContext _dbContext;
-        private readonly IErrorCodeService _errorCodeService;
+        string GenerateAdminToCompRedirectUrl(IList<string> roles);
+        string GenerateRedirectUrl(IList<string> roles);
+    }
 
-
-        public RoleRedirectService(UserManager<IdentityUser> userManager, AdministratorSystemDbContext dbContext, IErrorCodeService errorCodeService)
+    public class RoleRedirectService : IRoleRedirectService
+    {
+        public string GenerateRedirectUrl(IList<string> roles)
         {
-            _userManager = userManager;
-            _dbContext = dbContext;
-            _errorCodeService = errorCodeService;
+            if (roles.Contains("Sys_System Manager"))
+            {
+                return "/AdministratorSystem/Dashboards/Crm";
+            }
+            else if (roles.Contains("Comp_System Administrator"))
+            {
+                return "/NutritionCompanySystem/Dashboards/Crm";
+            }
+            return null;
         }
 
-        public async Task<ActionResult> HandleRoleRedirectAsync(string email)
+        public string GenerateAdminToCompRedirectUrl(IList<string> roles)
         {
-            var user = await _userManager.FindByEmailAsync(email);
-            // Retrieve user roles
-            var roles = await _userManager.GetRolesAsync(user);
-            Console.WriteLine($"Roles for user {email}: {string.Join(", ", roles)}");
-
-            // Retrieve the custom AspNetUser data
-            var aspNetUser = await _dbContext.Set<AspNetUser>().FirstOrDefaultAsync(u => u.Email == email);
-            if (aspNetUser == null)
+            if (roles.Contains("Sys_System Manager") && roles.Contains("Comp_System Administrator"))
             {
-                Console.WriteLine($"No custom AspNetUser found for email: {email}");
-                return new BadRequestObjectResult(new { success = false, mresponse = "Invalid user data" });
+                return "/NutritionCompanySystem/Dashboards/Security";
             }
-
-            var userId = aspNetUser.Id;
-            var companyId = aspNetUser.CompanyId;
-            Console.WriteLine($"AspNetUser found, UserId: {userId}");
-
-            string redirectUrl = null;
-
-            // Role-based redirection logic
-            if (roles.Contains("System Manager"))
-            {
-                Console.WriteLine("User is a System Manager.");
-                if (userId != null)
-                {
-                    var encodedUserId = HashingHelper.EncodeString(userId);
-                    Console.WriteLine($"Encoded UserId: {encodedUserId}");
-                    redirectUrl = $"/AdministratorSystem/SystemManager/Index/{encodedUserId}";
-                }
-            }
-            else if (roles.Contains("System Administrator"))
-            {
-                Console.WriteLine("User is a System Administrator.");
-
-                if (userId != null)
-                {
-                    var encodedUserId = HashingHelper.EncodeString(userId);
-                    var encodedCompanyId = HashingHelper.EncodeGuidID(companyId.Value);
-                    Console.WriteLine($"Encoded UserId: {encodedUserId}");
-                    redirectUrl = $"/NutritionCompanySystem/CrmDashboard/Index/{encodedUserId}/{encodedCompanyId}";
-                }
-            }
-            else
-            {
-                Console.WriteLine("User is neither a System Administrator nor a System Administrator.");
-                return new OkObjectResult(new { success = true, mresponse = "Login successful" });
-            }
-
-            // Return the redirect URL if we constructed one
-            if (redirectUrl != null)
-            {
-                return new OkObjectResult(new { success = true, mresponse = "Login successful", redirectUrl });
-            }
-
-            // If no redirect URL was found, fallback to successful login
-            return new OkObjectResult(new { success = true, mresponse = "Login successful" });
+            return null;
         }
-
-        public async Task<string> HandleSystemAdminToCompanyRedirection(string email, Guid companyId)
-        {
-            try
-            {
-                // Retrieve the user by email
-                var user = await _userManager.FindByEmailAsync(email);
-                if (user == null)
-                {
-                    Console.WriteLine($"User not found for email: {email}");
-                    return null;
-                }
-
-                // Retrieve user roles
-                var roles = await _userManager.GetRolesAsync(user);
-                Console.WriteLine($"Roles for user {email}: {string.Join(", ", roles)}");
-
-                // Retrieve the custom AspNetUser data
-                var aspNetUser = await _dbContext.Set<AspNetUser>().FirstOrDefaultAsync(u => u.Email == email);
-                if (aspNetUser == null)
-                {
-                    Console.WriteLine($"No custom AspNetUser found for email: {email}");
-                    return null;
-                }
-
-                var userId = aspNetUser.Id;
-                Console.WriteLine($"AspNetUser found, UserId: {userId}");
-
-                string redirectUrl = null;
-                if (roles.Contains("System Manager") && roles.Contains("System Administrator"))
-                {
-                    Console.WriteLine("User is a System Manager and a System Administrator.");
-                    if (!string.IsNullOrEmpty(userId))
-                    {
-                        var encodedUserId = HashingHelper.EncodeString(userId);
-                        var encodedCompanyId = HashingHelper.EncodeGuidID(companyId);
-                        Console.WriteLine($"Encoded UserId: {encodedUserId}");
-                        redirectUrl = $"/NutritionCompanySystem/CrmDashboard/Index/{encodedUserId}/{encodedCompanyId}";
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(redirectUrl))
-                {
-                    Console.WriteLine($"Redirecting to URL: {redirectUrl}");
-                    return redirectUrl;
-                }
-
-                Console.WriteLine("No applicable role found for redirection.");
-                return null;
-            }
-            catch (Exception ex)
-            {
-                // Handle and log the exception
-                Console.WriteLine($"Error occurred while redirecting: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                return null;
-            }
-        }
-
-
     }
 }

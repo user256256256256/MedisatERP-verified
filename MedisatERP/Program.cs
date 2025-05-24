@@ -1,4 +1,4 @@
-using MedisatERP.Areas.AdministratorSystem.Models;
+
 using MedisatERP.Data;
 using MedisatERP.Hubs;
 using MedisatERP.Services;
@@ -9,16 +9,9 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Register MedisatErpDbContext for your application data
-builder.Services.AddDbContext<AdministratorSystemDbContext>(options =>
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MedisatConnection")));
 
-// Register MedisatErpDbContext for your application data
-builder.Services.AddDbContext<NutritionSystemDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("MedisatConnection")));
-
-// Register MedisatErpDbContext for your application data
-builder.Services.AddDbContext<SharedDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("MedisatConnection")));
 
 // Register ApplicationDbContext for Identity data
 builder.Services.AddDbContext<UserDbContext>(options =>
@@ -29,10 +22,10 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     // Configure password settings
     options.Password.RequireDigit = false;
-    options.Password.RequiredLength = 4;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireLowercase = false;
+    options.Password.RequiredLength = 5;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
 
     // Configure user settings
     options.User.RequireUniqueEmail = true;
@@ -45,7 +38,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 
     // Sign-in settings
     options.SignIn.RequireConfirmedAccount = true;
-    options.SignIn.RequireConfirmedEmail = true;
+    options.SignIn.RequireConfirmedEmail = true; // Added to align with Medisat
     options.SignIn.RequireConfirmedPhoneNumber = false;
 
     // Configure token providers
@@ -59,7 +52,58 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 builder.Services.Configure<DataProtectionTokenProviderOptions>(opt =>
     opt.TokenLifespan = TimeSpan.FromMinutes(5));  // Ensures 5-minute expiry for tokens
 
+// Register the PhoneNumberNormalizationService as a singleton or transient service
+builder.Services.AddTransient<IPhoneNumberNormalizationService, PhoneNumberNormalizationService>();
+
+// Register RoleRedirectService 
+builder.Services.AddTransient<IRoleRedirectService, RoleRedirectService>();
+
+// Register UserSessionService
+builder.Services.AddTransient<IUserSessionService, UserSessionService>();
+
+// Register EmailSender and SmsSender services
+builder.Services.AddTransient<IEmailSender, EmailSenderService>();
+
+// Register ErrorCodeService
+builder.Services.AddSingleton<IErrorCodeService, ErrorCodeService>();
+
+// Register the validation service
+builder.Services.AddScoped<IValidationService, ValidationService>();
+
+// Register NotificationService
+builder.Services.AddTransient<NotificationService>();
+
+// Register HandelRoleRedirectService
+builder.Services.AddTransient<HandelRoleRedirectService>();
+
+// Register ExceptionHandlerService as a service
+builder.Services.AddScoped<ExceptionHandlerService>();
+
+// Register 2fa services
+builder.Services.AddScoped<TwoFactorService>();
+
+// Register DecodingUrl as a service
+builder.Services.AddScoped<UserService>();
+
+// Register SessionHelper as a service
+builder.Services.AddScoped<ValidateSessionService>();
+
+// Add IHttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
+// Add SignalR services
+builder.Services.AddSignalR();
+
+// Add services to the container
+builder.Services
+    .AddRazorPages()
+    .AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
+builder.Services
+    .AddControllersWithViews()
+    .AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
+
 // Add Session services
+builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -67,71 +111,31 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Register EmailSender and SmsSender services
-builder.Services.AddTransient<IEmailSender, EmailSender>();
-
-// Register RoleRedirectService
-builder.Services.AddTransient<RoleRedirectService>();
-
-// Register NotificationService
-builder.Services.AddTransient<NotificationService>();
-
-// Register HttpClient as a service
-builder.Services.AddHttpClient();
-
-// Register ErrorCodeService
-builder.Services.AddSingleton<IErrorCodeService, ErrorCodeService>();
-
-// Configure SignalR
-builder.Services.AddSignalR();
-
-// Add services to the container
-builder.Services.AddRazorPages().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
-builder.Services.AddControllersWithViews();
-
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-
-// Create the app
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler("/Home/Error");
 }
 
-app.UseStaticFiles();
-app.UseRouting();
-app.UseAuthorization();
-
-// Enable session middleware
 app.UseSession();
 
-// Enable areas support
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
 app.MapControllerRoute(
-    name: "areaRoute",
-    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
 
 // Map the API controller route for the LogoutAPI
 app.MapControllerRoute(
     name: "LogoutAPI",
     pattern: "api/{controller}/{action}");
-
-// Map routes for the "NutritionCompanySystem" area
-app.MapAreaControllerRoute(
-    name: "NutritionCompanySystem",
-    areaName: "NutritionCompanySystem",
-    pattern: "NutritionCompanySystem/{controller=Home}/{action=Index}/{userId}/{companyId:guid?}");
-
-// Specifically routes to the "CrmDashboard" controller within the "NutritionCompanySystem" area
-app.MapAreaControllerRoute(
-    name: "nutritionSystemRoute",
-    areaName: "NutritionCompanySystem",
-    pattern: "NutritionCompanySystem/{controller=CrmDashboard}/{action=Index}/{userId}/{companyId:guid}");
-
-// Map the default controller route (for non-area routes)
-app.MapDefaultControllerRoute();
 
 // Map SignalR hub
 /* The app.MapHub<NotificationHub>("/notificationHub") line is crucial for defining the route that clients will use to connect to your SignalR hub. This setup is what allows your application to support real-time notifications and communication. */

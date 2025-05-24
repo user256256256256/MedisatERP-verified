@@ -1,15 +1,11 @@
-﻿using MedisatERP.Areas.AdministratorSystem.Models;
-using MedisatERP.Areas.NutritionCompanySystem.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace MedisatERP.Models;
 
 public partial class CompanyClient
 {
-    [Key]
-    public Guid ClientId { get; set; }
+    public Guid Id { get; set; }
 
     public Guid CompanyId { get; set; }
 
@@ -23,8 +19,6 @@ public partial class CompanyClient
 
     public string PhoneNumber { get; set; }
 
-    public Guid AddressId { get; set; }
-
     public string EmergencyContactName { get; set; }
 
     public string EmergencyContactPhone { get; set; }
@@ -37,15 +31,23 @@ public partial class CompanyClient
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual ClientAddress Address { get; set; }
+    public string Street { get; set; }
+
+    public string City { get; set; }
+
+    public string State { get; set; }
+
+    public string PostalCode { get; set; }
+
+    public string Country { get; set; }
+
+    public string EmergencyContactRelationship { get; set; }
 
     public virtual ICollection<Allergy> Allergies { get; set; } = new List<Allergy>();
 
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 
     public virtual ICollection<ClientMembership> ClientMemberships { get; set; } = new List<ClientMembership>();
-
-    public virtual Company Company { get; set; }
 
     public virtual ICollection<DietPlan> DietPlans { get; set; } = new List<DietPlan>();
 
@@ -77,6 +79,7 @@ public partial class CompanyClient
 
     public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
 
+    public virtual ICollection<Subscription1> Subscription1s { get; set; } = new List<Subscription1>();
 
     public virtual ICollection<Supplement> Supplements { get; set; } = new List<Supplement>();
 }

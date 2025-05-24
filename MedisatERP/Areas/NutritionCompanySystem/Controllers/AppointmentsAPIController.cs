@@ -11,50 +11,45 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using MedisatERP.Data;
-using MedisatERP.Areas.NutritionCompanySystem.Models;
-using Microsoft.Data.SqlClient;
+using MedisatERP.Models;
 using MedisatERP.Services;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.CodeAnalysis;
 
 namespace MedisatERP.Controllers
 {
     [Route("api/[controller]/[action]")]
     public class AppointmentsAPIController : Controller
     {
-        private NutritionSystemDbContext _nutritionSystemDbContext;
-        private AdministratorSystemDbContext _administratorSystemDbContext;
-        private IErrorCodeService _errorCodeService;
+        private ApplicationDbContext _context;
+        private readonly ExceptionHandlerService _exceptionHandlerService;
+        private readonly ILogger<AppointmentsAPIController> _logger;
+        private readonly NotificationService _notificationService;
+        private readonly IErrorCodeService _errorCodeService;
+        private readonly IEmailSender _emailSender;
 
-        public AppointmentsAPIController(NutritionSystemDbContext nutritionSystemDbContext, AdministratorSystemDbContext administratorSystemDbContext, IErrorCodeService errorCodeService) {
-            _nutritionSystemDbContext = nutritionSystemDbContext;
-            _administratorSystemDbContext = administratorSystemDbContext;
+        public AppointmentsAPIController(ApplicationDbContext context, ExceptionHandlerService exceptionHandlerService, ILogger<AppointmentsAPIController> logger, NotificationService notificationService, IErrorCodeService errorCodeService, IEmailSender emailSender) {
+            _context = context;
+            _exceptionHandlerService = exceptionHandlerService;
+            _logger = logger;
+            _notificationService = notificationService;
             _errorCodeService = errorCodeService;
+            _emailSender = emailSender;
         }
 
-        [HttpGet]
-        public IActionResult Get(DataSourceLoadOptions loadOptions, Guid companyId)
+        public async Task<IActionResult> Get(DataSourceLoadOptions loadOptions, Guid companyId)
         {
-            // Log the input parameters for debugging
-            Console.WriteLine($"Get method called with companyId: {companyId}");
-
             try
             {
-                // Fetch related data from shared context
-                var clients = _administratorSystemDbContext.CompanyClients.ToList();
-                var nutritionists = _administratorSystemDbContext.AspNetUsers.ToList();
-
-                var appointments = _nutritionSystemDbContext.Appointments
-                    .Include(a => a.Workplace)
-                    .Where(a => a.CompanyId == companyId) // Filter by companyId first
-                    .OrderBy(a => a.AppointmentId)
-                    .AsEnumerable() // Switch to client-side evaluation
-                    .Select(i => new
-                    {
+                var appointments = _context.Appointments
+                    .Where(a => a.CompanyId == companyId &&
+                                a.Nutritionist.Roles.Any(r => r.Name.Contains("Comp_Nutritionist"))) 
+                    .Select(i => new {
                         i.AppointmentId,
                         i.ClientId,
                         i.NutritionistId,
                         i.ScheduledDate,
                         i.WorkplaceId,
-                        i.CompanyId,
                         i.Status,
                         i.Priority,
                         i.ReminderSent,
@@ -63,185 +58,210 @@ namespace MedisatERP.Controllers
                         i.CreatedAt,
                         i.UpdatedAt,
                         i.Duration,
-                        Workplace = i.Workplace != null ? new
+                        i.CompanyId,
+                        Client = new
+                        {
+                            i.Client.ClientName,
+                            i.Client.Email,
+                            i.Client.PhoneNumber
+                        },
+                        Workplace = new
                         {
                             i.Workplace.Workplace
-                        } : null,
-                        Client = clients.FirstOrDefault(c => c.ClientId == i.ClientId) != null ? new
+                        },
+                        Nutritionist = new
                         {
-                            ClientName = clients.FirstOrDefault(c => c.ClientId == i.ClientId).ClientName,
-                            Email = clients.FirstOrDefault(c => c.ClientId == i.ClientId).Email,
-                            PhoneNumber = clients.FirstOrDefault(c => c.ClientId == i.ClientId).PhoneNumber
-                        } : null,
-                        Nutritionist = nutritionists.FirstOrDefault(n => n.Id == i.NutritionistId) != null ? new
-                        {
-                            UserName = nutritionists.FirstOrDefault(n => n.Id == i.NutritionistId).UserName,
-                            Email = nutritionists.FirstOrDefault(n => n.Id == i.NutritionistId).Email,
-                            PhoneNumber = nutritionists.FirstOrDefault(n => n.Id == i.NutritionistId).PhoneNumber
-                        } : null
-                    }).ToList(); // Convert to List for client-side evaluation
+                            i.Nutritionist.UserName,
+                            i.Nutritionist.Email,
+                            i.Nutritionist.PhoneNumber
+                        }
+                    })
+                    .OrderBy(c => c.AppointmentId);
 
-                // Debug the query before applying DataSourceLoader
-                Console.WriteLine("Appointments query built. Applying DataSourceLoader...");
-
-                // Apply filtering, sorting, and paging using DataSourceLoader
-                var transformedData = DataSourceLoader.Load(appointments.AsQueryable(), loadOptions);
-
-                // Serialize the retrieved object and log it
-                var serializedData = JsonConvert.SerializeObject(transformedData, Formatting.Indented);
-                Console.WriteLine($"Data transformation completed. Retrieved data: {serializedData}");
-
-                // Return the transformed data as JSON
-                return Json(transformedData);
-            }
-            catch (SqlException ex)
-            {
-                // Log the exception (consider using a logging framework)
-                Console.WriteLine(ex);  // Replace with your logging mechanism
-                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Log the exception
-                Console.WriteLine(ex);  // Replace with your logging mechanism
-                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+                return Json(await DataSourceLoader.LoadAsync(appointments, loadOptions));
             }
             catch (Exception ex)
             {
-                // Log the exception message and stack trace for debugging purposes
-                Console.WriteLine($"An error occurred: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-
-                // Return a standardized error response
-                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+                return _exceptionHandlerService.HandleException(ex, this);
             }
         }
+
 
         [HttpPost]
         public async Task<IActionResult> Post(string values)
         {
             try
             {
-                // Log the received values
-                Console.WriteLine($"Received values: {values}");
-
                 var model = new Appointment();
                 var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
                 PopulateModel(model, valuesDict);
 
-                // Ensure non-nullable fields are set
-                model.AppointmentId = Guid.NewGuid(); // Generate a new GUID for the AppointmentId
-                model.CreatedAt = DateTime.UtcNow; // Set CreatedAt to the current UTC time
-                model.UpdatedAt = DateTime.UtcNow; // Initialize UpdatedAt to the current UTC time
+                if (model.CreatedAt == DateTime.MinValue)
+                {
+                    model.CreatedAt = DateTime.Now;
+                }
 
-                // Convert CompanyId from string to Guid
                 if (valuesDict.Contains("CompanyId") && Guid.TryParse(valuesDict["CompanyId"].ToString(), out Guid companyId))
                 {
                     model.CompanyId = companyId;
                 }
 
-                // Log the populated model
-                var modelJson = JsonConvert.SerializeObject(model, Formatting.Indented);
-                Console.WriteLine($"Populated model: {modelJson}");
+                var clientId = model.ClientId;
+                var nutritionistId = model.NutritionistId;
+
+                await SendAppointmentInitializedEmail(clientId, nutritionistId, model.ScheduledDate);
 
                 if (!TryValidateModel(model))
-                {
-                    var errorMessage = GetFullErrorMessage(ModelState);
-                    Console.WriteLine($"Validation error: {errorMessage}");
-                    return BadRequest(errorMessage);
-                }
+                    return BadRequest(GetFullErrorMessage(ModelState));
 
-                var result = _nutritionSystemDbContext.Appointments.Add(model);
-                await _nutritionSystemDbContext.SaveChangesAsync();
+                var result = _context.Appointments.Add(model);
+                await _context.SaveChangesAsync();
 
-                // Log the saved appointment ID
-                Console.WriteLine($"Appointment created with ID: {result.Entity.AppointmentId}");
-
-                return Json(new { success = true, message = $"Appointment scheduled successfully!" });
-            }
-            catch (JsonSerializationException ex)
-            {
-                // Log the exception
-                Console.WriteLine($"JSON serialization error: {ex.Message}");
-                return BadRequest(new { message = "Invalid input format. Please check your data and try again." });
-            }
-            catch (SqlException ex)
-            {
-                // Log the exception (consider using a logging framework)
-                Console.WriteLine(ex);  // Replace with your logging mechanism
-                return StatusCode(500, new { message = "A database error occurred. Please try again later." });
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Log the exception
-                Console.WriteLine(ex);  // Replace with your logging mechanism
-                return StatusCode(500, new { message = "An internal server error occurred. Please try again later." });
+                return Json(new { result.Entity.AppointmentId });
             }
             catch (Exception ex)
             {
-                // Log the exception message and stack trace for debugging purposes
-                Console.WriteLine($"An error occurred: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-
-                // Return a standardized error response
-                return StatusCode(500, new { message = "An unexpected error occurred. Please try again later.", error = ex.Message });
+                return _exceptionHandlerService.HandleException(ex, this);
             }
         }
 
+        private async Task SendAppointmentInitializedEmail(Guid clientId, string nutritionistId, DateTime scheduledDate)
+        {
+            try
+            {
+                var client = await _context.CompanyClients.FindAsync(clientId);
+                var nutritionist = await _context.AspNetUsers.FindAsync(nutritionistId);
 
+                if (client == null || nutritionist == null)
+                    throw new Exception("Client or Nutritionist not found.");
 
+                string clientMessage = $"Dear {client.ClientName}, your appointment is scheduled for {scheduledDate}.";
+                string nutritionistMessage = $"Dear {nutritionist.UserName}, you have been assigned an appointment scheduled for {scheduledDate}.";
 
+                await _emailSender.SendEmailAsync(client.Email, "Appointment Scheduled", clientMessage);
+                await _emailSender.SendEmailAsync(nutritionist.Email, "New Appointment Assigned", nutritionistMessage);
+
+                _logger.LogInformation("Emails sent to client and nutritionist successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while sending appointment emails.");
+                _exceptionHandlerService.HandleException(ex);
+            }
+        }
 
         [HttpPut]
-        public async Task<IActionResult> Put(Guid key, string values) {
-            var model = await _nutritionSystemDbContext.Appointments.FirstOrDefaultAsync(item => item.AppointmentId == key);
-            if(model == null)
-                return StatusCode(409, "Object not found");
+        public async Task<IActionResult> Put(Guid key, string values)
+        {
+            try
+            {
+                var model = await _context.Appointments.FirstOrDefaultAsync(item => item.AppointmentId == key);
+                if (model == null)
+                    return StatusCode(409, "Object not found");
 
-            var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
-            PopulateModel(model, valuesDict);
+                // Store the original ScheduledDate for comparison
+                var originalScheduledDate = model.ScheduledDate;
 
-            if(!TryValidateModel(model))
-                return BadRequest(GetFullErrorMessage(ModelState));
+                var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
+                PopulateModel(model, valuesDict);
 
-            await _nutritionSystemDbContext.SaveChangesAsync();
-            return Ok();
+                if (!TryValidateModel(model))
+                    return BadRequest(GetFullErrorMessage(ModelState));
+
+                if (model.ScheduledDate != originalScheduledDate)
+                {
+                    await SendRescheduleEmail(model.ClientId, model.NutritionistId, originalScheduledDate, model.ScheduledDate);
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return _exceptionHandlerService.HandleException(ex, this);
+            }
+        }
+
+        private async Task SendRescheduleEmail(Guid clientId, string nutritionistId, DateTime originalDate, DateTime newDate)
+        {
+            try
+            {
+                var client = await _context.CompanyClients.FindAsync(clientId);
+                if (client == null)
+                    throw new Exception("Client not found.");
+
+                var nutritionist = await _context.AspNetUsers.FindAsync(nutritionistId);
+                if (nutritionist == null)
+                    throw new Exception("Nutritionist not found.");
+
+                string clientMessage = $"Dear {client.ClientName}, your appointment has been rescheduled from {originalDate} to {newDate}.";
+                string nutritionistMessage = $"Dear {nutritionist.UserName}, the appointment you are assigned to has been rescheduled from {originalDate} to {newDate}.";
+
+                await _emailSender.SendEmailAsync(client.Email, "Appointment Rescheduled", clientMessage);
+
+                await _emailSender.SendEmailAsync(nutritionist.Email, "Appointment Rescheduled", nutritionistMessage);
+
+                _logger.LogInformation("Reschedule emails sent to client and nutritionist successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while sending reschedule emails.");
+                _exceptionHandlerService.HandleException(ex);
+            }
         }
 
         [HttpDelete]
         public async Task Delete(Guid key) {
-            var model = await _nutritionSystemDbContext.Appointments.FirstOrDefaultAsync(item => item.AppointmentId == key);
+            try
+            {
+                var model = await _context.Appointments.FirstOrDefaultAsync(item => item.AppointmentId == key);
 
-            _nutritionSystemDbContext.Appointments.Remove(model);
-            await _nutritionSystemDbContext.SaveChangesAsync();
+                _context.Appointments.Remove(model);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                 _exceptionHandlerService.HandleException(ex, this);
+            }
         }
 
 
-        //[HttpGet]
-        //public async Task<IActionResult> CompanyClientsLookup(DataSourceLoadOptions loadOptions) {
-        //    var lookup = from i in _nutritionSystemDbContext.CompanyClients
-        //                 orderby i.ClientName
-        //                 select new {
-        //                     Value = i.ClientId,
-        //                     Text = i.ClientName
-        //                 };
-        //    return Json(await DataSourceLoader.LoadAsync(lookup, loadOptions));
-        //}
+        [HttpGet]
+        public async Task<IActionResult> CompanyClientsLookup(DataSourceLoadOptions loadOptions) {
+            var lookup = from i in _context.CompanyClients
+                         orderby i.ClientName
+                         select new {
+                             Value = i.Id,
+                             Text = i.ClientName
+                         };
+            return Json(await DataSourceLoader.LoadAsync(lookup, loadOptions));
+        }
 
-        //[HttpGet]
-        //public async Task<IActionResult> AspNetUsersLookup(DataSourceLoadOptions loadOptions) {
-        //    var lookup = from i in _nutritionSystemDbContext.AspNetUsers
-        //                 orderby i.UserName
-        //                 select new {
-        //                     Value = i.Id,
-        //                     Text = i.UserName
-        //                 };
-        //    return Json(await DataSourceLoader.LoadAsync(lookup, loadOptions));
-        //}
+        [HttpGet]
+        public async Task<IActionResult> CompaniesLookup(DataSourceLoadOptions loadOptions) {
+            var lookup = from i in _context.Companies
+                         orderby i.CompanyName
+                         select new {
+                             Value = i.CompanyId,
+                             Text = i.CompanyName
+                         };
+            return Json(await DataSourceLoader.LoadAsync(lookup, loadOptions));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AspNetUsersLookup(DataSourceLoadOptions loadOptions) {
+            var lookup = from i in _context.AspNetUsers
+                         orderby i.UserName
+                         select new {
+                             Value = i.Id,
+                             Text = i.UserName
+                         };
+            return Json(await DataSourceLoader.LoadAsync(lookup, loadOptions));
+        }
 
         [HttpGet]
         public async Task<IActionResult> WorkplaceLookupsLookup(DataSourceLoadOptions loadOptions) {
-            var lookup = from i in _nutritionSystemDbContext.WorkplaceLookups
+            var lookup = from i in _context.WorkplaceLookups
                          orderby i.Workplace
                          select new {
                              Value = i.Id,
@@ -264,6 +284,7 @@ namespace MedisatERP.Controllers
             string CREATED_AT = nameof(Appointment.CreatedAt);
             string UPDATED_AT = nameof(Appointment.UpdatedAt);
             string DURATION = nameof(Appointment.Duration);
+            string COMPANY_ID = nameof(Appointment.CompanyId);
 
             if(values.Contains(APPOINTMENT_ID)) {
                 model.AppointmentId = ConvertTo<System.Guid>(values[APPOINTMENT_ID]);
@@ -315,6 +336,10 @@ namespace MedisatERP.Controllers
 
             if(values.Contains(DURATION)) {
                 model.Duration = values[DURATION] != null ? Convert.ToInt32(values[DURATION]) : (int?)null;
+            }
+
+            if(values.Contains(COMPANY_ID)) {
+                model.CompanyId = ConvertTo<System.Guid>(values[COMPANY_ID]);
             }
         }
 

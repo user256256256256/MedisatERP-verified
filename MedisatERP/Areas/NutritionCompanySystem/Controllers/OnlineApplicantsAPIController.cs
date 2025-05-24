@@ -11,42 +11,135 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using MedisatERP.Data;
-using MedisatERP.Areas.NutritionCompanySystem.Models;
+using MedisatERP.Models;
+using MedisatERP.Services;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace MedisatERP.Controllers
 {
     [Route("api/[controller]/[action]")]
     public class OnlineApplicantsAPIController : Controller
     {
-        private NutritionSystemDbContext _context;
-
-        public OnlineApplicantsAPIController(NutritionSystemDbContext context) {
+        private readonly ApplicationDbContext _context;
+        private readonly ExceptionHandlerService _exceptionHandlerService;
+        private readonly IEmailSender _emailSender;
+        private readonly ILogger<OnlineApplicantsAPIController> _logger;
+        public OnlineApplicantsAPIController(ApplicationDbContext context, ExceptionHandlerService exceptionHandlerService, IEmailSender emailSender, ILogger<OnlineApplicantsAPIController> logger)
+        {
             _context = context;
+            _exceptionHandlerService = exceptionHandlerService;
+            _emailSender = emailSender;
+            _logger = logger;
         }
 
         [HttpGet]
         public async Task<IActionResult> Get(DataSourceLoadOptions loadOptions) {
-            var onlineapplicants = _context.OnlineApplicants.Select(i => new {
-                i.Id,
-                i.FirstName,
-                i.LastName,
-                i.Email,
-                i.MobilePhoneNo,
-                i.Address,
-                i.Age,
-                i.Reason,
-                i.PreferredSchedule,
-                i.HowDidYouHearAboutUs,
-                i.AcceptPrivacyPolicies,
-                i.CreatedDate
-            });
+            try
+            {
+                var onlineapplicants = _context.OnlineApplicants.Select(i => new {
+                    i.Id,
+                    i.FirstName,
+                    i.LastName,
+                    i.Email,
+                    i.MobilePhoneNo,
+                    i.Address,
+                    i.Age,
+                    i.Reason,
+                    i.PreferredSchedule,
+                    i.HowDidYouHearAboutUs,
+                    i.AcceptPrivacyPolicies,
+                    i.CreatedDate
+                });
 
-            return Json(await DataSourceLoader.LoadAsync(onlineapplicants, loadOptions));
+                return Json(await DataSourceLoader.LoadAsync(onlineapplicants, loadOptions));
+            }
+            catch (Exception ex)
+            {
+                return _exceptionHandlerService.HandleException(ex, this);
+            }
         }
-        
+
+        [HttpPost]
+        public async Task RejectClientApplication(string clientId, string reason)
+        {
+            try
+            {
+                var client = await _context.CompanyClients.FindAsync(clientId);
+
+                if (client == null || reason == null)
+                    throw new Exception("Client or Reason not found.");
+
+                string clientMessage = $"Dear {client.ClientName}, your application has been rejected because: {reason}. ";
+
+                await _emailSender.SendEmailAsync(client.Email, "Appointment Rejected", clientMessage);
+
+                _logger.LogInformation("Emails sent to client successfully.");
+
+            }
+            catch (Exception ex)
+            {
+                _exceptionHandlerService.HandleException(ex, this);
+            }
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> ApproveApplicant(Guid applicantId, Guid companyId)
+        {
+            try
+            {
+                var applicant = await _context.OnlineApplicants.FindAsync(applicantId);
+
+                if (applicant == null)
+                    return NotFound(new { success = false, message = "Applicant not found." });
+                
+                int age = applicant.Age ?? 30; // Default to 30 if null --> You need to correct the assigning of default value of making the age nullabel for applicants
+                DateTime estimatedDateOfBirth = DateTime.UtcNow.AddYears(-age);
+
+                var newClient = new CompanyClient
+                {
+                    Id = Guid.NewGuid(),
+                    CompanyId = companyId,
+                    ClientName = $"{applicant.FirstName} {applicant.LastName}",
+                    Gender = "Unknown",
+                    Email = applicant.Email,
+                    PhoneNumber = applicant.MobilePhoneNo,
+                    EmergencyContactName = "N/A",
+                    EmergencyContactPhone = "N/A",
+                    MaritalStatus = "N/A",
+                    Nationality = "N/A",
+                    CreatedAt = DateTime.UtcNow,
+                    Street = applicant.Address,
+                    City = "N/A",
+                    State = "N/A",
+                    PostalCode = "N/A",
+                    Country = "N/A",
+                    EmergencyContactRelationship = "N/A",                  
+                    DateOfBirth = estimatedDateOfBirth
+                };
+
+                await _context.CompanyClients.AddAsync(newClient);
+                _context.OnlineApplicants.Remove(applicant);
+                await _context.SaveChangesAsync();
+
+                string clientMessage = $"Dear {newClient.ClientName}, your application has been approved and you are now registered as a client of LyfexAfrica!";
+                await _emailSender.SendEmailAsync(newClient.Email, "Application Approved", clientMessage);
+
+                _logger.LogInformation("Applicant approved and added as a client successfully.");
+
+                return Ok(new { success = true, message = "Applicant approved successfully!", clientId = newClient.Id });
+            }
+            catch (Exception ex)
+            {
+                _exceptionHandlerService.HandleException(ex, this);
+                return StatusCode(500, new { success = false, message = "An error occurred during approval." });
+            }
+        }
+
+
         [HttpPost]
         public async Task<IActionResult> Post(string values) {
-            var model = new OnlineApplicants();
+            var model = new OnlineApplicant();
             var valuesDict = JsonConvert.DeserializeObject<IDictionary>(values);
             PopulateModel(model, valuesDict);
 
@@ -83,19 +176,20 @@ namespace MedisatERP.Controllers
             await _context.SaveChangesAsync();
         }
 
-        private void PopulateModel(OnlineApplicants model, IDictionary values) {
-            string ID = nameof(OnlineApplicants.Id);
-            string FIRST_NAME = nameof(OnlineApplicants.FirstName);
-            string LAST_NAME = nameof(OnlineApplicants.LastName);
-            string EMAIL = nameof(OnlineApplicants.Email);
-            string MOBILE_PHONE_NO = nameof(OnlineApplicants.MobilePhoneNo);
-            string ADDRESS = nameof(OnlineApplicants.Address);
-            string AGE = nameof(OnlineApplicants.Age);
-            string REASON = nameof(OnlineApplicants.Reason);
-            string PREFERRED_SCHEDULE = nameof(OnlineApplicants.PreferredSchedule);
-            string HOW_DID_YOU_HEAR_ABOUT_US = nameof(OnlineApplicants.HowDidYouHearAboutUs);
-            string ACCEPT_PRIVACY_POLICIES = nameof(OnlineApplicants.AcceptPrivacyPolicies);
-            string CREATED_DATE = nameof(OnlineApplicants.CreatedDate);
+
+        private void PopulateModel(OnlineApplicant model, IDictionary values) {
+            string ID = nameof(OnlineApplicant.Id);
+            string FIRST_NAME = nameof(OnlineApplicant.FirstName);
+            string LAST_NAME = nameof(OnlineApplicant.LastName);
+            string EMAIL = nameof(OnlineApplicant.Email);
+            string MOBILE_PHONE_NO = nameof(OnlineApplicant.MobilePhoneNo);
+            string ADDRESS = nameof(OnlineApplicant.Address);
+            string AGE = nameof(OnlineApplicant.Age);
+            string REASON = nameof(OnlineApplicant.Reason);
+            string PREFERRED_SCHEDULE = nameof(OnlineApplicant.PreferredSchedule);
+            string HOW_DID_YOU_HEAR_ABOUT_US = nameof(OnlineApplicant.HowDidYouHearAboutUs);
+            string ACCEPT_PRIVACY_POLICIES = nameof(OnlineApplicant.AcceptPrivacyPolicies);
+            string CREATED_DATE = nameof(OnlineApplicant.CreatedDate);
 
             if(values.Contains(ID)) {
                 model.Id = ConvertTo<System.Guid>(values[ID]);

@@ -1,0 +1,95 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using MedisatERP.Models
+@model AspNetUser
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Patients";
+    var userId = Model.Id;
+
+    Guid? companyId = Model?.CompanyId;
+
+    if (companyId == null || companyId == Guid.Empty)
+    {
+        companyId = ViewData["CompanyId"] as Guid?;
+    }
+}
+
+<div class="card" style="padding:20px">
+    @(
+        Html.DevExtreme().DataGrid<Appointment>()
+            .ID("gv_patientList")
+            .ShowBorders(true)
+            .DataSource(d => d.Mvc().Controller("AppointmentsAPI").LoadAction("Get").Key("AppointmentId").LoadParams(new { companyId = companyId })
+            .InsertAction("Post")
+            .UpdateAction("Put")
+            .DeleteAction("Delete"))
+            .Columns(columns =>
+            {
+                columns.AddFor(m => m.ScheduledDate).Caption("Scheduled Date").Format("dd MMM, yyyy HH:mm:ss");
+                columns.AddFor(m => m.Status).Caption("Status");
+                columns.AddFor(m => m.Priority).Caption("Priority");
+                columns.AddFor(m => m.ReminderSent).Caption("Reminder Sent");
+                columns.AddFor(m => m.ReminderSentAt).Caption("Reminder Sent At").Format("dd MMM, yyyy HH:mm:ss");
+                columns.AddFor(m => m.Notes).Caption("Notes");
+                columns.AddFor(m => m.CreatedAt).Caption("Created At").Format("dd MMM, yyyy HH:mm:ss");
+                columns.AddFor(m => m.UpdatedAt).Caption("Updated At").Format("dd MMM, yyyy HH:mm:ss");
+                columns.AddFor(m => m.Duration).Caption("Duration (mins)");
+                columns.AddFor(m => m.Nutritionist.UserName).Caption("Nutritionist Name");
+                columns.AddFor(m => m.Nutritionist.Email).Caption("Nutritionist Email");
+                columns.AddFor(m => m.Nutritionist.PhoneNumber).Caption("Nutritionist Phone Number");
+                columns.AddFor(m => m.Workplace.Workplace).Caption("Appointment Venue");
+
+                columns.Add()
+                .Type(GridCommandColumnType.Buttons)
+                .Width(92)
+                .Caption("Manage")
+                .Name("ManageAppointmentsButton")
+                .Buttons(b =>
+                {
+                    b.Add().Name(GridColumnButtonName.Edit).Hint("Edit");
+                    b.Add().Name(GridColumnButtonName.Delete).Hint("Delete");
+                });
+            })
+        .Paging(p => p.PageSize(10))
+        .SearchPanel(s => s.Visible(true).Width(250).Placeholder("Search..."))
+        .ShowColumnLines(false)
+        .ShowRowLines(true)
+        .RowAlternationEnabled(true)
+        .ColumnHidingEnabled(true)
+        .ColumnAutoWidth(true)
+        .Selection(s => s.Mode(SelectionMode.Multiple))
+        .FocusedRowEnabled(true)
+        .HeaderFilter(f => f.Visible(true))
+        .GroupPanel(p => p.Visible(false))
+        .Grouping(g => g.AutoExpandAll(false))
+        .RemoteOperations(true)
+        .Summary(s => s
+        .TotalItems(totalItems =>
+        {
+        totalItems.AddFor(m => m.Client.ClientName).SummaryType(SummaryType.Count);
+        })
+        .GroupItems(groupItems =>
+        {
+        groupItems.Add().SummaryType(SummaryType.Count);
+        })
+        )
+        .Editing(e => e
+        .AllowAdding(true)
+        .AllowUpdating(true)
+        .AllowDeleting(true)
+        .UseIcons(true)
+        .Mode(GridEditMode.Popup)
+        .Popup(p => p
+        .Title("Patients")
+        .Height(450)
+        .ShowTitle(true)
+        .Position(pos => pos
+        .My(HorizontalAlignment.Center, VerticalAlignment.Center)
+        .At(HorizontalAlignment.Center, VerticalAlignment.Center)
+        .Of(new JS("window"))
+        )
+        )
+        )
+        )
+</div>
