@@ -101,6 +101,12 @@ namespace MedisatERP.Controllers
                     model.CreatedAt = DateTime.Now;
                 }
 
+
+                if (model.Status == null)
+                {
+                    model.Status = "Appointment Request";
+                }
+
                 if (valuesDict.Contains("CompanyId") && Guid.TryParse(valuesDict["CompanyId"].ToString(), out Guid companyId))
                 {
                     model.CompanyId = companyId;
@@ -129,8 +135,8 @@ namespace MedisatERP.Controllers
         {
             try
             {
-                var client = await _context.CompanyClients.FindAsync(clientId);
-                var nutritionist = await _context.AspNetUsers.FindAsync(nutritionistId);
+                var client = await _context.CompanyClients.FirstOrDefaultAsync(c => c.Id == clientId);
+                var nutritionist = await _context.AspNetUsers.FirstOrDefaultAsync(n => n.Id == nutritionistId);
 
                 if (client == null || nutritionist == null)
                     throw new Exception("Client or Nutritionist not found.");

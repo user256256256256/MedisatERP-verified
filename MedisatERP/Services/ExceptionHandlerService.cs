@@ -9,7 +9,7 @@ using System.Security;
 namespace MedisatERP.Services
 {
 
-    public class ExceptionHandlerService
+    public class ExceptionHandlerService 
     {
         private readonly ILogger<ExceptionHandlerService> _logger;
         public ExceptionHandlerService(ILogger<ExceptionHandlerService> logger)

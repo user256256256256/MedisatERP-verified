@@ -115,7 +115,7 @@
             'Approve',
             'Cancel',
             function () {
-                Notiflix.Loading.Dots('Redirecting to your selection...');
+                Notiflix.Loading.Dots('Approving client...');
                 $.ajax({
                     url: `/api/OnlineApplicantsAPI/ApproveApplicant?applicantId=${encodeURIComponent(applicantId)}&companyId=${encodeURIComponent(companyId)}`,
                     type: 'PUT',

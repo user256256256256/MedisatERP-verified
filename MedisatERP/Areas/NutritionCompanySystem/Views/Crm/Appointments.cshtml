@@ -15,10 +15,15 @@
     }
 }
 
+<!-- Section Title Card -->
+<div class="card col-12 card-title-nutrition-system">
+    <div><span><i data-feather="calendar"></i>APPOINTMENTS</span></div>
+</div>
+
 <div class="card" style="padding:20px">
     @(
         Html.DevExtreme().DataGrid<Appointment>()
-            .ID("gv_patientList")
+            .ID("gv_appointmentList")
             .ShowBorders(true)
             .DataSource(d => d.Mvc().Controller("AppointmentsAPI").LoadAction("Get").Key("AppointmentId").LoadParams(new { companyId = companyId })
             .InsertAction("Post")
@@ -26,19 +31,18 @@
             .DeleteAction("Delete"))
             .Columns(columns =>
             {
+                columns.AddFor(m => m.NutritionistId).Caption("Nutritionist Name").Lookup(lookup => lookup.DataSource(d => d.Mvc().Controller("AspNetUsersAPI").LoadAction("Get").Key("Id").LoadParams(new { companyId = companyId })).DisplayExpr("UserName").ValueExpr("Id")).CellTemplate(@<text><div><%- displayValue %></div></text>);
+                columns.AddFor(m => m.ClientId).Caption("Client Name").Lookup(lookup => lookup.DataSource(d => d.Mvc().Controller("CompanyClientsAPI").LoadAction("Get").Key("Id").LoadParams(new { companyId = companyId })).DisplayExpr("ClientName").ValueExpr("Id")).CellTemplate(@<text><div><%- displayValue %></div></text>);
                 columns.AddFor(m => m.ScheduledDate).Caption("Scheduled Date").Format("dd MMM, yyyy HH:mm:ss");
-                columns.AddFor(m => m.Status).Caption("Status");
-                columns.AddFor(m => m.Priority).Caption("Priority");
+                columns.AddFor(m => m.Status).Caption("Status").AllowEditing(false);
+                columns.AddFor(m => m.Priority).Caption("Priority").Lookup(lookup => lookup.DataSource(Enum.GetValues(typeof(MedisatERP.Areas.NutritionCompanySystem.Data.Enum.AppointmentPriority)).Cast<MedisatERP.Areas.NutritionCompanySystem.Data.Enum.AppointmentPriority>().Select(e => new { Name = e.ToString() })).DisplayExpr("Name").ValueExpr("Name")).CellTemplate(@<text><div><%- value %></div>  </text>);
                 columns.AddFor(m => m.ReminderSent).Caption("Reminder Sent");
-                columns.AddFor(m => m.ReminderSentAt).Caption("Reminder Sent At").Format("dd MMM, yyyy HH:mm:ss");
+                columns.AddFor(m => m.ReminderSentAt).Caption("Reminder Sent At").Format("dd MMM, yyyy HH:mm:ss").AllowEditing(false);
                 columns.AddFor(m => m.Notes).Caption("Notes");
-                columns.AddFor(m => m.CreatedAt).Caption("Created At").Format("dd MMM, yyyy HH:mm:ss");
-                columns.AddFor(m => m.UpdatedAt).Caption("Updated At").Format("dd MMM, yyyy HH:mm:ss");
-                columns.AddFor(m => m.Duration).Caption("Duration (mins)");
-                columns.AddFor(m => m.Workplace.Workplace).Caption("Appointment Venue").Lookup(lookup => lookup.DataSource(Enum.GetValues(typeof(MedisatERP.Areas.NutritionCompanySystem.Data.Enum.AppointmentVenue)).Cast<MedisatERP.Areas.NutritionCompanySystem.Data.Enum.AppointmentVenue>().Select(e => new { Name = e.ToString() })).DisplayExpr("Name").ValueExpr("Name")).CellTemplate(@<text><div><%- value %></div>  </text>);
-                columns.AddFor(m => m.Nutritionist.Email).Caption("Nutritionist Email");
-                columns.AddFor(m => m.Nutritionist.PhoneNumber).Caption("Nutritionist Phone Number");
-                columns.AddFor(m => m.Workplace.Workplace).Caption("Appointment Venue");
+                columns.AddFor(m => m.CreatedAt).Caption("Created At").Format("dd MMM, yyyy HH:mm:ss").AllowEditing(false);
+                columns.AddFor(m => m.UpdatedAt).Caption("Updated At").Format("dd MMM, yyyy HH:mm:ss").AllowEditing(false );
+                columns.AddFor(m => m.Duration).Caption("Duration (mins)").Lookup(lookup => lookup.DataSource(Enum.GetValues(typeof(MedisatERP.Areas.NutritionCompanySystem.Data.Enum.AppointmentDurations)).Cast<MedisatERP.Areas.NutritionCompanySystem.Data.Enum.AppointmentDurations>().Select(e => new { Name = e.ToString(), Value = (int)e })).DisplayExpr("Name").ValueExpr("Value")).CellTemplate(@<text><div><%- value %></div></text>);
+                columns.AddFor(m => m.WorkplaceId).Caption("Appointment Venue").Lookup(lookup => lookup.DataSource(d => d.Mvc().Controller("WorkplaceLookupsAPI")  .LoadAction("WorkplaceLookupsLookup") .Key("Value")) .DisplayExpr("Text")  .ValueExpr("Value"))  .CellTemplate(@<text><div><%- displayValue %></div></text>);
 
                 columns.Add()
                 .Type(GridCommandColumnType.Buttons)
@@ -63,6 +67,7 @@
         .HeaderFilter(f => f.Visible(true))
         .GroupPanel(p => p.Visible(false))
         .Grouping(g => g.AutoExpandAll(false))
+        .OnInitNewRow("onInitNewRow")
         .RemoteOperations(true)
         .Summary(s => s
         .TotalItems(totalItems =>
@@ -93,3 +98,17 @@
         )
         )
 </div>
+
+<script>
+
+     function getCompanyId() {
+        var companyId = $("#txt_company").dxSelectBox("option", "value");
+        return companyId;
+    }
+
+       function onInitNewRow(e) {
+        e.data.CompanyId = '@companyId';
+    }
+
+
+</script>
