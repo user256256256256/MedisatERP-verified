@@ -35,7 +35,7 @@
                 columns.AddFor(m => m.CreatedAt).Caption("Created At").Format("dd MMM, yyyy HH:mm:ss");
                 columns.AddFor(m => m.UpdatedAt).Caption("Updated At").Format("dd MMM, yyyy HH:mm:ss");
                 columns.AddFor(m => m.Duration).Caption("Duration (mins)");
-                columns.AddFor(m => m.Nutritionist.UserName).Caption("Nutritionist Name");
+                columns.AddFor(m => m.Workplace.Workplace).Caption("Appointment Venue").Lookup(lookup => lookup.DataSource(Enum.GetValues(typeof(MedisatERP.Areas.NutritionCompanySystem.Data.Enum.AppointmentVenue)).Cast<MedisatERP.Areas.NutritionCompanySystem.Data.Enum.AppointmentVenue>().Select(e => new { Name = e.ToString() })).DisplayExpr("Name").ValueExpr("Name")).CellTemplate(@<text><div><%- value %></div>  </text>);
                 columns.AddFor(m => m.Nutritionist.Email).Caption("Nutritionist Email");
                 columns.AddFor(m => m.Nutritionist.PhoneNumber).Caption("Nutritionist Phone Number");
                 columns.AddFor(m => m.Workplace.Workplace).Caption("Appointment Venue");
