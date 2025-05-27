@@ -2837,7 +2837,7 @@
   color: #333;
 }
 .dx-buttongroup-item.dx-button.dx-button-mode-contained:not(.dx-item-selected) {
-  background-color: #fff;
+   background-color: #0d4495;
 }
 .dx-buttongroup-item.dx-button.dx-button-mode-contained:not(.dx-item-selected).dx-button-default {
   border-color: #2d6da3;

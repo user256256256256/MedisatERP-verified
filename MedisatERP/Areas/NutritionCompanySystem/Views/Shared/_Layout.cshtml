@@ -400,14 +400,6 @@
                             </a>
                         </li>
 
-                        <!-- Sidebar Item: Communications -->
-                        <li class="sidebar-item @((Context.Request.Path.Value.Contains("Communications")) ? "active" : "")">
-                            <a class="sidebar-link" href="Communications">
-                                <i class="align-middle" data-feather="info"></i>
-                                <span class="align-middle">Communications</span>
-                            </a>
-                        </li>
-
                     </ul>
                 </li>
 
@@ -507,9 +499,7 @@
             </a>
             
             <a class="align-self-center text-center" style="flex-grow: 1;">
-                <img src="@(string.IsNullOrEmpty(ViewData["CompanyLogoFilePath"]?.ToString())
-                 ? Url.Content("~/img/companyLogoImages/defaultCompanyLogo.jpeg")
-                 : Url.Content("~/img/companyLogoImages/" + ViewData["CompanyLogoFilePath"]))"
+                <img src="@Url.Content("~/img/companyLogoImages/" + (Context.Session.GetString("CompanyLogoFilePath") ?? "defaultCompanyLogo.jpeg"))"
                      alt="company-logo"
                      style="max-height:3rem; max-width:7rem;" />
             </a>
@@ -545,12 +535,18 @@
 
                         <!-- Dropdown Menu -->
                         <div class="dropdown-menu dropdown-menu-end dropdownProfile" aria-labelledby="userDropdown">
-                            <a class="dropdown-item" href="@Url.Action("Index", "UserProfile", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId  })">
+                            <a class="dropdown-item" href="@Url.Action("UserProfile", "UserManagement", new { area = "NutritionCompanySystem" })"
+                               aria-label="Go to Profile">
                                 <i class="align-middle me-1" data-feather="user"></i> Profile
                             </a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="@Url.Action("Index", "UserSettingz", new { area = "NutritionCompanySystem", userId = encodedUserId, companyId = encodedCompanyId  })">
+                            <a class="dropdown-item" href="@Url.Action("UserSettings", "UserManagement", new { area = "NutritionCompanySystem" })"
+                               aria-label="Go to Settings">
                                 <i class="align-middle me-1" data-feather="settings"></i> Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="@Url.Action("Help", "UserManagement", new { area = "NutritionCompanySystem" })" aria-label="Help Section">
+                                <i class="align-middle me-1" data-feather="help-circle"></i> Help
                             </a>
                             <div class="dropdown-divider"></div>
                             <!-- Log out option with Javascript functionality -->

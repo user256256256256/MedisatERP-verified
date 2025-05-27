@@ -24,16 +24,30 @@ namespace MedisatERP.Services
 
         public async Task<AspNetUser> GetUserSessionAsync(string email)
         {
-            return await _dbContext.Set<AspNetUser>()
+            var user = await _dbContext.Set<AspNetUser>()
                 .Where(u => u.Email == email)
                 .Select(u => new AspNetUser { Id = u.Id, CompanyId = u.CompanyId })
                 .FirstOrDefaultAsync();
+
+            if (user?.CompanyId.HasValue == true)
+            {
+                var company = await _dbContext.Companies.Where(c => c.CompanyId == user.CompanyId).Select(c => new { c.CompanyLogoFilePath }).FirstOrDefaultAsync();
+
+                if (company != null)
+                {
+                    var session = _httpContextAccessor.HttpContext.Session;
+                    session.SetString("CompanyLogoFilePath", company.CompanyLogoFilePath);
+                }
+            }
+
+            return user;
         }
 
         public void SetSessionData(string userId, Guid? companyId)
         {
             var session = _httpContextAccessor.HttpContext.Session;
             session.SetString("UserId", userId);
+
             if (companyId.HasValue)
             {
                 session.SetString("CompanyId", companyId.Value.ToString());
